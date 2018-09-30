@@ -12,6 +12,13 @@ void HNPairAnalyzer::initializeAnalyzer(){
 
 void HNPairAnalyzer::executeEvent(){
 
+  FillHist("MCweight", GetEvent().MCweight(), 1, 4, -2., 2.);
+  if(!IsDATA && PDFWeights_Scale->size()>0){
+    double PDFreweight = PDFWeights_Scale->at(0)*GetEvent().MCweight();
+    int sign_PDFreweight = (PDFreweight>0);
+    FillHist("MCweight_reweighted", sign_PDFreweight, 1, 4, -2., 2.);
+  }
+
   AnalyzerParameter param;
 
   param.Name = "HNPair";
@@ -64,6 +71,7 @@ void HNPairAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //========================
 
   if(!PassMETFilter()) return;
+  FillHist("METFilter_"+param.Name, 0., 1., 1, 0., 1.);
 
   Event ev = GetEvent();
   Particle METv = ev.GetMETVector();
@@ -151,6 +159,7 @@ void HNPairAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   //==== Veto Extra Lepton
   if(!NoExtraLepton) return;
+  FillHist("NoExtraLepton_"+param.Name, 0., 1., 1, 0., 1.);
 
   //==== Loose sample or not
   if(RunFake){
@@ -159,6 +168,7 @@ void HNPairAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else{
     if(!IsAllTight) return;
   }
+  FillHist("BothLeptonPassTight_"+param.Name, 0., 1., 1, 0., 1.);
 
   //===========
   //==== Jets
@@ -220,6 +230,7 @@ void HNPairAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     bool PassTrigger = PassTriggers.at(it_Suffix);
 
     if(!( PassTrigger )) continue;
+    FillHist("PassTrigger_"+Suffix+"_"+param.Name, 0., 1., 1, 0., 1.);
 
     if(this->IsDATA){
       if(this->DataStream == "DoubleEG"){
