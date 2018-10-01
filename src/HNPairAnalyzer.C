@@ -15,7 +15,9 @@ void HNPairAnalyzer::executeEvent(){
   FillHist("MCweight", GetEvent().MCweight(), 1, 4, -2., 2.);
   if(!IsDATA && PDFWeights_Scale->size()>0){
     double PDFreweight = PDFWeights_Scale->at(0)*GetEvent().MCweight();
-    int sign_PDFreweight = (PDFreweight>0);
+    int sign_PDFreweight;
+    if(PDFreweight>0) sign_PDFreweight = +1;
+    else sign_PDFreweight = -1;
     FillHist("MCweight_reweighted", sign_PDFreweight, 1, 4, -2., 2.);
   }
 
