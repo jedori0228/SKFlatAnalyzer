@@ -290,6 +290,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         TString this_region = it_map->first;
 
         if(it_map->second){
+          map_bool_To_Region[this_region] = true;
           if(IsOS) map_bool_To_Region[this_region+"_OS"] = true;
           else     map_bool_To_Region[this_region+"_SS"] = true;
         }
