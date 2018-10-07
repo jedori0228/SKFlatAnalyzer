@@ -428,8 +428,8 @@ root -l -b -q run.C 1>stdout.log 2>stderr.log
     KillCommand.close()
 
 ## remove tar.gz
-os.system('rm '+SKFlat_WD+'/'+str_RandomNumber+'_data.tar.gz')
-os.system('rm '+SKFlat_WD+'/'+str_RandomNumber+'_lib.tar.gz')
+os.system('rm -f '+SKFlat_WD+'/'+str_RandomNumber+'_data.tar.gz')
+os.system('rm -f '+SKFlat_WD+'/'+str_RandomNumber+'_lib.tar.gz')
 
 if args.no_exec:
   exit()

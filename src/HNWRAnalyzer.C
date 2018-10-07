@@ -70,6 +70,8 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Name = "EXO17011";
 
+  param.MCCorrrectionIgnoreNoHist = true;
+
   param.Electron_Tight_ID = "TEST";
   param.Electron_Loose_ID = "TEST";
   param.Electron_Veto_ID = "TEST";
@@ -83,6 +85,9 @@ void HNWRAnalyzer::executeEvent(){
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
   param.Muon_MinPt = 50.;
+
+  param.Jet_ID = "HN";
+  param.FatJet_ID = "HN";
 
   executeEventFromParameter(param);
 
