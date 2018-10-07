@@ -4,9 +4,11 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   RunFake = HasFlag("RunFake");
   RunCF = HasFlag("RunCF");
+  PromptLeptonOnly = HasFlag("PromptLeptonOnly");
 
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
 
 }
 
@@ -87,8 +89,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector<Electron> Veto_electrons  = GetElectrons(param.Electron_Veto_ID, param.Electron_MinPt, 2.5);
   std::vector<Muon>     Veto_muons      = GetMuons(param.Muon_Veto_ID, param.Muon_MinPt, 2.4);
 
-  std::vector<Electron> Loose_electrons = ElectronPromptOnly(GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5), gens);
-  std::vector<Muon>     Loose_muons     = MuonPromptOnly(GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4), gens);
+  std::vector<Electron> Loose_electrons = GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
+  std::vector<Muon>     Loose_muons     = GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
+
+  if(PromptLeptonOnly){
+    Loose_electrons = ElectronPromptOnly(Loose_electrons, gens);
+    Loose_muons = MuonPromptOnly(Loose_muons, gens);
+  }
+
   std::vector<Electron> Tight_electrons;
   std::vector<Muon>     Tight_muons;
 
@@ -126,6 +134,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Veto Extra Lepton
   if(!NoExtraLepton) return;
 
+  FillHist("NoExtraLepton_"+param.Name, 0., 1., 1, 0., 1.);
+
   //==== Loose sample or not
   if(RunFake){
     if(IsAllTight) return;
@@ -133,6 +143,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else{
     if(!IsAllTight) return;
   }
+
+  FillHist("AllTight_"+param.Name, 0., 1., 1, 0., 1.);
 
   //===========
   //==== Jets
