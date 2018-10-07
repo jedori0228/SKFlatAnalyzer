@@ -395,6 +395,9 @@ bool Electron::Pass_HNWRVeto(){
 //==== TEST ID
 
 bool Electron::Pass_TESTID(){
+
+  if(! passHEEPID() ) return false;
+
   return true;
 }
 
