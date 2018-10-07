@@ -15,6 +15,7 @@ public:
   ~HNWRAnalyzer();
 
   bool RunFake, RunCF;
+  bool PromptLeptonOnly;
 
   vector<Gen> gens;
 

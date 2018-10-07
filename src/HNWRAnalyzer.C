@@ -4,9 +4,11 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   RunFake = HasFlag("RunFake");
   RunCF = HasFlag("RunCF");
+  PromptLeptonOnly = HasFlag("PromptLeptonOnly");
 
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
 
 }
 
@@ -62,6 +64,28 @@ void HNWRAnalyzer::executeEvent(){
 
   executeEventFromParameter(param);
 
+  //==== Following EXO-17-011
+
+  param.Clear();
+
+  param.Name = "EXO17011";
+
+  param.Electron_Tight_ID = "TEST";
+  param.Electron_Loose_ID = "TEST";
+  param.Electron_Veto_ID = "TEST";
+  param.Electron_UseMini = false;
+  param.Electron_UsePtCone = false;
+  param.Electron_MinPt = 50.;
+
+  param.Muon_Tight_ID = "TEST";
+  param.Muon_Loose_ID = "TEST";
+  param.Muon_Veto_ID = "TEST";
+  param.Muon_UseMini = false;
+  param.Muon_UsePtCone = false;
+  param.Muon_MinPt = 50.;
+
+  executeEventFromParameter(param);
+
 }
 
 void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
@@ -83,12 +107,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   bool PassSingleMuon = ev.PassTrigger("HLT_IsoMu27_v");
   bool PassSingleElectron = ev.PassTrigger("HLT_Ele35_WPTight_Gsf_v");
+  bool PassSingleMuonEXO17011 = ev.PassTrigger("HLT_Mu50_v");
 
   std::vector<Electron> Veto_electrons  = GetElectrons(param.Electron_Veto_ID, param.Electron_MinPt, 2.5);
   std::vector<Muon>     Veto_muons      = GetMuons(param.Muon_Veto_ID, param.Muon_MinPt, 2.4);
 
-  std::vector<Electron> Loose_electrons = ElectronPromptOnly(GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5), gens);
-  std::vector<Muon>     Loose_muons     = MuonPromptOnly(GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4), gens);
+  std::vector<Electron> Loose_electrons = GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
+  std::vector<Muon>     Loose_muons     = GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
+
+  if(PromptLeptonOnly){
+    Loose_electrons = ElectronPromptOnly(Loose_electrons, gens);
+    Loose_muons = MuonPromptOnly(Loose_muons, gens);
+  }
+
   std::vector<Electron> Tight_electrons;
   std::vector<Muon>     Tight_muons;
 
@@ -126,6 +157,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Veto Extra Lepton
   if(!NoExtraLepton) return;
 
+  FillHist("NoExtraLepton_"+param.Name, 0., 1., 1, 0., 1.);
+
   //==== Loose sample or not
   if(RunFake){
     if(IsAllTight) return;
@@ -133,6 +166,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else{
     if(!IsAllTight) return;
   }
+
+  FillHist("AllTight_"+param.Name, 0., 1., 1, 0., 1.);
 
   //===========
   //==== Jets
@@ -170,10 +205,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< TString > Suffixs = {
     "SingleMuon", // at least two muons
     "SingleElectron", // at least two muons
+    "SingleMuonEXO17011", // at least two muons
+    //"SingleElectronEXO17011", // at least two muons
   };
   std::vector< bool > PassTriggers = {
     PassSingleMuon && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
     PassSingleMuon && (Loose_electrons.size()>=1) && (Loose_muons.size()==0),
+    PassSingleMuonEXO17011 && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
   };
 
   //=================
@@ -187,6 +225,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(Suffix.Contains("SingleMuon")){
       if( Loose_muons.at(0).Pt() < 29. ) continue;
+      if(Suffix.Contains("EXO17011")){
+        if( Loose_muons.at(0).Pt() < 55. ) continue;
+      }
     }
     else if(Suffix.Contains("SingleElectron")){
       if( Loose_electrons.at(0).Pt() < 38. ) continue;
