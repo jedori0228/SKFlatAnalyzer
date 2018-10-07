@@ -323,6 +323,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         }
 
         FillLeptonPlots(leps, this_region, weight);
+        FillJetPlots(jets, fatjets, this_region, weight);
 
       } // END if(pass Region)
 
