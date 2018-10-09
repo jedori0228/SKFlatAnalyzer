@@ -25,6 +25,7 @@ void HNWRAnalyzer::executeEvent(){
   //========================
 
   AnalyzerParameter param;
+
   param.Clear();
 
   param.Name = "HNWR";
@@ -68,8 +69,6 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Clear();
 
-  param.Clear();
-
   param.Name = "EXO17011";
 
   param.Electron_Tight_ID = "passHEEPID";
@@ -81,6 +80,8 @@ void HNWRAnalyzer::executeEvent(){
   param.Electron_MinPt = 50.;
 
   param.Muon_Tight_ID = "POGHighPtWithLooseTrkIso";
+  param.Muon_Loose_ID = "POGHighPtWithLooseTrkIso";
+  param.Muon_Veto_ID = "POGHighPtWithLooseTrkIso";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
   param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
   param.Muon_Trigger_SF_Key = "Default";
