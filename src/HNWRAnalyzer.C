@@ -68,28 +68,29 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Clear();
 
+  param.Clear();
+
   param.Name = "EXO17011";
 
-  param.MCCorrrectionIgnoreNoHist = true;
-
-  param.Electron_Tight_ID = "TEST";
-  param.Electron_Loose_ID = "TEST";
-  param.Electron_Veto_ID = "TEST";
+  param.Electron_Tight_ID = "passHEEPID";
+  param.Electron_Loose_ID = "passHEEPID";
+  param.Electron_Veto_ID = "passHEEPID";
+  param.Electron_ID_SF_Key = "Default";
   param.Electron_UseMini = false;
   param.Electron_UsePtCone = false;
   param.Electron_MinPt = 50.;
 
-  param.Muon_Tight_ID = "TEST";
-  param.Muon_Loose_ID = "TEST";
-  param.Muon_Veto_ID = "TEST";
-  param.Muon_UseMini = false;
-  param.Muon_UsePtCone = false;
-  param.Muon_MinPt = 50.;
+  param.Muon_Tight_ID = "POGHighPtWithLooseTrkIso";
+  param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
+  param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
+  param.Muon_Trigger_SF_Key = "Default";
+  param.Muon_UseTuneP = true;
 
   param.Jet_ID = "HN";
   param.FatJet_ID = "HN";
 
   executeEventFromParameter(param);
+
 
 }
 
