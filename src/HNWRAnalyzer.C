@@ -231,6 +231,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if( !PassTriggers.at(it_Suffix) ) continue;
 
     if(Suffix.Contains("SingleMuon")){
+
+      bool HasTightIsoMuon = false;
+      for(unsigned int i=0; i<Loose_muons.size(); i++){
+        if(Loose_muons.at(i).RelIso()<0.15){
+          HasTightIsoMuon = true;
+          break;
+        }
+      }
+      if(!HasTightIsoMuon){
+        FillHist("SingleMuon_PassTightIso_"+param.Name, 0., 1., 1, 0., 1.);
+        continue;
+      }
+
       if( Loose_muons.at(0).Pt() < 29. ) continue;
       if(Suffix.Contains("EXO17011")){
         if( Loose_muons.at(0).Pt() < 55. ) continue;
@@ -301,6 +314,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     std::map<TString, bool> TMP_map_bool_To_Region; // For SS/OS
     std::map<TString, bool> map_bool_To_Region;
 
+    Particle WRCand;
+
     //==== One Lepton; Use IsOneLeptonEvent
     bool IsOneLeptonEvent = false;
     bool IsOneLeptonEvent_FatJet = false;
@@ -309,6 +324,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(fatjets.size()>=1){
         map_bool_To_Region["SingleLepton_WithFatJet"] = true;
         IsOneLeptonEvent_FatJet = true;
+        WRCand = (*leps[0])+fatjets.at(0);
       }
 
     }
@@ -318,6 +334,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     bool IsTwoLeptonEvent_TwoJet = false;
     bool IsOS = false;
     Particle ZCand_IsTwoLeptonEvent;
+
     if(leps.size()==2){
       IsTwoLeptonEvent = true;
 
@@ -332,6 +349,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(jets.size()>=2){
         TMP_map_bool_To_Region["DiLepton_WithTwoJet"] = true;
         IsTwoLeptonEvent_TwoJet = true;
+
+        WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
       }
 
       for(std::map<TString, bool>::iterator it_map = TMP_map_bool_To_Region.begin(); it_map != TMP_map_bool_To_Region.end(); it_map++){
@@ -361,14 +380,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
         if(IsOneLeptonEvent_FatJet){
-          JSFillHist(this_region, "lJ_Mass_"+this_region, ((*leps.at(0))+fatjets.at(0)).M(), weight, 2000, 0., 2000.);
+          JSFillHist(this_region, "dPhi_lJ_"+this_region, leps[0]->DeltaR(fatjets.at(0)), weight, 80., -4., 4.);
         }
         if(IsTwoLeptonEvent){
           JSFillHist(this_region, "ZCand_Mass_"+this_region, ZCand_IsTwoLeptonEvent.M(), weight, 2000, 0., 2000.);
-          if(IsTwoLeptonEvent_TwoJet){
-            JSFillHist(this_region, "lljj_Mass_"+this_region, (ZCand_IsTwoLeptonEvent+jets.at(0)+jets.at(1)).M(), weight, 2000, 0., 2000.);
-          }
         }
+
+        JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
 
         FillLeptonPlots(leps, this_region, weight);
         FillJetPlots(jets, fatjets, this_region, weight);

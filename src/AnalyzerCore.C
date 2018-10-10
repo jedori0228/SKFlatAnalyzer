@@ -1312,7 +1312,7 @@ void AnalyzerCore::FillLeptonPlots(std::vector<Lepton *> leps, TString this_regi
 
     Lepton *lep = leps[i];
 
-    JSFillHist(this_region, "Lepton_"+this_itoa+"_Pt_"+this_region, lep->Pt(), weight, 1000, 0., 1000.);
+    JSFillHist(this_region, "Lepton_"+this_itoa+"_Pt_"+this_region, lep->Pt(), weight, 3000, 0., 3000.);
     JSFillHist(this_region, "Lepton_"+this_itoa+"_Eta_"+this_region, lep->Eta(), weight, 60, -3., 3.);
     JSFillHist(this_region, "Lepton_"+this_itoa+"_RelIso_"+this_region, lep->RelIso(), weight, 100, 0., 1.);
     JSFillHist(this_region, "Lepton_"+this_itoa+"_MiniRelIso_"+this_region, lep->MiniRelIso(), weight, 100, 0., 1.);
