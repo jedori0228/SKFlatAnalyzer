@@ -317,26 +317,47 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     Particle WRCand;
 
     //==== One Lepton; Use IsOneLeptonEvent
-    bool IsOneLeptonEvent = false;
-    bool IsOneLeptonEvent_FatJet = false;
-    if(leps.size()==1){
+    bool IsAwayFatJetEvent = false;
 
-      if(fatjets.size()>=1){
-        map_bool_To_Region["SingleLepton_WithFatJet"] = true;
-        IsOneLeptonEvent_FatJet = true;
-        WRCand = (*leps[0])+fatjets.at(0);
+    FatJet WRJet;
+    if(fatjets.size()>=1){
+
+      //==== # of lepton can be 1 or 2
+      //==== If we have fatjets in the event,
+      //==== pick the leading lepton as a tag,
+      //==== and see if there is a away fatjet.
+      //==== Fatjet with higher pt has higher priority.
+      //==== IF we have two muons,
+      //==== that subleading muon should be inside the fatjet.
+
+      for(unsigned int i=0; i<fatjets.size(); i++){
+        if( fabs(leps[0]->DeltaPhi( fatjets.at(i) )) > 2.0 ){
+          WRJet = fatjets.at(i);
+          IsAwayFatJetEvent = true;
+          break;
+        }
+      }
+      if(leps.size()==2){
+        if(leps[1]->DeltaR( WRJet ) > 0.8) IsAwayFatJetEvent = false;
       }
 
+      if(IsAwayFatJetEvent){
+
+        map_bool_To_Region["SingleLepton_WithFatJet"] = true;
+        WRCand = (*leps[0])+WRJet;
+
+      }
     }
 
+
     //==== Two Lepton; Use IsTwoLeptonEvent
-    bool IsTwoLeptonEvent = false;
-    bool IsTwoLeptonEvent_TwoJet = false;
+    bool IsTwoLeptonEvent = (leps.size()==2);
     bool IsOS = false;
     Particle ZCand_IsTwoLeptonEvent;
 
-    if(leps.size()==2){
-      IsTwoLeptonEvent = true;
+    if(IsTwoLeptonEvent){
+
+      TMP_map_bool_To_Region["DiLepton"] = true;
 
       ZCand_IsTwoLeptonEvent = (*leps[0])+(*leps[1]); // Only works for two lepton case
       IsOS = (leps[0]->Charge() != leps[1]->Charge()); // Only works for two lepton case
@@ -345,11 +366,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         IsOS = !IsOS;
       }
 
-      TMP_map_bool_To_Region["DiLepton"] = true;
-      if(jets.size()>=2){
-        TMP_map_bool_To_Region["DiLepton_WithTwoJet"] = true;
-        IsTwoLeptonEvent_TwoJet = true;
-
+      if(!IsAwayFatJetEvent && (jets.size()>=2)){
+        TMP_map_bool_To_Region["DiLepton_TwoJetNoFatJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
       }
 
@@ -379,8 +397,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
-        if(IsOneLeptonEvent_FatJet){
-          JSFillHist(this_region, "dPhi_lJ_"+this_region, leps[0]->DeltaR(fatjets.at(0)), weight, 80., -4., 4.);
+        if(IsAwayFatJetEvent){
+          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(WRJet) ), weight, 40., 0., 4.);
         }
         if(IsTwoLeptonEvent){
           JSFillHist(this_region, "ZCand_Mass_"+this_region, ZCand_IsTwoLeptonEvent.M(), weight, 2000, 0., 2000.);
