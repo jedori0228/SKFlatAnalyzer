@@ -19,6 +19,7 @@ void HNWRAnalyzer::executeEvent(){
   //==========================
 
   gens = GetGens();
+  //PrintGen(gens); return;
 
   //========================
   //==== AnalyzerParameter
@@ -319,7 +320,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     //==== One Lepton; Use IsOneLeptonEvent
     bool IsAwayFatJetEvent = false;
 
-    FatJet WRJet;
+    FatJet HNJet;
     if(fatjets.size()>=1){
 
       //==== # of lepton can be 1 or 2
@@ -332,19 +333,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       for(unsigned int i=0; i<fatjets.size(); i++){
         if( fabs(leps[0]->DeltaPhi( fatjets.at(i) )) > 2.0 ){
-          WRJet = fatjets.at(i);
+          HNJet = fatjets.at(i);
           IsAwayFatJetEvent = true;
           break;
         }
       }
       if(leps.size()==2){
-        if(leps[1]->DeltaR( WRJet ) > 0.8) IsAwayFatJetEvent = false;
+        if(leps[1]->DeltaR( HNJet ) > 0.8) IsAwayFatJetEvent = false;
       }
 
       if(IsAwayFatJetEvent){
 
         map_bool_To_Region["SingleLepton_WithFatJet"] = true;
-        WRCand = (*leps[0])+WRJet;
+        WRCand = (*leps[0])+HNJet;
 
       }
     }
@@ -398,7 +399,16 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
         if(IsAwayFatJetEvent){
-          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(WRJet) ), weight, 40., 0., 4.);
+          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(HNJet) ), weight, 40., 0., 4.);
+
+          JSFillHist(this_region, "HNJet_Pt_"+this_region, HNJet.Pt(), weight, 1000, 0., 1000.);
+          JSFillHist(this_region, "HNJet_Eta_"+this_region, HNJet.Eta(), weight, 60, -3., 3.);
+          JSFillHist(this_region, "HNJet_Mass_"+this_region, HNJet.M(), weight, 3000, 0., 3000.);
+          JSFillHist(this_region, "HNJet_SDMass_"+this_region, HNJet.SDMass(), weight, 3000, 0., 3000.);
+          JSFillHist(this_region, "HNJet_PuppiTau21_"+this_region, HNJet.PuppiTau2()/HNJet.PuppiTau1(), weight, 100, 0., 1.);
+          JSFillHist(this_region, "HNJet_PuppiTau31_"+this_region, HNJet.PuppiTau3()/HNJet.PuppiTau1(), weight, 100, 0., 1.);
+          JSFillHist(this_region, "HNJet_PuppiTau32_"+this_region, HNJet.PuppiTau3()/HNJet.PuppiTau2(), weight, 100, 0., 1.);
+
         }
         if(IsTwoLeptonEvent){
           JSFillHist(this_region, "ZCand_Mass_"+this_region, ZCand_IsTwoLeptonEvent.M(), weight, 2000, 0., 2000.);
