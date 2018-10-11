@@ -1,7 +1,7 @@
 #include "CalcFakeRate.h"
 
 void CalcFakeRate::executeEvent(){
-
+/*
   //==============================
   //==== THIS IS FOR WR Analysis
   //==============================
@@ -58,9 +58,9 @@ void CalcFakeRate::executeEvent(){
   param.Jet_ID = "HN";
 
   executeEventFromParameter(param);
+*/
 
 
-/*
   //=============================================
   //===== THIS IS FOR PairN Production Analysis
   //=============================================
@@ -93,38 +93,6 @@ void CalcFakeRate::executeEvent(){
   //======================
 
   AnalyzerParameter param;
-
-  //==== To Check Denominator distribution, remove all selections for loose lepton
-
-  param.Name = "HNPairVeryLoose";
-
-  param.MCCorrrectionIgnoreNoHist = true;
-
-  param.Electron_Tight_ID = "HNPairTight";
-  param.Electron_Tight_RelIso = 0.1;
-  param.Electron_Loose_ID = "NOCUT";
-  param.Electron_Loose_RelIso = 999.;
-  param.Electron_Veto_ID = "NOCUT";
-  param.Electron_Veto_RelIso = 999.;
-  param.Electron_UseMini = true;
-  param.Electron_UsePtCone = true;
-  param.Electron_MinPt = 10.;
-
-  param.Muon_Tight_ID = "HNPairTight";
-  param.Muon_Tight_RelIso = 0.2;
-  param.Muon_Loose_ID = "POGLoose";
-  param.Muon_Loose_RelIso = 999.;
-  param.Muon_Veto_ID = "POGLoose";
-  param.Muon_Veto_RelIso = 999.;
-  param.Muon_UseMini = true;
-  param.Muon_UsePtCone = true;
-  param.Muon_MinPt = 10.;
-
-  param.Jet_ID = "HN";
-
-  executeEventFromParameter(param);
-
-  //==== HNPair ID
 
   param.Name = "HNPair";
 
@@ -161,48 +129,6 @@ void CalcFakeRate::executeEvent(){
   param.Muon_MinPt = 55.; // HLT_Mu50_v
 
   executeEventFromParameter(param);
-
-  //==== HNPair ID, but change IP cut
-  //==== Electron Loose : WIHTOUT IP cut
-  //==== Muon Loose : WITH IP cut
-
-  param.Name = "HNPair_ElectronLooseNoIP";
-
-  param.MCCorrrectionIgnoreNoHist = true;
-
-  param.Electron_Tight_ID = "HNPairTight";
-  param.Electron_Tight_RelIso = 0.1;
-  param.Electron_Loose_ID = "HNPairLooseNoIP";
-  param.Electron_Loose_RelIso = 0.6;
-  param.Electron_Veto_ID = "HNPairVeto";
-  param.Electron_Veto_RelIso = 0.6;
-  param.Electron_UseMini = true;
-  param.Electron_UsePtCone = true;
-  param.Electron_MinPt = 10.;
-
-  param.Muon_Tight_ID = "HNPairTight";
-  param.Muon_Tight_RelIso = 0.2;
-  param.Muon_Loose_ID = "TEST";
-  param.Muon_Loose_RelIso = 0.6;
-  param.Muon_Veto_ID = "HNPairVeto";
-  param.Muon_Veto_RelIso = 0.6;
-  param.Muon_UseMini = true;
-  param.Muon_UsePtCone = true;
-  param.Muon_MinPt = 10.;
-
-  param.Jet_ID = "HN";
-
-  executeEventFromParameter(param);
-
-  //==== HNPair ID with pt cut
-
-  param.Name = "HNPair_ElectronLooseNoIP_PtCut";
-  param.Electron_MinPt = 75.; // HLT_DoublePhoton70_v
-  param.Muon_MinPt = 55.; // HLT_Mu50_v
-
-  executeEventFromParameter(param);
-*/
-
 
 }
 
