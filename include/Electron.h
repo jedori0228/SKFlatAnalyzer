@@ -351,34 +351,14 @@ bool Electron::Pass_HNPairVeto(){
 
 bool Electron::Pass_HNWRTight(){
 
-  if(!Pass_CutBasedLooseNoIso()) return false;
-  if(! (RelIso()<0.15) ) return false;
-
-  if( fabs(scEta()) <= 1.479 ){
-    if(!( fabs(dXY())<0.05 )) return false;
-    if(!( fabs(dZ()) <0.10 )) return false;
-  }
-  else{
-    if(!( fabs(dXY())<0.10 )) return false;
-    if(!( fabs(dZ()) <0.20 )) return false;
-  }
+  if(! passHEEPID() ) return false;
 
   return true;
 }
 
 bool Electron::Pass_HNWRLoose(){
 
-  if(!Pass_CutBasedVetoNoIso()) return false;
-  if(! (RelIso()<0.6) ) return false;
-
-  if( fabs(scEta()) <= 1.479 ){
-    if(!( fabs(dXY())<0.05 )) return false;
-    if(!( fabs(dZ()) <0.10 )) return false;
-  }
-  else{
-    if(!( fabs(dXY())<0.10 )) return false;
-    if(!( fabs(dZ()) <0.20 )) return false;
-  }
+  if(! (passHEEPID()||Pass_CutBasedLooseNoIso()) ) return false;
 
   return true;
 
@@ -386,8 +366,7 @@ bool Electron::Pass_HNWRLoose(){
 
 bool Electron::Pass_HNWRVeto(){
 
-  if(!Pass_CutBasedVetoNoIso()) return false;
-  if(! (RelIso()<0.6) ) return false;
+  if(! (passHEEPID()||Pass_CutBasedVetoNoIso()) ) return false;
 
   return true;
 }

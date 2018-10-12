@@ -14,6 +14,27 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
 void HNWRAnalyzer::executeEvent(){
 
+  //==== FIXME
+
+  vector<Electron> T_els = GetElectrons("HNWRTight", 10., 2.5);
+  vector<Electron> L_els = GetElectrons("HNWRLoose", 10., 2.5);
+  vector<Electron> V_els = GetElectrons("HNWRVeto", 10., 2.5);
+
+  for(unsigned int i=0;i<L_els.size(); i++){
+    FillHist("Loose_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
+    if( L_els.at(i).passHEEPID() ){
+      FillHist("Loose_Pass_Tight_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
+    }
+  }
+  for(unsigned int i=0;i<V_els.size(); i++){
+    FillHist("Veto_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
+    if( V_els.at(i).passHEEPID() ){
+      FillHist("Veto_Pass_Tight_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
+    }
+  }
+  return;
+
+
   //==========================
   //==== Gen for genmatching
   //==========================
