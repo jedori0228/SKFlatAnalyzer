@@ -11,6 +11,7 @@ mkdir -p $SKFlat_WD/data/$SKFlatV
 export SAMPLE_DATA_DIR=$SKFlat_WD/data/$SKFlatV/Sample/
 export SKFlatSEDir="/xrootd/store/user/$USER/SKFlatOutput/"
 export SKFlatLogEmail='jskim@cern.ch'
+alias skout="cd /data7/Users/jskim/SKFlatOutput/$SKFlatV/"
 
 if [[ $HOSTNAME == *"ui10.sdfarm.kr"* ]]; then
   echo "Working on KISTI"
