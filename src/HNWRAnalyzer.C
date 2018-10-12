@@ -13,6 +13,49 @@ void HNWRAnalyzer::initializeAnalyzer(){
 }
 
 void HNWRAnalyzer::executeEvent(){
+/*
+  //==== [TEST]
+  //==== Test Which Loose/Veto electron to use..
+
+  vector<Electron> T_els = GetElectrons("HNWRTight", 10., 2.5);
+  vector<Electron> L_els = GetElectrons("HNWRLoose", 10., 2.5);
+  vector<Electron> V_els = GetElectrons("HNWRVeto", 10., 2.5);
+
+  for(unsigned int i=0;i<L_els.size(); i++){
+    FillHist("Loose_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
+    if( L_els.at(i).passHEEPID() ){
+      FillHist("Loose_Pass_Tight_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
+    }
+  }
+  for(unsigned int i=0;i<V_els.size(); i++){
+    FillHist("Veto_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
+    if( V_els.at(i).passHEEPID() ){
+      FillHist("Veto_Pass_Tight_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
+    }
+  }
+  return;
+*/
+
+  //==== FIXME
+
+  vector<Electron> T_els = GetElectrons("HNWRTight", 10., 2.5);
+  vector<Electron> L_els = GetElectrons("HNWRLoose", 10., 2.5);
+  vector<Electron> V_els = GetElectrons("HNWRVeto", 10., 2.5);
+
+  for(unsigned int i=0;i<L_els.size(); i++){
+    FillHist("Loose_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
+    if( L_els.at(i).passHEEPID() ){
+      FillHist("Loose_Pass_Tight_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
+    }
+  }
+  for(unsigned int i=0;i<V_els.size(); i++){
+    FillHist("Veto_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
+    if( V_els.at(i).passHEEPID() ){
+      FillHist("Veto_Pass_Tight_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
+    }
+  }
+  return;
+
 
   //==== FIXME
 
@@ -70,11 +113,8 @@ void HNWRAnalyzer::executeEvent(){
   param.MCCorrrectionIgnoreNoHist = true;
 
   param.Electron_Tight_ID = "HNWRTight";
-  param.Electron_Tight_RelIso = 0.15;
   param.Electron_Loose_ID = "HNWRLoose";
-  param.Electron_Loose_RelIso = 0.6;
   param.Electron_Veto_ID = "HNWRVeto";
-  param.Electron_Veto_RelIso = 0.6;
   param.Electron_FR_ID = "HNWR";
   param.Electron_FR_Key = "AwayJetPt40";
   param.Electron_CF_ID = "HNWR";
@@ -84,24 +124,22 @@ void HNWRAnalyzer::executeEvent(){
   param.Electron_MinPt = 10.;
 
   param.Muon_Tight_ID = "HNWRTight";
-  param.Muon_Tight_RelIso = 0.15;
   param.Muon_Loose_ID = "HNWRLoose";
-  param.Muon_Loose_RelIso = 0.6;
   param.Muon_Veto_ID = "HNWRVeto";
-  param.Muon_Veto_RelIso = 0.6;
   param.Muon_FR_ID = "HNWR";
   param.Muon_FR_Key = "AwayJetPt40";
   param.Muon_CF_ID = "HNWR";
   param.Muon_CF_Key = "ZToLL";
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
+  param.Muon_UseTuneP = true;
   param.Muon_MinPt = 10.;
 
   param.Jet_ID = "HN";
   param.FatJet_ID = "HN";
 
   executeEventFromParameter(param);
-
+/*
   //==== Following EXO-17-011
 
   param.Clear();
@@ -128,7 +166,7 @@ void HNWRAnalyzer::executeEvent(){
   param.FatJet_ID = "HN";
 
   executeEventFromParameter(param);
-
+*/
 
 }
 
@@ -266,6 +304,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     TString Suffix = Suffixs.at(it_Suffix);
     if( !PassTriggers.at(it_Suffix) ) continue;
+
+    FillHist(Suffix+"_PassTrigger_"+param.Name, 0., 1., 1, 0., 1.);
+
+    if(! (n_Tight_leptons>=1) ) continue;
+
+    FillHist(Suffix+"_AtLeastOneTightLepton_"+param.Name, 0., 1., 1, 0., 1.);
 
     if(Suffix.Contains("SingleMuon")){
 
