@@ -94,6 +94,39 @@ std::vector<Muon> AnalyzerCore::GetMuons(TString id, double ptmin, double fetama
 
 }
 
+std::vector<Muon> AnalyzerCore::GetHighPtMuons(TString id, double ptmin, double fetamax){
+
+  std::vector<Muon> muons = GetAllMuons();
+  std::vector<Muon> out;
+  for(unsigned int i=0; i<muons.size(); i++){
+    Muon this_muon=muons.at(i);
+
+    Particle this_tunep4 = this_muon.TuneP4();
+
+    if(!( this_tunep4.Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << this_muon.Pt() << ", cut = " << ptmin << endl;
+      continue;
+    }
+    if(!( fabs(this_tunep4.Eta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(this_muon.Eta()) << ", cut = " << fetamax << endl;
+      continue;
+    }
+    if(!( this_muon.PassID(id) )){
+      //cout << "Fail ID" << endl;
+      continue;
+    }
+
+    this_muon.SetPtEtaPhiM( this_tunep4.Pt(), this_tunep4.Eta(), this_tunep4.Phi(), this_tunep4.M() );
+    //FIXME add charge here
+
+    out.push_back(this_muon);
+  }
+  return out;
+
+}
+
+
+
 std::vector<Electron> AnalyzerCore::GetAllElectrons(){
 
   std::vector<Electron> out;
