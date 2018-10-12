@@ -70,7 +70,11 @@ std::vector<Muon> AnalyzerCore::GetAllMuons(){
 
 }
 
-std::vector<Muon> AnalyzerCore::GetMuons(TString id, double ptmin, double fetamax){
+std::vector<Muon> AnalyzerCore::GetMuons(TString id, double ptmin, double fetamax, bool UseTuneP){
+
+  if(UseTuneP){
+    return GetTunePMuons(id, ptmin, fetamax);
+  }
 
   std::vector<Muon> muons = GetAllMuons();
   std::vector<Muon> out;
@@ -94,7 +98,7 @@ std::vector<Muon> AnalyzerCore::GetMuons(TString id, double ptmin, double fetama
 
 }
 
-std::vector<Muon> AnalyzerCore::GetHighPtMuons(TString id, double ptmin, double fetamax){
+std::vector<Muon> AnalyzerCore::GetTunePMuons(TString id, double ptmin, double fetamax){
 
   std::vector<Muon> muons = GetAllMuons();
   std::vector<Muon> out;

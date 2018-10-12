@@ -43,6 +43,7 @@ void CalcFakeRate::executeEvent(){
   param.Electron_Veto_RelIso = 0.6;
   param.Electron_UseMini = false;
   param.Electron_UsePtCone = false;
+  param.Electron_ID_SF_Key = "Default";
   param.Electron_MinPt = 10.;
 
   param.Muon_Tight_ID = "HNWRTight";
@@ -53,6 +54,9 @@ void CalcFakeRate::executeEvent(){
   param.Muon_Veto_RelIso = 0.60;
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
+  param.Muon_UseTuneP = true;
+  param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
+  param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
   param.Muon_MinPt = 10.;
 
   param.Jet_ID = "HN";
@@ -116,6 +120,7 @@ void CalcFakeRate::executeEvent(){
   param.Muon_Veto_RelIso = 0.6;
   param.Muon_UseMini = true;
   param.Muon_UsePtCone = true;
+  param.Muon_UseTuneP = false;
   param.Muon_MinPt = 10.;
 
   param.Jet_ID = "HN";
@@ -140,11 +145,11 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
   Particle METv = ev.GetMETVector();
 
   std::vector<Electron> Veto_electrons = GetElectrons(param.Electron_Veto_ID, 10., 2.5);
-  std::vector<Muon> Veto_muons = GetMuons(param.Muon_Veto_ID, 10., 2.4);
+  std::vector<Muon> Veto_muons = GetMuons(param.Muon_Veto_ID, 10., 2.4, param.Muon_UseTuneP);
   int n_Veto_Leptons = Veto_electrons.size()+Veto_muons.size();
 
   std::vector<Electron> Loose_electrons = GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
-  std::vector<Muon> Loose_muons = GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
+  std::vector<Muon> Loose_muons = GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4, param.Muon_UseTuneP);
 
   vector<Gen> gens = GetGens();
 
@@ -168,6 +173,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
   vector<Lepton *> lepptrs_prompt, lepptrs_fake;
   vector<bool>     IsTight_prompt, IsTight_fake;
   int n_TightElectron(0), n_TightMuon(0);
+  double SF_Muon(1.), SF_Electron(1.);
 
   for(unsigned int i=0; i<lepptrs.size(); i++){
 
@@ -203,12 +209,34 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
     if(IsElectron){
       Electron *el = (Electron *)lepptr;
       PassTight = el->PassID(param.Electron_Tight_ID);
-      if(PassTight) n_TightElectron++;
+      if(PassTight){
+        n_TightElectron++;
+        if(!IsDATA){
+          double this_recosf = mcCorr.ElectronReco_SF(el->scEta(),el->Pt());
+          double this_idsf = mcCorr.ElectronID_SF(param.Electron_ID_SF_Key, el->scEta(), el->Pt());
+          SF_Electron *= this_recosf*this_idsf;
+        }
+      }
     }
     else{
       Muon *mu = (Muon *)lepptr;
       PassTight = mu->PassID(param.Muon_Tight_ID);
-      if(PassTight) n_TightMuon++;
+      if(PassTight){
+        n_TightMuon++;
+        if(!IsDATA){
+          double this_pt = mu->MiniAODPt();
+          double this_eta = mu->Eta();
+
+          if(param.Muon_UseTuneP){
+            Particle this_tuneP = mu->TuneP4();
+            this_pt = mu->Pt();
+            this_eta = mu->Eta();
+          }
+          double this_idsf  = mcCorr.MuonID_SF (param.Muon_ID_SF_Key,  this_eta, this_pt);
+          double this_isosf = mcCorr.MuonISO_SF(param.Muon_ISO_SF_Key, this_eta, this_pt);
+          SF_Muon *= this_idsf*this_isosf;
+        }
+      }
     }
 
     if(lep_tyep>0){
@@ -248,7 +276,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
         //==== TODO Add SFs
         double weight = 1.;
         if(!IsDATA){
-          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight();
+          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight() * SF_Electron;
         }
 
         if(OneLeptonEvent){
@@ -305,7 +333,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
         //==== TODO Add SFs
         double weight = 1.;
         if(!IsDATA){
-          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight();
+          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight() * SF_Muon;
         }
 
         if(OneLeptonEvent){
@@ -389,6 +417,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
     bool PassTriggerByPt = false;
     TString ThisPtTrigger = "";
+    double this_SF = 1.;
     if(IsElectron){
 
       double this_pt = lepptr_prompt->Pt();
@@ -398,6 +427,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
       if(ThisPtTrigger!="PTFAIL"){
         PassTriggerByPt = ev.PassTrigger(ThisPtTrigger);
       }
+      this_SF = SF_Electron;
     }
     else{
 
@@ -408,6 +438,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
       if(ThisPtTrigger!="PTFAIL"){
         PassTriggerByPt = ev.PassTrigger(ThisPtTrigger);
       }
+      this_SF = SF_Muon;
     }
     if(ThisPtTrigger=="NULL") PassTriggerByPt = false;
 
@@ -415,7 +446,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
       double weight = 1.;
       if(!IsDATA){
-        weight *= weight_norm_1invpb * ev.GetTriggerLumi(ThisPtTrigger) * ev.MCweight();
+        weight *= weight_norm_1invpb * ev.GetTriggerLumi(ThisPtTrigger) * ev.MCweight() * this_SF;
       }
 
       //TODO add Scale factors

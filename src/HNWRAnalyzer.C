@@ -18,48 +18,6 @@ void HNWRAnalyzer::executeEvent(){
   //==== Test Which Loose/Veto electron to use..
 
   vector<Electron> T_els = GetElectrons("HNWRTight", 10., 2.5);
-  vector<Electron> L_els = GetElectrons("HNWRLoose", 10., 2.5);
-  vector<Electron> V_els = GetElectrons("HNWRVeto", 10., 2.5);
-
-  for(unsigned int i=0;i<L_els.size(); i++){
-    FillHist("Loose_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( L_els.at(i).passHEEPID() ){
-      FillHist("Loose_Pass_Tight_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-  for(unsigned int i=0;i<V_els.size(); i++){
-    FillHist("Veto_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( V_els.at(i).passHEEPID() ){
-      FillHist("Veto_Pass_Tight_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-  return;
-*/
-
-  //==== FIXME
-
-  vector<Electron> T_els = GetElectrons("HNWRTight", 10., 2.5);
-  vector<Electron> L_els = GetElectrons("HNWRLoose", 10., 2.5);
-  vector<Electron> V_els = GetElectrons("HNWRVeto", 10., 2.5);
-
-  for(unsigned int i=0;i<L_els.size(); i++){
-    FillHist("Loose_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( L_els.at(i).passHEEPID() ){
-      FillHist("Loose_Pass_Tight_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-  for(unsigned int i=0;i<V_els.size(); i++){
-    FillHist("Veto_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( V_els.at(i).passHEEPID() ){
-      FillHist("Veto_Pass_Tight_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-  return;
-
-
-  //==== FIXME
-
-  vector<Electron> T_els = GetElectrons("HNWRTight", 10., 2.5);
   vector<Electron> L_els = GetElectrons("passLooseID", 10., 2.5);
   vector<Electron> V_els = GetElectrons("passVetoID", 10., 2.5);
   vector<Electron> LNoIso_els = GetElectrons("HNWRLoose", 10., 2.5);
@@ -91,7 +49,7 @@ void HNWRAnalyzer::executeEvent(){
     }
   }
   return;
-
+*/
 
   //==========================
   //==== Gen for genmatching
@@ -192,10 +150,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool PassSingleMuonEXO17011 = ev.PassTrigger("HLT_Mu50_v");
 
   std::vector<Electron> Veto_electrons  = GetElectrons(param.Electron_Veto_ID, param.Electron_MinPt, 2.5);
-  std::vector<Muon>     Veto_muons      = GetHighPtMuons(param.Muon_Veto_ID, param.Muon_MinPt, 2.4);
+  std::vector<Muon>     Veto_muons      = GetMuons(param.Muon_Veto_ID, param.Muon_MinPt, 2.4, param.Muon_UseTuneP);
 
   std::vector<Electron> Loose_electrons = GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
-  std::vector<Muon>     Loose_muons     = GetHighPtMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
+  std::vector<Muon>     Loose_muons     = GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4, param.Muon_UseTuneP);
 
   if(PromptLeptonOnly){
     Loose_electrons = ElectronPromptOnly(Loose_electrons, gens);

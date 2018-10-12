@@ -43,8 +43,8 @@ public:
   Event GetEvent();
 
   std::vector<Muon> GetAllMuons();
-  std::vector<Muon> GetMuons(TString id, double ptmin=-999., double fetamax=999.);
-  std::vector<Muon> GetHighPtMuons(TString id, double ptmin=-999., double fetamax=999.);
+  std::vector<Muon> GetMuons(TString id, double ptmin=-999., double fetamax=999., bool UseTuneP=false);
+  std::vector<Muon> GetTunePMuons(TString id, double ptmin=-999., double fetamax=999.);
 
   std::vector<Electron> GetAllElectrons();
   std::vector<Electron> GetElectrons(TString id, double ptmin=-999., double fetamax=999.);
