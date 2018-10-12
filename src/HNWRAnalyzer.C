@@ -75,13 +75,14 @@ void HNWRAnalyzer::executeEvent(){
   param.Muon_CF_Key = "ZToLL";
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
+  param.Muon_UseTuneP = true;
   param.Muon_MinPt = 10.;
 
   param.Jet_ID = "HN";
   param.FatJet_ID = "HN";
 
   executeEventFromParameter(param);
-
+/*
   //==== Following EXO-17-011
 
   param.Clear();
@@ -108,7 +109,7 @@ void HNWRAnalyzer::executeEvent(){
   param.FatJet_ID = "HN";
 
   executeEventFromParameter(param);
-
+*/
 
 }
 
@@ -246,6 +247,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     TString Suffix = Suffixs.at(it_Suffix);
     if( !PassTriggers.at(it_Suffix) ) continue;
+
+    FillHist(Suffix+"_PassTrigger_"+param.Name, 0., 1., 1, 0., 1.);
+
+    if(! (n_Tight_leptons>=1) ) continue;
+
+    FillHist(Suffix+"_AtLeastOneTightLepton_"+param.Name, 0., 1., 1, 0., 1.);
 
     if(Suffix.Contains("SingleMuon")){
 
