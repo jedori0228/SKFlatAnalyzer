@@ -1,7 +1,7 @@
 #include "CalcFakeRate.h"
 
 void CalcFakeRate::executeEvent(){
-/*
+
   //==============================
   //==== THIS IS FOR WR Analysis
   //==============================
@@ -46,11 +46,11 @@ void CalcFakeRate::executeEvent(){
   param.Electron_MinPt = 10.;
 
   param.Muon_Tight_ID = "HNWRTight";
-  param.Muon_Tight_RelIso = 0.15;
+  param.Muon_Tight_RelIso = 0.10;
   param.Muon_Loose_ID = "HNWRLoose";
-  param.Muon_Loose_RelIso = 0.6;
+  param.Muon_Loose_RelIso = 0.40;
   param.Muon_Veto_ID = "HNWRVeto";
-  param.Muon_Veto_RelIso = 0.6;
+  param.Muon_Veto_RelIso = 0.60;
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
   param.Muon_MinPt = 10.;
@@ -58,9 +58,9 @@ void CalcFakeRate::executeEvent(){
   param.Jet_ID = "HN";
 
   executeEventFromParameter(param);
-*/
 
 
+/*
   //=============================================
   //===== THIS IS FOR PairN Production Analysis
   //=============================================
@@ -129,7 +129,7 @@ void CalcFakeRate::executeEvent(){
   param.Muon_MinPt = 55.; // HLT_Mu50_v
 
   executeEventFromParameter(param);
-
+*/
 }
 
 void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){

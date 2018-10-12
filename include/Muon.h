@@ -186,20 +186,24 @@ bool Muon::Pass_HNPairVeto(){
 //==== HN WR
 
 bool Muon::Pass_HNWRTight(){
-  if(! isPOGMedium() ) return false;
-  if(! (RelIso()<0.15) ) return false;
-  if(! (fabs(dXY())<0.05 && fabs(dZ())<0.1) ) return false;
+
+  if(! isPOGHighPt() ) return false;
+  if(! ( (TrkIso()/Pt())<0.1 ) ) return false;
+
   return true;
 }
 bool Muon::Pass_HNWRLoose(){
-  if(! isPOGMedium() ) return false;
-  if(! (RelIso()<0.6) ) return false;
-  if(! (fabs(dXY())<0.05 && fabs(dZ())<0.1) ) return false;
+
+  if(! isPOGHighPt() ) return false;
+  if(! ( (TrkIso()/Pt())<0.4 ) ) return false;
+
   return true;
 }
 bool Muon::Pass_HNWRVeto(){
-  if(! isPOGLoose() ) return false;
-  if(! (RelIso()<0.6) ) return false;
+
+  if(! isPOGHighPt() ) return false;
+  if(! ( (TrkIso()/Pt())<0.6 ) ) return false;
+
   return true;
 }
 
