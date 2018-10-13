@@ -654,6 +654,40 @@ std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::
 
 }
 
+std::vector<FatJet> AnalyzerCore::FatJetsVetoLeptonInside(std::vector<FatJet> jets, std::vector<Electron> els, std::vector<Muon> mus){
+
+  std::vector<FatJet> out;
+  for(unsigned int i=0; i<jets.size(); i++){
+    FatJet this_jet = jets.at(i);
+
+    bool HasLeptonInside = false;
+
+    for(unsigned int j=0; j<els.size(); j++){
+      if( this_jet.DeltaR( els.at(j) ) < 0.8 ){
+        HasLeptonInside = true;
+        break;
+      }
+    }
+    if(HasLeptonInside) continue;
+
+    for(unsigned int j=0; j<mus.size(); j++){
+      if( this_jet.DeltaR( mus.at(j) ) < 0.8 ){
+        HasLeptonInside = true;
+        break;
+      }
+    }
+    if(HasLeptonInside) continue;
+
+    //==== if all fine,
+    out.push_back( this_jet );
+
+  }
+  return out;
+
+}
+
+
+
 Particle AnalyzerCore::AddFatJetAndLepton(FatJet fatjet, Lepton lep){
 
   if(fatjet.DeltaR( lep )<0.8){

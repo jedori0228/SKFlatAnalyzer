@@ -170,7 +170,7 @@ bool FatJet::PassID(TString id){
 bool FatJet::Pass_HN(){
 
   if(! Pass_tightJetID() ) return false;
-  if(! (SDMass()>60.) ) return false;
+  //if(! (SDMass()>60.) ) return false;
 
   return true;
 

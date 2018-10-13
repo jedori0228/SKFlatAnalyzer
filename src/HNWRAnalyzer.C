@@ -145,9 +145,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   Event ev = GetEvent();
   Particle METv = ev.GetMETVector();
 
-  bool PassSingleMuon = ev.PassTrigger("HLT_IsoMu27_v");
+  bool PassMu50 = ev.PassTrigger("HLT_Mu50_v");
+  bool PassIsoMu27 = ev.PassTrigger("HLT_IsoMu27_v");
   bool PassSingleElectron = ev.PassTrigger("HLT_Ele35_WPTight_Gsf_v");
-  bool PassSingleMuonEXO17011 = ev.PassTrigger("HLT_Mu50_v");
 
   std::vector<Electron> Veto_electrons  = GetElectrons(param.Electron_Veto_ID, param.Electron_MinPt, 2.5);
   std::vector<Muon>     Veto_muons      = GetMuons(param.Muon_Veto_ID, param.Muon_MinPt, 2.4, param.Muon_UseTuneP);
@@ -191,8 +191,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
   }
 
-  bool NoExtraLepton = (n_Veto_leptons==n_Loose_leptons);
-  bool IsAllTight = (n_Loose_leptons==n_Tight_leptons);
+  bool NoExtraLepton = (n_Veto_leptons  == n_Loose_leptons);
+  bool IsAllTight    = (n_Loose_leptons == n_Tight_leptons);
 
   //==== Veto Extra Lepton
   if(!NoExtraLepton) return;
@@ -213,10 +213,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Jets
   //===========
 
-  std::vector<FatJet>   fatjets         = GetFatJets(param.FatJet_ID, 200, 2.7);
+  std::vector<FatJet>   fatjets         = FatJetsVetoLeptonInside( GetFatJets(param.FatJet_ID, 200, 2.7), Tight_electrons, Tight_muons);
 
   std::vector<Jet>      alljets         = GetJets(param.Jet_ID, 20., 2.7);
-  std::vector<Jet>      jets            = JetsVetoLeptonInside(JetsAwayFromFatJet(alljets, fatjets), Veto_electrons, Veto_muons);
+  std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Veto_electrons, Veto_muons);
 
   int NBJets=0;
   for(unsigned int i=0; i<alljets.size(); i++){
@@ -243,15 +243,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //====================================================
 
   std::vector< TString > Suffixs = {
-    "SingleMuon", // at least two muons
-    "SingleElectron", // at least two muons
-    "SingleMuonEXO17011", // at least two muons
-    //"SingleElectronEXO17011", // at least two muons
+    "SingleMuon_Mu50",
+    "SingleMuon_IsoMu27",
+    "SingleElectron",
   };
   std::vector< bool > PassTriggers = {
-    PassSingleMuon && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
-    PassSingleMuon && (Loose_electrons.size()>=1) && (Loose_muons.size()==0),
-    PassSingleMuonEXO17011 && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
+    PassMu50           && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
+    PassIsoMu27        && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
+    PassSingleElectron && (Loose_electrons.size()>=1) && (Loose_muons.size()==0),
   };
 
   //=================
@@ -271,22 +270,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(Suffix.Contains("SingleMuon")){
 
-      bool HasTightIsoMuon = false;
-      for(unsigned int i=0; i<Loose_muons.size(); i++){
-        if(Loose_muons.at(i).RelIso()<0.15){
-          HasTightIsoMuon = true;
-          break;
-        }
+      if(Suffix.Contains("Mu50")){
+        if( Loose_muons.at(0).Pt() < 52. ) continue;
       }
-      if(!HasTightIsoMuon){
-        FillHist("SingleMuon_PassTightIso_"+param.Name, 0., 1., 1, 0., 1.);
-        continue;
+      if(Suffix.Contains("IsoMu27")){
+        if( Loose_muons.at(0).Pt() < 29. ) continue;
       }
 
-      if( Loose_muons.at(0).Pt() < 29. ) continue;
-      if(Suffix.Contains("EXO17011")){
-        if( Loose_muons.at(0).Pt() < 55. ) continue;
-      }
     }
     else if(Suffix.Contains("SingleElectron")){
       if( Loose_electrons.at(0).Pt() < 38. ) continue;
@@ -353,72 +343,77 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     std::map<TString, bool> TMP_map_bool_To_Region; // For SS/OS
     std::map<TString, bool> map_bool_To_Region;
 
+    FatJet HNFatJet;
+    Particle HNDiJet;
+
     Particle WRCand;
 
-    //==== One Lepton; Use IsOneLeptonEvent
-    bool IsAwayFatJetEvent = false;
+    FillHist(Suffix+"_NLepton_"+param.Name, leps.size(), 1., 5, 0., 5.);
 
-    FatJet HNJet;
-    if(fatjets.size()>=1){
+    //==== If only one lepton, it should be boosted
+    if(leps.size()==1){
 
-      //==== # of lepton can be 1 or 2
-      //==== If we have fatjets in the event,
-      //==== pick the leading lepton as a tag,
-      //==== and see if there is a away fatjet.
-      //==== Fatjet with higher pt has higher priority.
-      //==== IF we have two muons,
-      //==== that subleading muon should be inside the fatjet.
+      bool FoundAwayFatJet = false;
+      bool FoundAwayDiJet = false;
 
-      for(unsigned int i=0; i<fatjets.size(); i++){
-        if( fabs(leps[0]->DeltaPhi( fatjets.at(i) )) > 2.0 ){
-          HNJet = fatjets.at(i);
-          IsAwayFatJetEvent = true;
-          break;
+      if(fatjets.size()>=1){
+
+        for(unsigned int i=0; i<fatjets.size(); i++){
+
+          if( fabs(leps[0]->DeltaPhi( fatjets.at(i) )) > 2.0 ){
+            HNFatJet = fatjets.at(i);
+            FoundAwayFatJet = true;
+            break;
+          }
+
         }
-      }
-      if(leps.size()==2){
-        if(leps[1]->DeltaR( HNJet ) > 0.8) IsAwayFatJetEvent = false;
-      }
-
-      if(IsAwayFatJetEvent){
-
-        map_bool_To_Region["SingleLepton_WithFatJet"] = true;
-        WRCand = (*leps[0])+HNJet;
 
       }
+      else if(jets.size()>=2){
+
+        Particle temp_HNDiJet = jets.at(0)+jets.at(1);
+        if( fabs(leps[0]->DeltaPhi( temp_HNDiJet )) > 2.0 ){
+          HNDiJet = temp_HNDiJet;
+          FoundAwayDiJet = true;
+        }
+
+      }
+
+      FillHist(Suffix+"_NFatJetWhenOneLepton_"+param.Name, fatjets.size(), 1., 5, 0., 5.);
+      if(fatjets.size()==0){
+        FillHist(Suffix+"_NJetWhenOneLeptonNoFatJet_"+param.Name, jets.size(), 1., 5, 0., 5.);
+      }
+
+      if(FoundAwayFatJet){
+        map_bool_To_Region["OneLepton_AwayFatJet"] = true;
+        WRCand = (*leps[0])+HNFatJet;
+      }
+      else if(FoundAwayDiJet){
+        map_bool_To_Region["OneLepton_AwayDiJet"] = true;
+        WRCand = (*leps[0])+HNDiJet;
+      }
+
     }
+    else if(leps.size()==2){
 
+      bool IsOS = (leps[0]->Charge() != leps[1]->Charge());
 
-    //==== Two Lepton; Use IsTwoLeptonEvent
-    bool IsTwoLeptonEvent = (leps.size()==2);
-    bool IsOS = false;
-    Particle ZCand_IsTwoLeptonEvent;
-
-    if(IsTwoLeptonEvent){
-
-      TMP_map_bool_To_Region["DiLepton"] = true;
-
-      ZCand_IsTwoLeptonEvent = (*leps[0])+(*leps[1]); // Only works for two lepton case
-      IsOS = (leps[0]->Charge() != leps[1]->Charge()); // Only works for two lepton case
-      if(RunCF){
-        if(!IsOS) continue;
-        IsOS = !IsOS;
+      Particle Jets;
+      bool IsJetFound;
+      if(fatjets.size()>=1){
+        map_bool_To_Region["TwoLepton_FatJet"] = true;
+        WRCand = (*leps[0])+(*leps[1])+fatjets.at(0);
       }
-
-      if(!IsAwayFatJetEvent && (jets.size()>=2)){
-        TMP_map_bool_To_Region["DiLepton_TwoJetNoFatJet"] = true;
+      else if(jets.size()>=2){
+        map_bool_To_Region["TwoLepton_TwoJetNoFatJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
       }
+      else{}
 
-      for(std::map<TString, bool>::iterator it_map = TMP_map_bool_To_Region.begin(); it_map != TMP_map_bool_To_Region.end(); it_map++){
-        TString this_region = it_map->first;
 
-        if(it_map->second){
-          map_bool_To_Region[this_region] = true;
-          if(IsOS) map_bool_To_Region[this_region+"_OS"] = true;
-          else     map_bool_To_Region[this_region+"_SS"] = true;
-        }
-
+      if(jets.size()>=2){
+        map_bool_To_Region["TwoLepton_TwoJet"] = true;
+        WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
       }
 
     }
@@ -433,23 +428,30 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "NEvent_"+this_region, 0., weight, 1, 0., 1.);
         JSFillHist(this_region, "MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
 
+        JSFillHist(this_region, "Lepton_Size_"+this_region, leps.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
-        if(IsAwayFatJetEvent){
-          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(HNJet) ), weight, 40., 0., 4.);
+        if(this_region.Contains("OneLepton_AwayFatJet")){
+          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(HNFatJet) ), weight, 40., 0., 4.);
 
-          JSFillHist(this_region, "HNJet_Pt_"+this_region, HNJet.Pt(), weight, 1000, 0., 1000.);
-          JSFillHist(this_region, "HNJet_Eta_"+this_region, HNJet.Eta(), weight, 60, -3., 3.);
-          JSFillHist(this_region, "HNJet_Mass_"+this_region, HNJet.M(), weight, 3000, 0., 3000.);
-          JSFillHist(this_region, "HNJet_SDMass_"+this_region, HNJet.SDMass(), weight, 3000, 0., 3000.);
-          JSFillHist(this_region, "HNJet_PuppiTau21_"+this_region, HNJet.PuppiTau2()/HNJet.PuppiTau1(), weight, 100, 0., 1.);
-          JSFillHist(this_region, "HNJet_PuppiTau31_"+this_region, HNJet.PuppiTau3()/HNJet.PuppiTau1(), weight, 100, 0., 1.);
-          JSFillHist(this_region, "HNJet_PuppiTau32_"+this_region, HNJet.PuppiTau3()/HNJet.PuppiTau2(), weight, 100, 0., 1.);
+          JSFillHist(this_region, "HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 1000, 0., 1000.);
+          JSFillHist(this_region, "HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
+          JSFillHist(this_region, "HNFatJet_Mass_"+this_region, HNFatJet.M(), weight, 3000, 0., 3000.);
+          JSFillHist(this_region, "HNFatJet_SDMass_"+this_region, HNFatJet.SDMass(), weight, 3000, 0., 3000.);
+          JSFillHist(this_region, "HNFatJet_PuppiTau21_"+this_region, HNFatJet.PuppiTau2()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
+          JSFillHist(this_region, "HNFatJet_PuppiTau31_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
+          JSFillHist(this_region, "HNFatJet_PuppiTau32_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau2(), weight, 100, 0., 1.);
 
         }
-        if(IsTwoLeptonEvent){
-          JSFillHist(this_region, "ZCand_Mass_"+this_region, ZCand_IsTwoLeptonEvent.M(), weight, 2000, 0., 2000.);
+        if(this_region.Contains("OneLepton_AwayDiJet")){
+          JSFillHist(this_region, "HNDiJet_Mass_"+this_region, HNDiJet.M(), weight, 3000, 0., 3000.);
+          JSFillHist(this_region, "dPhi_ljj_"+this_region, fabs( leps[0]->DeltaPhi(HNDiJet) ), weight, 40., 0., 4.);
+        }
+
+
+        if(this_region.Contains("TwoLepton")){
+          JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*leps[0])+(*leps[1])).M(), weight, 2000, 0., 2000.);
         }
 
         JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
