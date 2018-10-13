@@ -11,7 +11,6 @@ mkdir -p $SKFlat_WD/data/$SKFlatV
 export SAMPLE_DATA_DIR=$SKFlat_WD/data/$SKFlatV/Sample/
 export SKFlatSEDir="/xrootd/store/user/$USER/SKFlatOutput/"
 export SKFlatLogEmail='jskim@cern.ch'
-alias skout="cd /data7/Users/jskim/SKFlatOutput/$SKFlatV/"
 
 if [[ $HOSTNAME == *"ui10.sdfarm.kr"* ]]; then
   echo "Working on KISTI"
@@ -55,6 +54,9 @@ elif [[ $HOSTNAME == *"knu"* ]]; then
   source /cvmfs/cms.cern.ch/slc6_amd64_gcc630/cms/cmssw/CMSSW_9_4_9_cand2/external/slc6_amd64_gcc630/bin/thisroot.sh
 
 fi
+
+alias skout="cd $SKFlatOutputDir/$SKFlatV/"
+
 export MYBIN=$SKFlat_WD/bin/
 export PATH=${MYBIN}:${PATH}
 
