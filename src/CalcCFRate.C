@@ -285,9 +285,12 @@ void CalcCFRate::FillCFRatePlots(TString name, Lepton *lep, bool IsCF, double we
 
     //==== Muon-only plots
     Muon *mu = (Muon *)lep;
+
     JSFillHist(name, name+"_"+"Den_"+"Chi2", mu->Chi2(), weight, 500, 0., 50.);
+    JSFillHist(name, name+"_"+"Den_"+"TrkRelIso", mu->TrkIso()/mu->TuneP4().Pt(), weight, 100, 0., 1.0);
     if(IsCF){
       JSFillHist(name, name+"_"+"Num_"+"Chi2", mu->Chi2(), weight, 500, 0., 50.);
+      JSFillHist(name, name+"_"+"Num_"+"TrkRelIso", mu->TrkIso()/mu->TuneP4().Pt(), weight, 100, 0., 1.0);
     }
 
     ThisEta = mu->Eta();

@@ -76,11 +76,11 @@ void HNWRAnalyzer::executeEvent(){
   param.Electron_ID_SF_Key = "Default";
   param.Electron_FR_ID = "HNWR";
   param.Electron_FR_Key = "AwayJetPt40";
-  param.Electron_CF_ID = "HNWR";
+  param.Electron_CF_ID = "HNWRTight";
   param.Electron_CF_Key = "ZToLL";
   param.Electron_UseMini = false;
   param.Electron_UsePtCone = false;
-  param.Electron_MinPt = 10.;
+  param.Electron_MinPt = 35.;
 
   param.Muon_Tight_ID = "HNWRTight";
   param.Muon_Loose_ID = "HNWRLoose";
@@ -91,7 +91,7 @@ void HNWRAnalyzer::executeEvent(){
   param.Muon_FR_ID = "HNWR";
   //param.Muon_FR_ID = "HNWRTrkRelIso0p6";
   param.Muon_FR_Key = "AwayJetPt40";
-  param.Muon_CF_ID = "HNWR";
+  param.Muon_CF_ID = "HNWRTight";
   param.Muon_CF_Key = "ZToLL";
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
@@ -426,6 +426,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 			TString this_region = it_map->first;
 
       bool IsOS = (leps[0]->Charge() != leps[1]->Charge());
+      if(RunCF) IsOS = !IsOS;
 
 			if(it_map->second){
 				map_bool_To_Region[this_region] = true;
@@ -440,6 +441,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       TString this_region = it_map->first;
       this_region = (param.Name)+"_"+Suffix+"_"+this_region;
 
+      if(RunCF){
+        if(!(this_region.Contains("_SS"))) continue;
+      }
+
       if(it_map->second){
 
         JSFillHist(this_region, "NEvent_"+this_region, 0., weight, 1, 0., 1.);
@@ -450,7 +455,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
         if(this_region.Contains("OneLepton_AwayFatJet")){
-          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(HNFatJet) ), weight, 40., 0., 4.);
+          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
 
           JSFillHist(this_region, "HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 1000, 0., 1000.);
           JSFillHist(this_region, "HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
