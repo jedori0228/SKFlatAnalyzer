@@ -22,7 +22,7 @@ void CalcFakeRate::executeEvent(){
   Muon_TrigWithPtRange.Validate();
 
   //==== 2D Plot Pt Binnings
-  Electron_FakeRatePtBinnings = {10,15,20,25,30,40,50,60,100,200,500,1000};
+  Electron_FakeRatePtBinnings = {10,15,20,25,30,40,50,60,100,200,500,1000}; //FIXME HEEP ID is availablve for eT>35 GeV. maybe change 30 to 35?
   Muon_FakeRatePtBinnings     = {10,15,20,25,30,40,55,60,100,200,500,1000};
 
   //======================

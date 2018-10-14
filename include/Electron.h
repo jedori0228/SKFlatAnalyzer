@@ -358,7 +358,7 @@ bool Electron::Pass_HNWRTight(){
 
 bool Electron::Pass_HNWRLoose(){
 
-  if(! (passHEEPID()||Pass_CutBasedLooseNoIso()) ) return false;
+  if(! (passHEEPID()||passVetoID()) ) return false;
 
   return true;
 
@@ -366,7 +366,7 @@ bool Electron::Pass_HNWRLoose(){
 
 bool Electron::Pass_HNWRVeto(){
 
-  if(! (passHEEPID()||Pass_CutBasedVetoNoIso()) ) return false;
+  if(! (passHEEPID()||passVetoID()) ) return false;
 
   return true;
 }
