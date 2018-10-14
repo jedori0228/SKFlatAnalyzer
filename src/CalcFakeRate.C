@@ -524,8 +524,10 @@ void CalcFakeRate::FillFakeRatePlots(TString name, TString frtype, Lepton *lep, 
     //==== Muon-only plots
     Muon *mu = (Muon *)lep;
     JSFillHist(name, name+"_"+frtype+"_"+"Den_"+"Chi2", mu->Chi2(), weight, 500, 0., 50.);
+    JSFillHist(name, name+"_"+frtype+"_"+"Den_"+"TrkRelIso", mu->TrkIso()/mu->TuneP4().Pt(), weight, 100, 0., 1.0);
     if(IsTight){
       JSFillHist(name, name+"_"+frtype+"_"+"Num_"+"Chi2", mu->Chi2(), weight, 500, 0., 50.);
+      JSFillHist(name, name+"_"+frtype+"_"+"Num_"+"TrkRelIso", mu->TrkIso()/mu->TuneP4().Pt(), weight, 100, 0., 1.0);
     }
 
     ThisEta = mu->Eta();
@@ -553,6 +555,7 @@ void CalcFakeRate::FillFakeRatePlots(TString name, TString frtype, Lepton *lep, 
   JSFillHist(name, name+"_"+frtype+"_"+"Den_"+"IP3D", fabs(lep->IP3D()), weight, 500, 0., 0.5);
   JSFillHist(name, name+"_"+frtype+"_"+"Den_"+"IP3DSig", fabs(lep->IP3D()/lep->IP3Derr()), weight, 100, 0., 10);
   JSFillHist(name, name+"_"+frtype+"_"+"Den_"+"NEvent", 0., weight, 1, 0., 1.);
+  JSFillHist(name, name+"_"+frtype+"_"+"Den_"+"Pt_vs_Eta", lep->Pt(), fabs(ThisEta), weight, n_ptbins, ptbins, n_etabins, etabins);
   JSFillHist(name, name+"_"+frtype+"_"+"Den_"+"PtCone_vs_Eta", lep->PtCone(), fabs(ThisEta), weight, n_ptbins, ptbins, n_etabins, etabins);
 
   if(IsTight){
@@ -569,6 +572,7 @@ void CalcFakeRate::FillFakeRatePlots(TString name, TString frtype, Lepton *lep, 
     JSFillHist(name, name+"_"+frtype+"_"+"Num_"+"IP3D", fabs(lep->IP3D()), weight, 500, 0., 0.5);
     JSFillHist(name, name+"_"+frtype+"_"+"Num_"+"IP3DSig", fabs(lep->IP3D()/lep->IP3Derr()), weight, 100, 0., 10);
     JSFillHist(name, name+"_"+frtype+"_"+"Num_"+"NEvent", 0., weight, 1, 0., 1.);
+    JSFillHist(name, name+"_"+frtype+"_"+"Num_"+"Pt_vs_Eta", lep->Pt(), fabs(ThisEta), weight, n_ptbins, ptbins, n_etabins, etabins);
     JSFillHist(name, name+"_"+frtype+"_"+"Num_"+"PtCone_vs_Eta", lep->PtCone(), fabs(ThisEta), weight, n_ptbins, ptbins, n_etabins, etabins);
 
   }

@@ -195,7 +195,7 @@ bool Muon::Pass_HNWRTight(){
 bool Muon::Pass_HNWRLoose(){
 
   if(! isPOGHighPt() ) return false;
-  if(! ( (TrkIso()/TuneP4().Pt())<0.4 ) ) return false;
+  if(! ( (TrkIso()/TuneP4().Pt())<0.6 ) ) return false;
 
   return true;
 }
