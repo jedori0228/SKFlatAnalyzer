@@ -474,7 +474,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         }
         if(this_region.Contains("OneLepton_AwayDiJet")){
           JSFillHist(this_region, "HNDiJet_Mass_"+this_region, HNDiJet.M(), weight, 3000, 0., 3000.);
-          JSFillHist(this_region, "dPhi_ljj_"+this_region, fabs( leps[0]->DeltaPhi(HNDiJet) ), weight, 40., 0., 4.);
+          JSFillHist(this_region, "dPhi_ljj_"+this_region, fabs( leps[0]->DeltaPhi(HNDiJet) ), weight, 40, 0., 4.);
         }
 
 
