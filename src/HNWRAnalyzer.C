@@ -352,6 +352,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     Particle HNDiJet;
 
     Particle WRCand;
+    Particle NCand;
 
     FillHist(Suffix+"_NLepton_"+param.Name, leps.size(), 1., 5, 0., 5.);
 
@@ -392,10 +393,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(FoundAwayFatJet){
         map_bool_To_Region["OneLepton_AwayFatJet"] = true;
         WRCand = (*leps[0])+HNFatJet;
+        NCand = HNFatJet;
       }
       else if(FoundAwayDiJet){
         map_bool_To_Region["OneLepton_AwayDiJet"] = true;
         WRCand = (*leps[0])+HNDiJet;
+        NCand = HNDiJet;
       }
 
     }
@@ -406,10 +409,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(fatjets.size()>=1){
         TMP_map_bool_To_Region["TwoLepton_FatJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+fatjets.at(0);
+        NCand = (*leps[1])+fatjets.at(0);
       }
       else if(jets.size()>=2){
         TMP_map_bool_To_Region["TwoLepton_TwoJetNoFatJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
+        NCand = (*leps[1])+jets.at(0)+jets.at(1);
       }
       else{}
 
@@ -417,6 +422,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(jets.size()>=2){
         TMP_map_bool_To_Region["TwoLepton_TwoJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
+        NCand = (*leps[1])+jets.at(0)+jets.at(1);
       }
 
     }
@@ -479,6 +485,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
         JSFillHist(this_region, "WRCand_Pt_"+this_region, WRCand.Pt(), weight, 1000, 0., 1000.);
+
+        JSFillHist(this_region, "NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
+        JSFillHist(this_region, "NCand_Pt_"+this_region, NCand.Pt(), weight, 300, 0., 3000.);
+
 
         FillLeptonPlots(leps, this_region, weight);
         FillJetPlots(jets, fatjets, this_region, weight);
