@@ -360,6 +360,15 @@ bool Electron::Pass_HNWRLoose(){
 
   if(! (passHEEPID()||passVetoID()) ) return false;
 
+  //==== Apply HEEP dXY cut
+
+  if( fabs(scEta()) <= 1.479 ){
+    if(!( fabs(dXY())<0.02 )) return false;
+  }
+  else{
+    if(!( fabs(dXY())<0.05 )) return false;
+  }
+
   return true;
 
 }
