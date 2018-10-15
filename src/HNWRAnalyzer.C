@@ -89,7 +89,6 @@ void HNWRAnalyzer::executeEvent(){
   param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
   param.Muon_Trigger_SF_Key = "Default";
   param.Muon_FR_ID = "HNWR";
-  //param.Muon_FR_ID = "HNWRTrkRelIso0p6";
   param.Muon_FR_Key = "AwayJetPt40";
   param.Muon_CF_ID = "HNWRTight";
   param.Muon_CF_Key = "ZToLL";
@@ -102,34 +101,6 @@ void HNWRAnalyzer::executeEvent(){
   param.FatJet_ID = "HN";
 
   executeEventFromParameter(param);
-/*
-  //==== Following EXO-17-011
-
-  param.Clear();
-
-  param.Name = "EXO17011";
-
-  param.Electron_Tight_ID = "passHEEPID";
-  param.Electron_Loose_ID = "passHEEPID";
-  param.Electron_Veto_ID = "passHEEPID";
-  param.Electron_ID_SF_Key = "Default";
-  param.Electron_UseMini = false;
-  param.Electron_UsePtCone = false;
-  param.Electron_MinPt = 50.;
-
-  param.Muon_Tight_ID = "POGHighPtWithLooseTrkIso";
-  param.Muon_Loose_ID = "POGHighPtWithLooseTrkIso";
-  param.Muon_Veto_ID = "POGHighPtWithLooseTrkIso";
-  param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
-  param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
-  param.Muon_Trigger_SF_Key = "Default";
-  param.Muon_UseTuneP = true;
-
-  param.Jet_ID = "HN";
-  param.FatJet_ID = "HN";
-
-  executeEventFromParameter(param);
-*/
 
 }
 
