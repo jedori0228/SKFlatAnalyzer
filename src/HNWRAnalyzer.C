@@ -154,8 +154,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool PassIsoMu27 = ev.PassTrigger("HLT_IsoMu27_v");
   bool PassSingleElectron = ev.PassTrigger("HLT_Ele35_WPTight_Gsf_v");
 
-  std::vector<Electron> Veto_electrons  = GetElectrons(param.Electron_Veto_ID, param.Electron_MinPt, 2.5);
-  std::vector<Muon>     Veto_muons      = GetMuons(param.Muon_Veto_ID, param.Muon_MinPt, 2.4, param.Muon_UseTuneP);
+  //==== For Veto leptons, use pT>10 GeV
+  std::vector<Electron> Veto_electrons  = GetElectrons(param.Electron_Veto_ID, 10., 2.5);
+  std::vector<Muon>     Veto_muons      = GetMuons(param.Muon_Veto_ID, 10., 2.4, param.Muon_UseTuneP);
 
   std::vector<Electron> Loose_electrons = GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
   std::vector<Muon>     Loose_muons     = GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4, param.Muon_UseTuneP);
@@ -474,7 +475,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         }
         if(this_region.Contains("OneLepton_AwayDiJet")){
           JSFillHist(this_region, "HNDiJet_Mass_"+this_region, HNDiJet.M(), weight, 3000, 0., 3000.);
-          JSFillHist(this_region, "dPhi_ljj_"+this_region, fabs( leps[0]->DeltaPhi(HNDiJet) ), weight, 40., 0., 4.);
+          JSFillHist(this_region, "dPhi_ljj_"+this_region, fabs( leps[0]->DeltaPhi(HNDiJet) ), weight, 40, 0., 4.);
         }
 
 
