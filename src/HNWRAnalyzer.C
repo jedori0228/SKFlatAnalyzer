@@ -474,9 +474,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         if(this_region.Contains("TwoLepton")){
           JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*leps[0])+(*leps[1])).M(), weight, 2000, 0., 2000.);
+          JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*leps[0])+(*leps[1])).Pt(), weight, 2000, 0., 2000.);
         }
 
         JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+        JSFillHist(this_region, "WRCand_Pt_"+this_region, WRCand.Pt(), weight, 1000, 0., 1000.);
 
         FillLeptonPlots(leps, this_region, weight);
         FillJetPlots(jets, fatjets, this_region, weight);
