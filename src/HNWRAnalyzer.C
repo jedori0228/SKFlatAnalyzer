@@ -386,39 +386,43 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
     else if(leps.size()==2){
 
-      Particle Jets;
-      bool IsJetFound;
-      if(fatjets.size()>=1){
-        TMP_map_bool_To_Region["TwoLepton_FatJet"] = true;
-        WRCand = (*leps[0])+(*leps[1])+fatjets.at(0);
-        NCand = (*leps[1])+fatjets.at(0);
-        NCand_1 = (*leps[0])+fatjets.at(0);
-        NCand_2 = (*leps[1])+fatjets.at(0);
-      }
-      else if(jets.size()>=2){
-        TMP_map_bool_To_Region["TwoLepton_TwoJetNoFatJet"] = true;
-        WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
-        NCand = (*leps[1])+jets.at(0)+jets.at(1);
-        NCand_1 = (*leps[0])+jets.at(0)+jets.at(1);
-        NCand_2 = (*leps[1])+jets.at(0)+jets.at(1);
-      }
-      else{}
+      double m_ll = ( (*leps[0])+(*leps[1]) ).M();
 
+      if(m_ll>15.){
 
-      if(jets.size()>=2){
-        TMP_map_bool_To_Region["TwoLepton_TwoJet"] = true;
-        WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
-        NCand = (*leps[1])+jets.at(0)+jets.at(1);
-        NCand_1 = (*leps[0])+jets.at(0)+jets.at(1);
-        NCand_2 = (*leps[1])+jets.at(0)+jets.at(1);
-
-        double m_ll = ( (*leps[0])+(*leps[1]) ).M();
-
-        if(m_ll>150.){
-          TMP_map_bool_To_Region["TwoLepton_TwoJet_mllgt150"] = true;
+        Particle Jets;
+        bool IsJetFound;
+        if(fatjets.size()>=1){
+          TMP_map_bool_To_Region["TwoLepton_FatJet"] = true;
+          WRCand = (*leps[0])+(*leps[1])+fatjets.at(0);
+          NCand = (*leps[1])+fatjets.at(0);
+          NCand_1 = (*leps[0])+fatjets.at(0);
+          NCand_2 = (*leps[1])+fatjets.at(0);
         }
-        else{
-          TMP_map_bool_To_Region["TwoLepton_TwoJet_mlllt150"] = true;
+        else if(jets.size()>=2){
+          TMP_map_bool_To_Region["TwoLepton_TwoJetNoFatJet"] = true;
+          WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
+          NCand = (*leps[1])+jets.at(0)+jets.at(1);
+          NCand_1 = (*leps[0])+jets.at(0)+jets.at(1);
+          NCand_2 = (*leps[1])+jets.at(0)+jets.at(1);
+        }
+        else{}
+
+
+        if(jets.size()>=2){
+          TMP_map_bool_To_Region["TwoLepton_TwoJet"] = true;
+          WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
+          NCand = (*leps[1])+jets.at(0)+jets.at(1);
+          NCand_1 = (*leps[0])+jets.at(0)+jets.at(1);
+          NCand_2 = (*leps[1])+jets.at(0)+jets.at(1);
+
+          if(m_ll>150.){
+            TMP_map_bool_To_Region["TwoLepton_TwoJet_mllgt150"] = true;
+          }
+          else{
+            TMP_map_bool_To_Region["TwoLepton_TwoJet_mlllt150"] = true;
+          }
+
         }
 
       }
@@ -426,19 +430,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
 
     //==== For TwoLeptons
-		for(std::map<TString, bool>::iterator it_map = TMP_map_bool_To_Region.begin(); it_map != TMP_map_bool_To_Region.end(); it_map++){
-			TString this_region = it_map->first;
+    for(std::map<TString, bool>::iterator it_map = TMP_map_bool_To_Region.begin(); it_map != TMP_map_bool_To_Region.end(); it_map++){
+      TString this_region = it_map->first;
 
       bool IsOS = (leps[0]->Charge() != leps[1]->Charge());
       if(RunCF) IsOS = !IsOS;
 
-			if(it_map->second){
-				map_bool_To_Region[this_region] = true;
-				if(IsOS) map_bool_To_Region[this_region+"_OS"] = true;
-				else     map_bool_To_Region[this_region+"_SS"] = true;
-			}
+      if(it_map->second){
+        map_bool_To_Region[this_region] = true;
+        if(IsOS) map_bool_To_Region[this_region+"_OS"] = true;
+        else     map_bool_To_Region[this_region+"_SS"] = true;
+      }
 
-		}
+    }
 
     for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
