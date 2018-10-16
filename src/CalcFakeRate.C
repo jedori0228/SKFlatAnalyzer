@@ -144,12 +144,19 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
   Event ev = GetEvent();
   Particle METv = ev.GetMETVector();
 
-  std::vector<Electron> Veto_electrons = GetElectrons(param.Electron_Veto_ID, 10., 2.5);
-  std::vector<Muon> Veto_muons = GetMuons(param.Muon_Veto_ID, 10., 2.4, param.Muon_UseTuneP);
+  std::vector<Electron> AllElectrons= GetAllElectrons();
+  std::vector<Muon> AllMuons = GetAllMuons();
+
+  if(param.Muon_UseTuneP){
+    AllMuons = UseTunePMuon(AllMuons);
+  };
+
+  std::vector<Electron> Veto_electrons = SelectElectrons(AllElectrons, param.Electron_Veto_ID, 10., 2.5);
+  std::vector<Muon> Veto_muons = SelectMuons(AllMuons, param.Muon_Veto_ID, 10., 2.4);
   int n_Veto_Leptons = Veto_electrons.size()+Veto_muons.size();
 
-  std::vector<Electron> Loose_electrons = GetElectrons(param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
-  std::vector<Muon> Loose_muons = GetMuons(param.Muon_Loose_ID, param.Muon_MinPt, 2.4, param.Muon_UseTuneP);
+  std::vector<Electron> Loose_electrons = SelectElectrons(AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
+  std::vector<Muon> Loose_muons = SelectMuons(AllMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
 
   vector<Gen> gens = GetGens();
 
