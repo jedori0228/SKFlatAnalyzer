@@ -13,43 +13,6 @@ void HNWRAnalyzer::initializeAnalyzer(){
 }
 
 void HNWRAnalyzer::executeEvent(){
-/*
-  //==== [TEST]
-  //==== Test Which Loose/Veto electron to use..
-
-  vector<Electron> T_els = GetElectrons("HNWRTight", 10., 2.5);
-  vector<Electron> L_els = GetElectrons("passLooseID", 10., 2.5);
-  vector<Electron> V_els = GetElectrons("passVetoID", 10., 2.5);
-  vector<Electron> LNoIso_els = GetElectrons("HNWRLoose", 10., 2.5);
-  vector<Electron> VNoIso_els = GetElectrons("HNWRVeto", 10., 2.5);
-
-  for(unsigned int i=0;i<L_els.size(); i++){
-    FillHist("Loose_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( L_els.at(i).passHEEPID() ){
-      FillHist("Loose_Pass_Tight_Electron_Pt", L_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-  for(unsigned int i=0;i<LNoIso_els.size(); i++){
-    FillHist("LooseNoIso_Electron_Pt", LNoIso_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( LNoIso_els.at(i).passHEEPID() ){
-      FillHist("LooseNoIso_Pass_Tight_Electron_Pt", LNoIso_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-
-  for(unsigned int i=0;i<V_els.size(); i++){
-    FillHist("Veto_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( V_els.at(i).passHEEPID() ){
-      FillHist("Veto_Pass_Tight_Electron_Pt", V_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-  for(unsigned int i=0;i<VNoIso_els.size(); i++){
-    FillHist("VetoNoIso_Electron_Pt", VNoIso_els.at(i).Pt(), 1., 50, 0., 500.);
-    if( VNoIso_els.at(i).passHEEPID() ){
-      FillHist("VetoNoIso_Pass_Tight_Electron_Pt", VNoIso_els.at(i).Pt(), 1., 50, 0., 500.);
-    }
-  }
-  return;
-*/
 
   //==========================
   //==== Gen for genmatching
@@ -63,7 +26,6 @@ void HNWRAnalyzer::executeEvent(){
   //========================
 
   AnalyzerParameter param;
-
   param.Clear();
 
   param.Name = "HNWR";
@@ -100,6 +62,9 @@ void HNWRAnalyzer::executeEvent(){
   param.Jet_ID = "HN";
   param.FatJet_ID = "HN";
 
+  AllElectrons = GetAllElectrons();
+  AllMuons = UseTunePMuon( GetAllMuons() );
+
   executeEventFromParameter(param);
 
 }
@@ -125,12 +90,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool PassIsoMu27 = ev.PassTrigger("HLT_IsoMu27_v");
   bool PassSingleElectron = ev.PassTrigger("HLT_Ele35_WPTight_Gsf_v");
 
-  std::vector<Electron> AllElectrons= GetAllElectrons();
-  std::vector<Muon> AllMuons = GetAllMuons();
-
-  if(param.Muon_UseTuneP){
-    AllMuons = UseTunePMuon(AllMuons);
-  };
+  //==== Objects
 
   std::vector<Electron> Veto_electrons = SelectElectrons(AllElectrons, param.Electron_Veto_ID, 10., 2.5);
   std::vector<Muon> Veto_muons = SelectMuons(AllMuons, param.Muon_Veto_ID, 10., 2.4);

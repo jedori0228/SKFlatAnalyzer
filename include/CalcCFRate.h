@@ -14,6 +14,9 @@ public:
 
   vector<double> Electron_FakeRatePtBinnings, Muon_FakeRatePtBinnings;
 
+  vector<Electron> AllElectrons;
+  vector<Muon>  AllMuons;
+
 };
 
 

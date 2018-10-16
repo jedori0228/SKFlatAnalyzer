@@ -19,6 +19,9 @@ public:
 
   vector<Gen> gens;
 
+  vector<Electron> AllElectrons;
+  vector<Muon>  AllMuons;
+
 };
 
 

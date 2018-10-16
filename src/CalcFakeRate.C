@@ -61,6 +61,9 @@ void CalcFakeRate::executeEvent(){
 
   param.Jet_ID = "HN";
 
+  AllElectrons = GetAllElectrons();
+  AllMuons = UseTunePMuon( GetAllMuons() );
+
   executeEventFromParameter(param);
 
 
@@ -143,13 +146,6 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
   Event ev = GetEvent();
   Particle METv = ev.GetMETVector();
-
-  std::vector<Electron> AllElectrons= GetAllElectrons();
-  std::vector<Muon> AllMuons = GetAllMuons();
-
-  if(param.Muon_UseTuneP){
-    AllMuons = UseTunePMuon(AllMuons);
-  };
 
   std::vector<Electron> Veto_electrons = SelectElectrons(AllElectrons, param.Electron_Veto_ID, 10., 2.5);
   std::vector<Muon> Veto_muons = SelectMuons(AllMuons, param.Muon_Veto_ID, 10., 2.4);

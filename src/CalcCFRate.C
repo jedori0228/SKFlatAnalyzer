@@ -31,7 +31,12 @@ void CalcCFRate::executeEvent(){
 
   param.Jet_ID = "HN";
 
+  AllElectrons = GetAllElectrons();
+  AllMuons = UseTunePMuon( GetAllMuons() );
+
   executeEventFromParameter(param);
+
+
 
   param.Name = "HNWRLoose";
 
