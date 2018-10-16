@@ -325,6 +325,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     Particle WRCand;
     Particle NCand;
+    Particle NCand_1, NCand_2;
 
     FillHist(Suffix+"_NLepton_"+param.Name, leps.size(), 1., 5, 0., 5.);
 
@@ -366,11 +367,20 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         map_bool_To_Region["OneLepton_AwayFatJet"] = true;
         WRCand = (*leps[0])+HNFatJet;
         NCand = HNFatJet;
+        NCand_1 = HNFatJet;
+        NCand_2 = HNFatJet;
+
+        if(WRCand.Pt()>200.){
+          map_bool_To_Region["OneLepton_AwayFatJet_WRCandPtgt200"] = true;
+        }
+
       }
       else if(FoundAwayDiJet){
         map_bool_To_Region["OneLepton_AwayDiJet"] = true;
         WRCand = (*leps[0])+HNDiJet;
         NCand = HNDiJet;
+        NCand_1 = HNDiJet;
+        NCand_2 = HNDiJet;
       }
 
     }
@@ -382,11 +392,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         TMP_map_bool_To_Region["TwoLepton_FatJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+fatjets.at(0);
         NCand = (*leps[1])+fatjets.at(0);
+        NCand_1 = (*leps[0])+fatjets.at(0);
+        NCand_2 = (*leps[1])+fatjets.at(0);
       }
       else if(jets.size()>=2){
         TMP_map_bool_To_Region["TwoLepton_TwoJetNoFatJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
         NCand = (*leps[1])+jets.at(0)+jets.at(1);
+        NCand_1 = (*leps[0])+jets.at(0)+jets.at(1);
+        NCand_2 = (*leps[1])+jets.at(0)+jets.at(1);
       }
       else{}
 
@@ -395,6 +409,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         TMP_map_bool_To_Region["TwoLepton_TwoJet"] = true;
         WRCand = (*leps[0])+(*leps[1])+jets.at(0)+jets.at(1);
         NCand = (*leps[1])+jets.at(0)+jets.at(1);
+        NCand_1 = (*leps[0])+jets.at(0)+jets.at(1);
+        NCand_2 = (*leps[1])+jets.at(0)+jets.at(1);
+
+        double m_ll = ( (*leps[0])+(*leps[1]) ).M();
+
+        if(m_ll>150.){
+          TMP_map_bool_To_Region["TwoLepton_TwoJet_mllgt150"] = true;
+        }
+        else{
+          TMP_map_bool_To_Region["TwoLepton_TwoJet_mlllt150"] = true;
+        }
+
       }
 
     }
@@ -453,13 +479,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         if(this_region.Contains("TwoLepton")){
           JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*leps[0])+(*leps[1])).M(), weight, 2000, 0., 2000.);
           JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*leps[0])+(*leps[1])).Pt(), weight, 2000, 0., 2000.);
+          JSFillHist(this_region, "dPhi_ll_"+this_region, fabs((*leps[0]).DeltaPhi(*leps[1])), weight, 40, 0., 4.);
         }
 
         JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
-        JSFillHist(this_region, "WRCand_Pt_"+this_region, WRCand.Pt(), weight, 3000, 0., 3000.);
+        JSFillHist(this_region, "WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
 
         JSFillHist(this_region, "NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
         JSFillHist(this_region, "NCand_Pt_"+this_region, NCand.Pt(), weight, 300, 0., 3000.);
+        JSFillHist(this_region, "NCand_1_Mass_"+this_region, NCand_1.M(), weight, 800, 0., 8000.);
+        JSFillHist(this_region, "NCand_1_Pt_"+this_region, NCand_1.Pt(), weight, 300, 0., 3000.);
+        JSFillHist(this_region, "NCand_2_Mass_"+this_region, NCand_2.M(), weight, 800, 0., 8000.);
+        JSFillHist(this_region, "NCand_2_Pt_"+this_region, NCand_2.Pt(), weight, 300, 0., 3000.);
 
 
         FillLeptonPlots(leps, this_region, weight);
