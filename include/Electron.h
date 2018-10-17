@@ -38,21 +38,21 @@ public:
     else if( sceta < 1.566 ) return GAP;
     else return EC;
   }
-
+  
   void SetCutBasedIDVariables(
-    double full5x5_sigmaIetaIeta,
+    double Full5x5_sigmaIetaIeta,
     double dEtaSeed,
     double dPhiIn,
     double HoverE,
     double InvEminusInvP
   ){
-    j_full5x5_sigmaIetaIeta = full5x5_sigmaIetaIeta;
+    j_Full5x5_sigmaIetaIeta = Full5x5_sigmaIetaIeta;
     j_dEtaSeed = dEtaSeed;
     j_dPhiIn = dPhiIn;
     j_HoverE = HoverE;
     j_InvEminusInvP = InvEminusInvP;
   }
-  double full5x5_sigmaIetaIeta() const { return j_full5x5_sigmaIetaIeta; }
+  double Full5x5_sigmaIetaIeta() const { return j_Full5x5_sigmaIetaIeta; }
   double dEtaSeed() const { return j_dEtaSeed; }
   double dPhiIn() const { return j_dPhiIn; }
   double HoverE() const { return j_HoverE; }
@@ -100,7 +100,7 @@ private:
   double j_EnergyUnCorr;
   bool j_passConversionVeto;
   int j_NMissingHits;
-  double j_full5x5_sigmaIetaIeta, j_dEtaSeed, j_dPhiIn, j_HoverE, j_InvEminusInvP;
+  double j_Full5x5_sigmaIetaIeta, j_dEtaSeed, j_dPhiIn, j_HoverE, j_InvEminusInvP;
   bool j_passVetoID;
   bool j_passLooseID;
   bool j_passMediumID;
@@ -172,7 +172,7 @@ void Electron::SetRelPFIso_Rho(double r){
 double Electron::EA(){
 
   //==== RecoEgamma/ElectronIdentification/data/Fall17/effAreaElectrons_cone03_pfNeuHadronsAndPhotons_94X.txt
-
+  
   double eta = fabs(this->scEta());
 
   if     (eta<1.000) return 0.1440;
@@ -395,7 +395,7 @@ bool Electron::Pass_CutBasedLooseNoIso(){
 
   if( fabs(scEta()) <= 1.479 ){
 
-    if(! (full5x5_sigmaIetaIeta() < 0.0112) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0112) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00377) ) return false;
     if(! (fabs(dPhiIn()) < 0.0884) ) return false;
     if(! (HoverE() < 0.05 + 1.16/scE() + 0.0324*Rho()/scE()) ) return false;
@@ -408,7 +408,7 @@ bool Electron::Pass_CutBasedLooseNoIso(){
   }
   else{
 
-    if(! (full5x5_sigmaIetaIeta() < 0.0425) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0425) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00674) ) return false;
     if(! (fabs(dPhiIn()) <  0.169 ) ) return false;
     if(! (HoverE() < 0.0441 + 2.54/scE() + 0.183*Rho()/scE()) ) return false;
@@ -426,7 +426,7 @@ bool Electron::Pass_CutBasedVetoNoIso(){
   
   if( fabs(scEta()) <= 1.479 ){
     
-    if(! (full5x5_sigmaIetaIeta() < 0.0126 ) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0126 ) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00463 ) ) return false;
     if(! (fabs(dPhiIn()) < 0.148) ) return false;
     if(! (HoverE() < 0.05 + 1.16/scE() + 0.0324*Rho()/scE()) ) return false;
@@ -439,7 +439,7 @@ bool Electron::Pass_CutBasedVetoNoIso(){
   }
   else{
     
-    if(! (full5x5_sigmaIetaIeta() < 0.0457) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0457) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00814) ) return false;
     if(! (fabs(dPhiIn()) < 0.19) ) return false;
     if(! (HoverE() < 0.05 + 2.54/scE() + 0.183*Rho()/scE()) ) return false;
@@ -457,7 +457,7 @@ bool Electron::Pass_CutBasedLoose(){
 
   if( fabs(scEta()) <= 1.479 ){
 
-    if(! (full5x5_sigmaIetaIeta() < 0.0112) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0112) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00377) ) return false;
     if(! (fabs(dPhiIn()) < 0.0884) ) return false;
     if(! (HoverE() < 0.05 + 1.16/scE() + 0.0324*Rho()/scE()) ) return false;
@@ -471,7 +471,7 @@ bool Electron::Pass_CutBasedLoose(){
   }
   else{
 
-    if(! (full5x5_sigmaIetaIeta() < 0.0425) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0425) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00674) ) return false;
     if(! (fabs(dPhiIn()) <  0.169 ) ) return false;
     if(! (HoverE() < 0.0441 + 2.54/scE() + 0.183*Rho()/scE()) ) return false;
@@ -490,7 +490,7 @@ bool Electron::Pass_CutBasedVeto(){
 
   if( fabs(scEta()) <= 1.479 ){
 
-    if(! (full5x5_sigmaIetaIeta() < 0.0126 ) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0126 ) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00463 ) ) return false;
     if(! (fabs(dPhiIn()) < 0.148) ) return false;
     if(! (HoverE() < 0.05 + 1.16/scE() + 0.0324*Rho()/scE()) ) return false;
@@ -504,7 +504,7 @@ bool Electron::Pass_CutBasedVeto(){
   }
   else{
 
-    if(! (full5x5_sigmaIetaIeta() < 0.0457) ) return false;
+    if(! (Full5x5_sigmaIetaIeta() < 0.0457) ) return false;
     if(! (fabs(dEtaSeed()) < 0.00814) ) return false;
     if(! (fabs(dPhiIn()) < 0.19) ) return false;
     if(! (HoverE() < 0.05 + 2.54/scE() + 0.183*Rho()/scE()) ) return false;
