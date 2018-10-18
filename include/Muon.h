@@ -50,6 +50,7 @@ public:
   bool Pass_HNWRTight();
   bool Pass_HNWRLoose();
   bool Pass_HNWRVeto();
+  bool Pass_HNWRNoIso();
   bool Pass_TESTID();
 
 private:
@@ -131,6 +132,12 @@ void Muon::SetTuneP4(double pt, double pt_err, double eta, double phi){
 }
 
 bool Muon::PassID(TString ID){
+
+  if(ID=="HNWRTight") return Pass_HNWRTight();
+  if(ID=="HNWRLoose") return Pass_HNWRLoose();
+  if(ID=="HNWRVeto") return Pass_HNWRVeto();
+  if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
+
   //==== POG
   if(ID=="POGTight") return isPOGTight();
   if(ID=="POGHighPt") return isPOGHighPt();
@@ -142,9 +149,6 @@ bool Muon::PassID(TString ID){
   if(ID=="HNPairTight") return Pass_HNPairTight();
   if(ID=="HNPairLoose") return Pass_HNPairLoose();
   if(ID=="HNPairVeto") return Pass_HNPairVeto();
-  if(ID=="HNWRTight") return Pass_HNWRTight();
-  if(ID=="HNWRLoose") return Pass_HNWRLoose();
-  if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="TEST") return Pass_TESTID();
 
   cout << "[Electron::PassID] No id : " << ID << endl;
@@ -205,6 +209,14 @@ bool Muon::Pass_HNWRVeto(){
   if(! ( (TrkIso()/TuneP4().Pt())<0.6 ) ) return false;
 
   return true;
+}
+
+bool Muon::Pass_HNWRNoIso(){
+
+  if(! isPOGLoose() ) return false;
+
+  return true;
+
 }
 
 //==== TEST ID

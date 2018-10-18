@@ -63,7 +63,8 @@ void HNWRAnalyzer::executeEvent(){
   param.FatJet_ID = "HN";
 
   AllElectrons = GetAllElectrons();
-  AllMuons = UseTunePMuon( GetAllMuons() );
+  AllMuons = GetAllMuons();
+  AllTunePMuons = UseTunePMuon( AllMuons );
 
   executeEventFromParameter(param);
 
@@ -93,15 +94,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Objects
 
   std::vector<Electron> Veto_electrons = SelectElectrons(AllElectrons, param.Electron_Veto_ID, 10., 2.5);
-  std::vector<Muon> Veto_muons = SelectMuons(AllMuons, param.Muon_Veto_ID, 10., 2.4);
+  std::vector<Muon> Veto_muons = SelectMuons(AllTunePMuons, param.Muon_Veto_ID, 10., 2.4);
 
   std::vector<Electron> Loose_electrons = SelectElectrons(AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
-  std::vector<Muon> Loose_muons = SelectMuons(AllMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
+  std::vector<Muon> Loose_muons = SelectMuons(AllTunePMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
 
   if(PromptLeptonOnly){
     Loose_electrons = ElectronPromptOnly(Loose_electrons, gens);
     Loose_muons = MuonPromptOnly(Loose_muons, gens);
   }
+
+  std::vector<Electron> NoIso_electrons = SelectElectrons(AllElectrons, "HNWRNoIso", 50., 2.5);
+  std::vector<Muon> NoIso_muons = SelectMuons(AllMuons, "HNWRNoIso", 50., 2.4);
 
   std::vector<Electron> Tight_electrons;
   std::vector<Muon>     Tight_muons;
@@ -156,7 +160,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Jets
   //===========
 
-  std::vector<FatJet>   fatjets         = FatJetsVetoLeptonInside( GetFatJets(param.FatJet_ID, 200, 2.7), Tight_electrons, Tight_muons);
+  std::vector<FatJet>   fatjets         = GetFatJets(param.FatJet_ID, 200, 2.7);
 
   std::vector<Jet>      alljets         = GetJets(param.Jet_ID, 20., 2.7);
   std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Veto_electrons, Veto_muons);
@@ -247,6 +251,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     for(unsigned int i=0; i<leps_el.size(); i++) leps.push_back( leps_el.at(i) );
     for(unsigned int i=0; i<leps_mu.size(); i++) leps.push_back( leps_mu.at(i) );
 
+    std::vector<Lepton *> leps_NoIso_el, leps_NoIso_mu;
+    std::vector<Lepton *> leps_NoIso;
+    leps_NoIso_el = MakeLeptonPointerVector(NoIso_electrons);
+    leps_NoIso_mu = MakeLeptonPointerVector(NoIso_muons);
+    for(unsigned int i=0; i<leps_NoIso_el.size(); i++) leps_NoIso.push_back( leps_NoIso_el.at(i) );
+    for(unsigned int i=0; i<leps_NoIso_mu.size(); i++) leps_NoIso.push_back( leps_NoIso_mu.at(i) );
+
     double weight = 1.;
     if(!IsDATA){
       weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight();
@@ -299,6 +310,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if(leps.size()==1){
 
       bool FoundAwayFatJet = false;
+      bool FoundAwayFatJetWithLepton = false;
       bool FoundAwayDiJet = false;
 
       if(fatjets.size()>=1){
@@ -308,6 +320,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           if( fabs(leps[0]->DeltaPhi( fatjets.at(i) )) > 2.0 ){
             HNFatJet = fatjets.at(i);
             FoundAwayFatJet = true;
+
+
+            for(unsigned int j=0; j<leps_NoIso.size(); j++){
+              if(HNFatJet.DeltaR( *(leps_NoIso.at(j)) ) < 0.8){
+                FoundAwayFatJetWithLepton = true;
+                break;
+              }
+            }
+
             break;
           }
 
@@ -336,8 +357,24 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         NCand_1 = HNFatJet;
         NCand_2 = HNFatJet;
 
+       if(FoundAwayFatJetWithLepton){
+         map_bool_To_Region["OneLepton_AwayFatJetWithLepton"] = true;
+         if(leps[0]->Pt() > 100.){
+           map_bool_To_Region["OneLepton_AwayFatJetWithLepton100GeV"] = true;
+         }
+       }
+
         if(WRCand.Pt()>200.){
           map_bool_To_Region["OneLepton_AwayFatJet_WRCandPtgt200"] = true;
+        }
+        else{
+          map_bool_To_Region["OneLepton_AwayFatJet_WRCandPtlt200"] = true;
+          if(FoundAwayFatJetWithLepton){
+            map_bool_To_Region["OneLepton_AwayFatJetWithLepton_WRCandPtlt200"] = true;
+            if(leps[0]->Pt() > 100.){
+              map_bool_To_Region["OneLepton_AwayFatJetWithLepton100GeV_WRCandPtlt200"] = true;
+            }
+          }
         }
 
       }
