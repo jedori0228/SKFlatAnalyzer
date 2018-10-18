@@ -25,6 +25,10 @@ void CalcFakeRate::executeEvent(){
   Electron_FakeRatePtBinnings = {10,15,20,25,35,40,50,60,100,200,500,1000};
   Muon_FakeRatePtBinnings     = {10,15,20,25,30,40,55,60,100,200,500,1000};
 
+  //==== Prefire weight
+
+  weight_Prefire = GetPrefireWeight(0);
+
   //======================
   //==== AnalyzerParamer
   //======================
@@ -276,10 +280,9 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
       if(ev.PassTrigger(this_trigger)){
 
-        //==== TODO Add SFs
         double weight = 1.;
         if(!IsDATA){
-          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight() * SF_Electron;
+          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight() * SF_Electron * weight_Prefire;
         }
 
         if(OneLeptonEvent){
@@ -333,10 +336,9 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
       if(ev.PassTrigger(this_trigger)){
 
-        //==== TODO Add SFs
         double weight = 1.;
         if(!IsDATA){
-          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight() * SF_Muon;
+          weight *= weight_norm_1invpb * ev.GetTriggerLumi(this_trigger) * ev.MCweight() * SF_Muon * weight_Prefire;
         }
 
         if(OneLeptonEvent){
@@ -401,8 +403,6 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
   //==== For Data, use all leptons
   //==== For MC, pick up prompt leptons 
 
-  double weight = 1.;
-
   if(lepptrs_prompt.size()==1 && n_Veto_Leptons==1){ //TODO add veto
 
     Lepton *lepptr_prompt = lepptrs_prompt.at(0);
@@ -449,7 +449,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
       double weight = 1.;
       if(!IsDATA){
-        weight *= weight_norm_1invpb * ev.GetTriggerLumi(ThisPtTrigger) * ev.MCweight() * this_SF;
+        weight *= weight_norm_1invpb * ev.GetTriggerLumi(ThisPtTrigger) * ev.MCweight() * this_SF * weight_Prefire;
       }
 
       //TODO add Scale factors

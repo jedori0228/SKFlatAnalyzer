@@ -20,6 +20,8 @@ public:
   vector<Electron> AllElectrons;
   vector<Muon>  AllMuons;
 
+  double weight_Prefire;
+
 };
 
 #endif
