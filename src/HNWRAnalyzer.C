@@ -357,14 +357,24 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         NCand_1 = HNFatJet;
         NCand_2 = HNFatJet;
 
-       if(FoundAwayFatJetWithLepton) map_bool_To_Region["OneLepton_AwayFatJetWithLepton"] = true;
+       if(FoundAwayFatJetWithLepton){
+         map_bool_To_Region["OneLepton_AwayFatJetWithLepton"] = true;
+         if(leps[0]->Pt() > 100.){
+           map_bool_To_Region["OneLepton_AwayFatJetWithLepton100GeV"] = true;
+         }
+       }
 
         if(WRCand.Pt()>200.){
           map_bool_To_Region["OneLepton_AwayFatJet_WRCandPtgt200"] = true;
         }
         else{
           map_bool_To_Region["OneLepton_AwayFatJet_WRCandPtlt200"] = true;
-          if(FoundAwayFatJetWithLepton) map_bool_To_Region["OneLepton_AwayFatJetWithLepton_WRCandPtlt200"] = true;
+          if(FoundAwayFatJetWithLepton){
+            map_bool_To_Region["OneLepton_AwayFatJetWithLepton_WRCandPtlt200"] = true;
+            if(leps[0]->Pt() > 100.){
+              map_bool_To_Region["OneLepton_AwayFatJetWithLepton100GeV_WRCandPtlt200"] = true;
+            }
+          }
         }
 
       }
