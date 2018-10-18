@@ -78,6 +78,7 @@ public:
   bool Pass_HNWRTight();
   bool Pass_HNWRLoose();
   bool Pass_HNWRVeto();
+  bool Pass_HNWRNoIso();
 
   void SetRelPFIso_Rho(double r);
   double EA();
@@ -191,6 +192,11 @@ bool Electron::PassID(TString ID){
   //==== XXX veto Gap Always
   if(etaRegion()==GAP) return false;
 
+  if(ID=="HNWRTight") return Pass_HNWRTight();
+  if(ID=="HNWRLoose") return Pass_HNWRLoose();
+  if(ID=="HNWRVeto") return Pass_HNWRVeto();
+  if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
+
   //==== POG
   if(ID=="passVetoID") return passVetoID();
   if(ID=="passLooseID") return passLooseID();
@@ -208,9 +214,6 @@ bool Electron::PassID(TString ID){
   if(ID=="HNPairLoose") return Pass_HNPairLoose();
   if(ID=="HNPairLooseNoIP") return Pass_HNPairLooseNoIP();
   if(ID=="HNPairVeto") return Pass_HNPairVeto();
-  if(ID=="HNWRTight") return Pass_HNWRTight();
-  if(ID=="HNWRLoose") return Pass_HNWRLoose();
-  if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="NOCUT") return true;
   if(ID=="TEST") return Pass_TESTID();
 
@@ -378,6 +381,14 @@ bool Electron::Pass_HNWRVeto(){
   if(! (passHEEPID()||passVetoID()) ) return false;
 
   return true;
+}
+
+bool Electron::Pass_HNWRNoIso(){
+
+  if(! Pass_CutBasedLooseNoIso() ) return false;
+
+  return true;
+
 }
 
 //==== TEST ID
