@@ -21,6 +21,10 @@ void HNWRAnalyzer::executeEvent(){
   gens = GetGens();
   //PrintGen(gens); return;
 
+  //==== Prefire weight
+
+  weight_Prefire = GetPrefireWeight(0);
+
   //========================
   //==== AnalyzerParameter
   //========================
@@ -260,7 +264,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     double weight = 1.;
     if(!IsDATA){
-      weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight();
+      weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire;
 
       mcCorr.IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
