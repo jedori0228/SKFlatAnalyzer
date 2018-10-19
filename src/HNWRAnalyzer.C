@@ -164,9 +164,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Jets
   //===========
 
-  std::vector<FatJet>   fatjets         = GetFatJets(param.FatJet_ID, 200, 2.7);
+  std::vector<FatJet>   fatjets         = GetFatJets(param.FatJet_ID, 200, 2.4);
 
-  std::vector<Jet>      alljets         = GetJets(param.Jet_ID, 20., 2.7);
+  std::vector<Jet>      alljets         = GetJets(param.Jet_ID, 40., 2.4);
   std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Veto_electrons, Veto_muons);
 
   int NBJets=0;
