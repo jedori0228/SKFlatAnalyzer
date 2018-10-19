@@ -380,6 +380,14 @@ bool Electron::Pass_HNWRVeto(){
 
   if(! (passHEEPID()||passVetoID()) ) return false;
 
+  if( fabs(scEta()) <= 1.479 ){
+    if(!( fabs(dXY())<0.02 )) return false;
+  }
+  else{
+    if(!( fabs(dXY())<0.05 )) return false;
+  }
+
+
   return true;
 }
 
