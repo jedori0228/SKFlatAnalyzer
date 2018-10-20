@@ -380,6 +380,8 @@ bool Electron::Pass_HNWRVeto(){
 
   if(! (passHEEPID()||passVetoID()) ) return false;
 
+  //==== Apply HEEP dXY cut
+
   if( fabs(scEta()) <= 1.479 ){
     if(!( fabs(dXY())<0.02 )) return false;
   }
@@ -387,8 +389,8 @@ bool Electron::Pass_HNWRVeto(){
     if(!( fabs(dXY())<0.05 )) return false;
   }
 
-
   return true;
+
 }
 
 bool Electron::Pass_HNWRNoIso(){

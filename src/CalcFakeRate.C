@@ -170,7 +170,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
     lepptrs.push_back( lepptrs_muon.at(i) );
   }
 
-  vector<Jet> jets = GetJets("HN", 20., 2.7);
+  vector<Jet> jets = GetJets("HN", 20., 2.4);
   vector<double> AwayJetMinPts = {20, 30, 40, 60, 100, 500};
   vector<TString> str_AwayJetMinPts = {"20", "30", "40", "60", "100", "500"};
 
