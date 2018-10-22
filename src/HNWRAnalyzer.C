@@ -53,7 +53,7 @@ void HNWRAnalyzer::executeEvent(){
   param.Muon_Veto_ID = "HNWRVeto";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
   param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
-  param.Muon_Trigger_SF_Key = "Default";
+  param.Muon_Trigger_SF_Key = "Mu50_POGHighPtLooseTrkIso";
   param.Muon_FR_ID = "HNWR";
   param.Muon_FR_Key = "AwayJetPt40";
   param.Muon_CF_ID = "HNWRTight";
@@ -217,7 +217,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< bool > PassTriggers = {
     PassMu50           && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
     PassSingleElectron && (Loose_electrons.size()>=1) && (Loose_muons.size()==0),
-    (PassMu50||PassSingleElectron) && (Loose_electrons.size()==1) && (Loose_muons.size()==1),
+    (PassMu50||PassSingleElectron) && (n_Loose_leptons>=1),
   };
 
   //=================
