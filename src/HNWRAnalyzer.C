@@ -316,10 +316,25 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       for(unsigned int i=0; i<Loose_muons.size(); i++){
         double this_idsf  = mcCorr.MuonID_SF (param.Muon_ID_SF_Key,  Loose_muons.at(i).Eta(), Loose_muons.at(i).MiniAODPt());
         double this_isosf = mcCorr.MuonISO_SF(param.Muon_ISO_SF_Key, Loose_muons.at(i).Eta(), Loose_muons.at(i).MiniAODPt());
-        double this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, "Mu50", Loose_muons);
 
-        weight *= this_idsf*this_isosf*this_trigsf;
+        weight *= this_idsf*this_isosf;
       }
+
+      double this_trigsf = 1.;
+      if(Suffix.Contains("SingleMuon")){
+        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, "Mu50", Loose_muons);
+      }
+      else if(Suffix.Contains("SingleElectron")){
+        this_trigsf = 1.;
+      }
+      else if(Suffix.Contains("EMu")){
+        if(PassMu50) this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, "Mu50", Loose_muons);
+      }
+      else{
+
+      }
+
+      weight *= this_trigsf;
 
     }
     else{
