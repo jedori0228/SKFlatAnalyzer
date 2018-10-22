@@ -157,6 +157,9 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
   std::vector<Electron> Loose_electrons = SelectElectrons(AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
   std::vector<Muon> Loose_muons = SelectMuons(AllMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
+  //==== Sorting
+  std::sort(Loose_electrons.begin(), Loose_electrons.end(), PtComparing);
+  std::sort(Loose_muons.begin(), Loose_muons.end(), PtComparing);
 
   vector<Gen> gens = GetGens();
 
@@ -171,6 +174,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
   }
 
   vector<Jet> jets = GetJets("HN", 20., 2.4);
+  std::sort(jets.begin(), jets.end(), PtComparing);
   vector<double> AwayJetMinPts = {20, 30, 40, 60, 100, 500};
   vector<TString> str_AwayJetMinPts = {"20", "30", "40", "60", "100", "500"};
 

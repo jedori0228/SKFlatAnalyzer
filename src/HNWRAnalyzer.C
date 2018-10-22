@@ -95,7 +95,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool PassIsoMu27 = ev.PassTrigger("HLT_IsoMu27_v");
   bool PassSingleElectron = ev.PassTrigger("HLT_Ele35_WPTight_Gsf_v");
 
-  //==== Objects
+  //==============
+  //==== Leptons
+  //==============
 
   std::vector<Electron> Veto_electrons = SelectElectrons(AllElectrons, param.Electron_Veto_ID, 10., 2.5);
   std::vector<Muon> Veto_muons = SelectMuons(AllTunePMuons, param.Muon_Veto_ID, 10., 2.4);
@@ -107,6 +109,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     Loose_electrons = ElectronPromptOnly(Loose_electrons, gens);
     Loose_muons = MuonPromptOnly(Loose_muons, gens);
   }
+  //==== Sorting
+  std::sort(Loose_electrons.begin(), Loose_electrons.end(), PtComparing);
+  std::sort(Loose_muons.begin(), Loose_muons.end(), PtComparing);
 
   std::vector<Electron> NoIso_electrons = SelectElectrons(AllElectrons, "HNWRNoIso", 50., 2.5);
   std::vector<Muon> NoIso_muons = SelectMuons(AllMuons, "HNWRNoIso", 50., 2.4);
@@ -175,8 +180,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //===========
 
   std::vector<FatJet>   fatjets         = GetFatJets(param.FatJet_ID, 200, 2.4);
+  std::sort(fatjets.begin(), fatjets.end(), PtComparing);
 
   std::vector<Jet>      alljets         = GetJets(param.Jet_ID, 40., 2.4);
+  std::sort(alljets.begin(), alljets.end(), PtComparing);
   std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Veto_electrons, Veto_muons);
 
   int NBJets=0;

@@ -22,7 +22,7 @@ public:
   vector<Electron> AllElectrons;
   vector<Muon>  AllMuons, AllTunePMuons;
 
-   double weight_Prefire;
+  double weight_Prefire;
 
 };
 
