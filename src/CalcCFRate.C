@@ -7,6 +7,9 @@ void CalcCFRate::executeEvent(){
   //==== THIS IS FOR WR Analysis
   //==============================
 
+  Electron_FakeRatePtBinnings = {40, 50, 75,     110, 150, 200, 250, 300, 350, 500, 1000, 1500, 2000};
+  Muon_FakeRatePtBinnings     = {35, 45, 75, 80, 110, 150, 200, 250, 300, 350, 500, 1000, 1500, 2000};
+
   //======================
   //==== AnalyzerParamer
   //======================
