@@ -433,8 +433,17 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
        if(FoundAwayFatJetWithLepton){
          map_bool_To_Region["OneLepton_AwayFatJetWithLepton"] = true;
+         if(Suffix.Contains("EMu")){
+           if(Loose_electrons.size()==1 && Loose_muons.size()==0) map_bool_To_Region["OneLepton_AwayFatJetWithMuon"] = true;
+           if(Loose_electrons.size()==0 && Loose_muons.size()==1) map_bool_To_Region["OneLepton_AwayFatJetWithElectron"] = true;
+         }
+
          if(leps[0]->Pt() > 100.){
            map_bool_To_Region["OneLepton_AwayFatJetWithLepton100GeV"] = true;
+           if(Suffix.Contains("EMu")){
+             if(Loose_electrons.size()==1 && Loose_muons.size()==0) map_bool_To_Region["OneLepton_AwayFatJetWithMuon100GeV"] = true;
+             if(Loose_electrons.size()==0 && Loose_muons.size()==1) map_bool_To_Region["OneLepton_AwayFatJetWithElectron100GeV"] = true;
+           }
          }
        }
 
