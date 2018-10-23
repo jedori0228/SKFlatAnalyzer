@@ -244,15 +244,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
     else if(Suffix.Contains("EMu")){
 
-      bool PtOkay = false;
-
-      if(PassMu50 && Loose_muons.size()>0){
-        if(Loose_muons.at(0).Pt() >= 52.) PtOkay = true;
+      //==== If Mu50 is fired, we need a muon in a flat pt region
+      if(PassMu50){
+        if(Loose_muons.size()==0) continue;
+        else{
+          if(Loose_muons.at(0).Pt() < 52.) continue;
+        }
       }
-      if(PassSingleElectron && Loose_electrons.size()>0){
-        if(Loose_electrons.at(0).Pt() >= 38.) PtOkay = true;
+      if(PassSingleElectron){
+        if(Loose_electrons.size()==0) continue;
+        else{
+          if(Loose_electrons.at(0).Pt() < 38.) continue;
+        }
       }
-      if(!PtOkay) continue;
 
     }
     else{
