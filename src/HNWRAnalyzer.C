@@ -135,6 +135,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   int n_Loose_leptons = Loose_electrons.size()+Loose_muons.size();
   int n_Tight_leptons = Tight_electrons.size()+Tight_muons.size();
 
+  bool Is_IsEMu_leptons = ( Loose_electrons.size()==1 && Loose_muons.size()==0) ||
+                          ( Loose_electrons.size()==0 && Loose_muons.size()==1) ||
+                          ( Loose_electrons.size()==1 && Loose_muons.size()==1);
+
+
   FillHist("n_Tight_electrons", Tight_electrons.size(), 1., 5, 0., 5.);
   FillHist("n_Loose_electrons", Loose_electrons.size(), 1., 5, 0., 5.);
   FillHist("n_Veto_electrons", Veto_electrons.size(), 1., 5, 0., 5.);
@@ -217,7 +222,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< bool > PassTriggers = {
     PassMu50           && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
     PassSingleElectron && (Loose_electrons.size()>=1) && (Loose_muons.size()==0),
-    (PassMu50||PassSingleElectron) && (n_Loose_leptons>=1),
+    (PassMu50||PassSingleElectron) && (Is_IsEMu_leptons),
   };
 
   //=================
@@ -275,23 +280,31 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     for(unsigned int i=0; i<leps_el.size(); i++) leps.push_back( leps_el.at(i) );
     for(unsigned int i=0; i<leps_mu.size(); i++) leps.push_back( leps_mu.at(i) );
 
-    std::vector<Lepton *> leps_NoIso;
+    std::vector<Lepton *> leps_NoIso, leps_NoIso_Veto;
     if(Suffix.Contains("SingleMuon")){
       leps_NoIso = MakeLeptonPointerVector(NoIso_muons);
+      leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_electrons);
     }
     else if(Suffix.Contains("SingleElectron")){
       leps_NoIso = MakeLeptonPointerVector(NoIso_electrons);
+      leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_muons);
     }
     else if(Suffix.Contains("EMu")){
 
       //==== For EMu, we want;
       //==== 1) Isolated Electron + AK8Jet(with noniso Mu)
       //==== 2) Isolated Muon + AK8Jet(with noniso El)
-      if(Loose_electrons.at(0).Pt() > Loose_muons.at(0).Pt()){
+
+      if(Loose_electrons.size()==1 && Loose_muons.size()==0){
         leps_NoIso = MakeLeptonPointerVector(NoIso_muons);
+        leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_electrons);
+      }
+      else if(Loose_electrons.size()==0 && Loose_muons.size()==1){
+        leps_NoIso = MakeLeptonPointerVector(NoIso_electrons);
+        leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_muons);
       }
       else{
-        leps_NoIso = MakeLeptonPointerVector(NoIso_electrons);
+        //==== When two leptons, it is okay
       }
 
       //==== Also, sort leps here
@@ -386,6 +399,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             for(unsigned int j=0; j<leps_NoIso.size(); j++){
               if(HNFatJet.DeltaR( *(leps_NoIso.at(j)) ) < 0.8){
                 FoundAwayFatJetWithLepton = true;
+                break;
+              }
+            }
+            for(unsigned int j=0; j<leps_NoIso_Veto.size(); j++){
+              if(HNFatJet.DeltaR( *(leps_NoIso_Veto.at(j)) ) < 0.8){
+                FoundAwayFatJetWithLepton = false;
                 break;
               }
             }
