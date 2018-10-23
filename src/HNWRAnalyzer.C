@@ -246,8 +246,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       bool PtOkay = false;
 
-      if(PassMu50 && (Loose_muons.at(0).Pt() >= 52.)) PtOkay = true;
-      if(PassSingleElectron && (Loose_electrons.at(0).Pt() >= 38.)) PtOkay = true;
+      if(PassMu50 && Loose_muons.size()>0){
+        if(Loose_muons.at(0).Pt() >= 52.) PtOkay = true;
+      }
+      if(PassSingleElectron && Loose_electrons.size()>0){
+        if(Loose_electrons.at(0).Pt() >= 38.) PtOkay = true;
+      }
       if(!PtOkay) continue;
 
     }
