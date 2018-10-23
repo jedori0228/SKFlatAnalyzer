@@ -398,13 +398,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             HNFatJet = fatjets.at(i);
             FoundAwayFatJet = true;
 
-
+            //==== 1) NoIso lepton should be inside AK8 jet
             for(unsigned int j=0; j<leps_NoIso.size(); j++){
               if(HNFatJet.DeltaR( *(leps_NoIso.at(j)) ) < 0.8){
                 FoundAwayFatJetWithLepton = true;
                 break;
               }
             }
+            //==== 2) NoIso_Veto lepton should NOT be inside AK8 jet
             for(unsigned int j=0; j<leps_NoIso_Veto.size(); j++){
               if(HNFatJet.DeltaR( *(leps_NoIso_Veto.at(j)) ) < 0.8){
                 FoundAwayFatJetWithLepton = false;
