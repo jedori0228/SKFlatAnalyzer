@@ -135,11 +135,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   int n_Loose_leptons = Loose_electrons.size()+Loose_muons.size();
   int n_Tight_leptons = Tight_electrons.size()+Tight_muons.size();
 
-  bool Is_IsEMu_leptons = ( Loose_electrons.size()==1 && Loose_muons.size()==0) ||
-                          ( Loose_electrons.size()==0 && Loose_muons.size()==1) ||
-                          ( Loose_electrons.size()==1 && Loose_muons.size()==1);
-
-
   FillHist("n_Tight_electrons", Tight_electrons.size(), 1., 5, 0., 5.);
   FillHist("n_Loose_electrons", Loose_electrons.size(), 1., 5, 0., 5.);
   FillHist("n_Veto_electrons", Veto_electrons.size(), 1., 5, 0., 5.);
@@ -222,7 +217,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< bool > PassTriggers = {
     PassMu50           && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
     PassSingleElectron && (Loose_electrons.size()>=1) && (Loose_muons.size()==0),
-    (PassMu50||PassSingleElectron) && (Is_IsEMu_leptons),
+    PassMu50           && (Loose_electrons.size()==1) && (Loose_muons.size()==1),
   };
 
   //=================
@@ -243,21 +238,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if( Loose_electrons.at(0).Pt() < 38. ) continue;
     }
     else if(Suffix.Contains("EMu")){
-
-      //==== If Mu50 is fired, we need a muon in a flat pt region
-      if(PassMu50){
-        if(Loose_muons.size()==0) continue;
-        else{
-          if(Loose_muons.at(0).Pt() < 52.) continue;
-        }
-      }
-      if(PassSingleElectron){
-        if(Loose_electrons.size()==0) continue;
-        else{
-          if(Loose_electrons.at(0).Pt() < 38.) continue;
-        }
-      }
-
+      if( Loose_muons.at(0).Pt() < 52. ) continue;
+      if( Loose_electrons.at(0).Pt() < 38. ) continue;
     }
     else{
 
@@ -270,11 +252,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       else if( Suffix.Contains("SingleElectron") ){
         if( !(this->DataStream == "SingleElectron") ) continue;
       }
-      //==== For EMu SingleElectron PD, collect events which fails Mu50
       else if( Suffix.Contains("EMu") ){
-        if(this->DataStream == "SingleElectron"){
-          if(PassMu50) continue;
-        }
+        if( !(this->DataStream == "SingleMuon") ) continue;
       }
       else{
 
@@ -288,34 +267,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     for(unsigned int i=0; i<leps_el.size(); i++) leps.push_back( leps_el.at(i) );
     for(unsigned int i=0; i<leps_mu.size(); i++) leps.push_back( leps_mu.at(i) );
 
-    std::vector<Lepton *> leps_NoIso, leps_NoIso_Veto;
+    std::vector<Lepton *> leps_NoIso_SF, leps_NoIso_OF;
     if(Suffix.Contains("SingleMuon")){
-      leps_NoIso = MakeLeptonPointerVector(NoIso_muons);
-      leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_electrons);
+      leps_NoIso_SF = MakeLeptonPointerVector(NoIso_muons);
+      leps_NoIso_OF = MakeLeptonPointerVector(NoIso_electrons);
     }
     else if(Suffix.Contains("SingleElectron")){
-      leps_NoIso = MakeLeptonPointerVector(NoIso_electrons);
-      leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_muons);
+      leps_NoIso_SF = MakeLeptonPointerVector(NoIso_electrons);
+      leps_NoIso_OF = MakeLeptonPointerVector(NoIso_muons);
     }
     else if(Suffix.Contains("EMu")){
 
-      //==== For EMu, we want;
-      //==== 1) Isolated Electron + AK8Jet(with noniso Mu)
-      //==== 2) Isolated Muon + AK8Jet(with noniso El)
-
-      if(Loose_electrons.size()==1 && Loose_muons.size()==0){
-        leps_NoIso = MakeLeptonPointerVector(NoIso_muons);
-        leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_electrons);
-      }
-      else if(Loose_electrons.size()==0 && Loose_muons.size()==1){
-        leps_NoIso = MakeLeptonPointerVector(NoIso_electrons);
-        leps_NoIso_Veto = MakeLeptonPointerVector(NoIso_muons);
-      }
-      else{
-        //==== When two leptons, it is okay
-      }
-
-      //==== Also, sort leps here
+      //==== Always dilepton event. No need this.
+      //==== Sort leps here
       std::sort( leps.begin(), leps.end(), PtComparingPtr);
 
     }
@@ -348,7 +312,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         this_trigsf = 1.;
       }
       else if(Suffix.Contains("EMu")){
-        if(PassMu50) this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, "Mu50", Loose_muons);
+        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, "Mu50", Loose_muons);
       }
       else{
 
@@ -392,7 +356,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if(leps.size()==1){
 
       bool FoundAwayFatJet = false;
-      bool FoundAwayFatJetWithLepton = false;
+      bool FoundAwayFatJetWithSFNonIsoLepton = false;
+      bool FoundAwayFatJetWithOFNonIsoLepton = false;
 
       if(fatjets.size()>=1){
 
@@ -403,16 +368,16 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             FoundAwayFatJet = true;
 
             //==== 1) NoIso lepton should be inside AK8 jet
-            for(unsigned int j=0; j<leps_NoIso.size(); j++){
-              if(HNFatJet.DeltaR( *(leps_NoIso.at(j)) ) < 0.8){
-                FoundAwayFatJetWithLepton = true;
+            for(unsigned int j=0; j<leps_NoIso_SF.size(); j++){
+              if(HNFatJet.DeltaR( *(leps_NoIso_SF.at(j)) ) < 0.8){
+                FoundAwayFatJetWithSFNonIsoLepton = true;
                 break;
               }
             }
             //==== 2) NoIso_Veto lepton should NOT be inside AK8 jet
-            for(unsigned int j=0; j<leps_NoIso_Veto.size(); j++){
-              if(HNFatJet.DeltaR( *(leps_NoIso_Veto.at(j)) ) < 0.8){
-                FoundAwayFatJetWithLepton = false;
+            for(unsigned int j=0; j<leps_NoIso_OF.size(); j++){
+              if(HNFatJet.DeltaR( *(leps_NoIso_OF.at(j)) ) < 0.8){
+                FoundAwayFatJetWithOFNonIsoLepton = true;
                 break;
               }
             }
@@ -431,23 +396,24 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         NCand_1 = HNFatJet;
         NCand_2 = HNFatJet;
 
-       if(FoundAwayFatJetWithLepton){
-         map_bool_To_Region["OneLepton_AwayFatJetWithLepton"] = true;
-         if(Suffix.Contains("EMu")){
-           if(Loose_electrons.size()==1 && Loose_muons.size()==0) map_bool_To_Region["OneLepton_AwayFatJetWithMuon"] = true;
-           if(Loose_electrons.size()==0 && Loose_muons.size()==1) map_bool_To_Region["OneLepton_AwayFatJetWithElectron"] = true;
-         }
+        //==== SR : AwayJet has SF Noniso lepton inside
+        //====           but no OF Noniso lepton inside
+        if(FoundAwayFatJetWithSFNonIsoLepton && !FoundAwayFatJetWithOFNonIsoLepton){
+          map_bool_To_Region["OneLepton_AwayFatJetWithSFLepton"] = true;
+          if(leps[0]->Pt() > 100.){
+            map_bool_To_Region["OneLepton_AwayFatJetWithSFLepton100GeV"] = true;
+          }
+        }
+        //==== CR : AwayJet has OF Noniso lepton inside
+        //====           but no SF Noniso lepton inside
+        if(!FoundAwayFatJetWithSFNonIsoLepton && FoundAwayFatJetWithOFNonIsoLepton){
+          map_bool_To_Region["OneLepton_AwayFatJetWithOFLepton"] = true;
+          if(leps[0]->Pt() > 100.){
+            map_bool_To_Region["OneLepton_AwayFatJetWithOFLepton100GeV"] = true;
+          }
+        }
 
-         if(leps[0]->Pt() > 100.){
-           map_bool_To_Region["OneLepton_AwayFatJetWithLepton100GeV"] = true;
-           if(Suffix.Contains("EMu")){
-             if(Loose_electrons.size()==1 && Loose_muons.size()==0) map_bool_To_Region["OneLepton_AwayFatJetWithMuon100GeV"] = true;
-             if(Loose_electrons.size()==0 && Loose_muons.size()==1) map_bool_To_Region["OneLepton_AwayFatJetWithElectron100GeV"] = true;
-           }
-         }
-       }
-
-      }
+      } // END if FoundAwayFatJet
 
     }
     else if(leps.size()==2){
