@@ -15,12 +15,15 @@ public:
   ~HNWRAnalyzer();
 
   bool RunFake, RunCF;
+  bool RunSyst;
   bool PromptLeptonOnly;
 
   vector<Gen> gens;
 
   vector<Electron> AllElectrons;
-  vector<Muon>  AllMuons, AllTunePMuons;
+  vector<Muon> AllMuons, AllTunePMuons;
+  vector<Jet> AllJets;
+  vector<FatJet> AllFatJets;
 
   double weight_Prefire;
 

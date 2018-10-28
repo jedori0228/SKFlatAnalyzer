@@ -4,10 +4,12 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   RunFake = HasFlag("RunFake");
   RunCF = HasFlag("RunCF");
+  RunSyst = HasFlag("RunSyst");
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
 
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer] RunSyst = " << RunSyst << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
 
 }
@@ -28,6 +30,8 @@ void HNWRAnalyzer::executeEvent(){
   //========================
   //==== AnalyzerParameter
   //========================
+
+  //==== Central
 
   AnalyzerParameter param;
   param.Clear();
@@ -69,8 +73,19 @@ void HNWRAnalyzer::executeEvent(){
   AllElectrons = GetAllElectrons();
   AllMuons = GetAllMuons();
   AllTunePMuons = UseTunePMuon( AllMuons );
+  AllJets = GetAllJets();
+  AllFatJets = GetAllFatJets();
 
   executeEventFromParameter(param);
+
+  if(RunSyst){
+
+    for(int it_syst=1; it_syst<AnalyzerParameter::NSyst; it_syst++){
+      param.syst_ = AnalyzerParameter::Syst(it_syst);
+      param.Name = "Syst_"+param.GetSystType()+"_HNWR";
+      executeEventFromParameter(param);
+    }
+  }
 
 }
 
@@ -94,15 +109,69 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool PassMu50 = ev.PassTrigger("HLT_Mu50_v");
   bool PassSingleElectron = ev.PassTrigger("HLT_Ele35_WPTight_Gsf_v");
 
+  //======================
+  //==== Copy AllObjects
+  //======================
+
+  vector<Electron> this_AllElectrons = AllElectrons;
+  vector<Muon> this_AllMuons = AllMuons;
+  vector<Muon> this_AllTunePMuons = AllTunePMuons;
+  vector<Jet> this_AllJets = AllJets;
+  vector<FatJet> this_AllFatJets = AllFatJets;
+
+  if(param.syst_ == AnalyzerParameter::Central){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::JetResUp){
+    this_AllJets = SmearJets( this_AllJets, +1 );
+    this_AllFatJets = SmearFatJets( this_AllFatJets, +1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::JetResDown){
+    this_AllJets = SmearJets( this_AllJets, -1 );
+    this_AllFatJets = SmearFatJets( this_AllFatJets, -1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::JetEnUp){
+    this_AllJets = ScaleJets( this_AllJets, +1 );
+    this_AllFatJets = ScaleFatJets( this_AllFatJets, +1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::JetEnDown){
+    this_AllJets = ScaleJets( this_AllJets, -1 );
+    this_AllFatJets = ScaleFatJets( this_AllFatJets, -1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonEnUp){
+    this_AllMuons = ScaleMuons( this_AllMuons, +1 );
+    this_AllTunePMuons = ScaleMuons( this_AllTunePMuons , +1 ); //FIXME not sure what to do for TuneP Muons..
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonEnDown){
+    this_AllMuons = ScaleMuons( this_AllMuons, -1 );
+    this_AllTunePMuons = ScaleMuons( this_AllTunePMuons , -1 ); //FIXME not sure what to do for TuneP Muons..
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronResUp){
+    this_AllElectrons = SmearElectrons( this_AllElectrons, +1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronResDown){
+    this_AllElectrons = SmearElectrons( this_AllElectrons, -1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronEnUp){
+    this_AllElectrons = ScaleElectrons( this_AllElectrons, +1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronEnDown){
+    this_AllElectrons = ScaleElectrons( this_AllElectrons, -1 );
+  }
+  else{
+    cout << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst" << endl;
+    exit(EXIT_FAILURE);
+  }
+
   //==============
   //==== Leptons
   //==============
 
-  std::vector<Electron> Veto_electrons = SelectElectrons(AllElectrons, param.Electron_Veto_ID, 10., 2.5);
-  std::vector<Muon> Veto_muons = SelectMuons(AllTunePMuons, param.Muon_Veto_ID, 10., 2.4);
+  std::vector<Electron> Veto_electrons = SelectElectrons(this_AllElectrons, param.Electron_Veto_ID, 10., 2.5);
+  std::vector<Muon> Veto_muons = SelectMuons(this_AllTunePMuons, param.Muon_Veto_ID, 10., 2.4);
 
-  std::vector<Electron> Loose_electrons = SelectElectrons(AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
-  std::vector<Muon> Loose_muons = SelectMuons(AllTunePMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
+  std::vector<Electron> Loose_electrons = SelectElectrons(this_AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
+  std::vector<Muon> Loose_muons = SelectMuons(this_AllTunePMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
 
   if(PromptLeptonOnly){
     Loose_electrons = ElectronPromptOnly(Loose_electrons, gens);
@@ -112,8 +181,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::sort(Loose_electrons.begin(), Loose_electrons.end(), PtComparing);
   std::sort(Loose_muons.begin(), Loose_muons.end(), PtComparing);
 
-  std::vector<Electron> NoIso_electrons = SelectElectrons(AllElectrons, "HNWRNoIso", 50., 2.5);
-  std::vector<Muon> NoIso_muons = SelectMuons(AllMuons, "HNWRNoIso", 50., 2.4);
+  std::vector<Electron> NoIso_electrons = SelectElectrons(this_AllElectrons, "HNWRNoIso", 50., 2.5);
+  std::vector<Muon> NoIso_muons = SelectMuons(this_AllMuons, "HNWRNoIso", 50., 2.4);
 
   std::vector<Electron> Tight_electrons;
   std::vector<Muon>     Tight_muons;
@@ -178,10 +247,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Jets
   //===========
 
-  std::vector<FatJet>   fatjets         = GetFatJets(param.FatJet_ID, 200, 2.4);
+  std::vector<FatJet>   fatjets         = SelectFatJets(this_AllFatJets, param.FatJet_ID, 200, 2.4);
   std::sort(fatjets.begin(), fatjets.end(), PtComparing);
 
-  std::vector<Jet>      alljets         = GetJets(param.Jet_ID, 40., 2.4);
+  std::vector<Jet>      alljets         = SelectJets(this_AllJets, param.Jet_ID, 40., 2.4);
   std::sort(alljets.begin(), alljets.end(), PtComparing);
   std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Veto_electrons, Veto_muons);
 
