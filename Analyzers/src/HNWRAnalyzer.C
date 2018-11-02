@@ -543,6 +543,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "NEvent_"+this_region, 0., weight, 1, 0., 1.);
         JSFillHist(this_region, "MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
 
+        JSFillHist(this_region, "nPileUp_"+this_region, nPileUp, weight, 200., 0., 200.);
+        JSFillHist(this_region, "nPV_"+this_region, nPV, weight, 200., 0., 200.);
+
         JSFillHist(this_region, "Lepton_Size_"+this_region, leps.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
