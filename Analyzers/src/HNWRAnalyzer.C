@@ -204,15 +204,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   int n_Loose_leptons = Loose_electrons.size()+Loose_muons.size();
   int n_Tight_leptons = Tight_electrons.size()+Tight_muons.size();
 
-  FillHist("n_Tight_electrons", Tight_electrons.size(), 1., 5, 0., 5.);
-  FillHist("n_Loose_electrons", Loose_electrons.size(), 1., 5, 0., 5.);
-  FillHist("n_Veto_electrons", Veto_electrons.size(), 1., 5, 0., 5.);
-  FillHist("n_Tight_muons", Tight_muons.size(), 1., 5, 0., 5.);
-  FillHist("n_Loose_muons", Loose_muons.size(), 1., 5, 0., 5.);
-  FillHist("n_Veto_muons", Veto_muons.size(), 1., 5, 0., 5.);
-  FillHist("n_Tight_leptons", n_Tight_leptons, 1., 5, 0., 5.);
-  FillHist("n_Loose_leptons", n_Loose_leptons, 1., 5, 0., 5.);
-  FillHist("n_Veto_leptons", n_Veto_leptons, 1., 5, 0., 5.);
+  FillHist("n_Tight_electrons_"+param.Name, Tight_electrons.size(), 1., 5, 0., 5.);
+  FillHist("n_Loose_electrons_"+param.Name, Loose_electrons.size(), 1., 5, 0., 5.);
+  FillHist("n_Veto_electrons_"+param.Name, Veto_electrons.size(), 1., 5, 0., 5.);
+  FillHist("n_Tight_muons_"+param.Name, Tight_muons.size(), 1., 5, 0., 5.);
+  FillHist("n_Loose_muons_"+param.Name, Loose_muons.size(), 1., 5, 0., 5.);
+  FillHist("n_Veto_muons_"+param.Name, Veto_muons.size(), 1., 5, 0., 5.);
+  FillHist("n_Tight_leptons_"+param.Name, n_Tight_leptons, 1., 5, 0., 5.);
+  FillHist("n_Loose_leptons_"+param.Name, n_Loose_leptons, 1., 5, 0., 5.);
+  FillHist("n_Veto_leptons_"+param.Name, n_Veto_leptons, 1., 5, 0., 5.);
 
   bool HasCFElectron = false;
   if(!IsDATA){
@@ -242,6 +242,16 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   }
 
   FillHist("AllTight_"+param.Name, 0., 1., 1, 0., 1.);
+
+  FillHist("AfterAllTight_n_Tight_electrons_"+param.Name, Tight_electrons.size(), 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Loose_electrons_"+param.Name, Loose_electrons.size(), 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Veto_electrons_"+param.Name, Veto_electrons.size(), 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Tight_muons_"+param.Name, Tight_muons.size(), 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Loose_muons_"+param.Name, Loose_muons.size(), 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Veto_muons_"+param.Name, Veto_muons.size(), 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Tight_leptons_"+param.Name, n_Tight_leptons, 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Loose_leptons_"+param.Name, n_Loose_leptons, 1., 5, 0., 5.);
+  FillHist("AfterAllTight_n_Veto_leptons_"+param.Name, n_Veto_leptons, 1., 5, 0., 5.);
 
   //===========
   //==== Jets
