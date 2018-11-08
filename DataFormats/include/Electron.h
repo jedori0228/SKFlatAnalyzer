@@ -101,6 +101,7 @@ public:
   bool Pass_HNWRTight();
   bool Pass_HNWRLoose();
   bool Pass_HNWRVeto();
+  bool Pass_HNWRNoIso();
 
   void SetRelPFIso_Rho(double r);
   double EA();

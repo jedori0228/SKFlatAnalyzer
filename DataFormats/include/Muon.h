@@ -94,6 +94,7 @@ public:
   bool Pass_HNWRTight();
   bool Pass_HNWRLoose();
   bool Pass_HNWRVeto();
+  bool Pass_HNWRNoIso();
   bool Pass_TESTID();
 
 private:

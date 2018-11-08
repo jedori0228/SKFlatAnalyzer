@@ -15,4 +15,13 @@
 #pragma link C++ class ExampleRun+;
 #pragma link C++ class SKFlatValidation+;
 
+#pragma link C++ class CalcCFRate+;
+#pragma link C++ class CalcFakeRate+;
+#pragma link C++ class GenStudy+;
+#pragma link C++ class HNPairAnalyzer+;
+#pragma link C++ class HNWRAnalyzer+;
+#pragma link C++ class HNWRGenMatching+;
+#pragma link C++ class TriggerNormCheck+;
+#pragma link C++ class TriggerWithPtRange+;
+
 #endif

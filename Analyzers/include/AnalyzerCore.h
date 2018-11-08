@@ -133,6 +133,7 @@ public:
   std::vector<Electron> ElectronApplyPtCut(std::vector<Electron> electrons, double ptcut);
   std::vector<Jet> JetsAwayFromFatJet(std::vector<Jet> jets, std::vector<FatJet> fatjets, double mindr=1.0);
   std::vector<Jet> JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron> els, std::vector<Muon> mus);
+  std::vector<FatJet> FatJetsVetoLeptonInside(std::vector<FatJet> jets, std::vector<Electron> els, std::vector<Muon> mus);
   std::vector<Jet> JetsAwayFromPhoton(std::vector<Jet> jets, std::vector<Photon> photons, double mindr);
   Particle AddFatJetAndLepton(FatJet fatjet, Lepton lep);
 
