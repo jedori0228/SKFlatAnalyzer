@@ -91,11 +91,11 @@ void Jet::SetTightLepVetoJetID(double b){
   j_tightLepVetoJetID = b;
 }
 
-bool Jet::PassID(TString id){
+bool Jet::PassID(TString ID){
 
-  if(id=="HN") return Pass_HN();
-  if(id=="tight") return Pass_tightJetID();
-  if(id=="tightLepVeto") return Pass_tightLepVetoJetID();
+  if(ID=="HN") return Pass_HN();
+  if(ID=="tight") return Pass_tightJetID();
+  if(ID=="tightLepVeto") return Pass_tightLepVetoJetID();
 
   cout << "[Jet::PassID] No id : " << ID << endl;
   exit(EXIT_FAILURE);
