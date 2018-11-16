@@ -94,6 +94,14 @@ public:
   bool Pass_SUSYMVAWP(TString wp);
   bool Pass_SUSYTight();
   bool Pass_SUSYLoose();
+  bool Pass_HNPairTight();
+  bool Pass_HNPairLoose();
+  bool Pass_HNPairLooseNoIP();
+  bool Pass_HNPairVeto();
+  bool Pass_HNWRTight();
+  bool Pass_HNWRLoose();
+  bool Pass_HNWRVeto();
+  bool Pass_HNWRNoIso();
 
   void SetRelPFIso_Rho(double r);
   double EA();

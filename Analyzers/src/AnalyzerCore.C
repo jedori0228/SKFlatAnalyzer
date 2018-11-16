@@ -943,6 +943,39 @@ std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::
 
 }
 
+std::vector<FatJet> AnalyzerCore::FatJetsVetoLeptonInside(std::vector<FatJet> jets, std::vector<Electron> els, std::vector<Muon> mus){
+
+  std::vector<FatJet> out;
+  for(unsigned int i=0; i<jets.size(); i++){
+    FatJet this_jet = jets.at(i);
+
+    bool HasLeptonInside = false;
+
+    for(unsigned int j=0; j<els.size(); j++){
+      if( this_jet.DeltaR( els.at(j) ) < 0.8 ){
+        HasLeptonInside = true;
+        break;
+      }
+    }
+    if(HasLeptonInside) continue;
+
+    for(unsigned int j=0; j<mus.size(); j++){
+      if( this_jet.DeltaR( mus.at(j) ) < 0.8 ){
+        HasLeptonInside = true;
+        break;
+      }
+    }
+    if(HasLeptonInside) continue;
+
+    //==== if all fine,
+    out.push_back( this_jet );
+
+  }
+
+  return out;
+
+}
+
 std::vector<Jet> AnalyzerCore::JetsAwayFromPhoton(std::vector<Jet> jets, std::vector<Photon> photons, double mindr){
   
   std::vector<Jet> out;
@@ -962,7 +995,6 @@ std::vector<Jet> AnalyzerCore::JetsAwayFromPhoton(std::vector<Jet> jets, std::ve
   return out;
 
 }
-
 
 Particle AnalyzerCore::AddFatJetAndLepton(FatJet fatjet, Lepton lep){
 
@@ -1666,7 +1698,7 @@ void AnalyzerCore::FillLeptonPlots(std::vector<Lepton *> leps, TString this_regi
 
     Lepton *lep = leps[i];
 
-    JSFillHist(this_region, "Lepton_"+this_itoa+"_Pt_"+this_region, lep->Pt(), weight, 1000, 0., 1000.);
+    JSFillHist(this_region, "Lepton_"+this_itoa+"_Pt_"+this_region, lep->Pt(), weight, 3000, 0., 3000.);
     JSFillHist(this_region, "Lepton_"+this_itoa+"_Eta_"+this_region, lep->Eta(), weight, 60, -3., 3.);
     JSFillHist(this_region, "Lepton_"+this_itoa+"_RelIso_"+this_region, lep->RelIso(), weight, 100, 0., 1.);
     JSFillHist(this_region, "Lepton_"+this_itoa+"_MiniRelIso_"+this_region, lep->MiniRelIso(), weight, 100, 0., 1.);
