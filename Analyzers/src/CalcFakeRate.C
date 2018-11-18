@@ -471,7 +471,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
           if(!( jet.Pt() > ThisMinJetPt )) continue;
           double dPhi = fabs( lep.DeltaPhi(jet) );
 
-          bool UseEvent = (dPhi > 2.5) && (jet.Pt()/lep.Pt() > 1.0) && (METv.Pt() < 80.) && (thisMT < 25.);
+          bool UseEvent = (dPhi > 2.5) && (jet.Pt()/lep.Pt() > 1.0);
 /*
           cout << "dPhi = " << dPhi << endl;
           cout << "jet.Pt()/lep.Pt() = " << jet.Pt()/lep.Pt() << endl;
