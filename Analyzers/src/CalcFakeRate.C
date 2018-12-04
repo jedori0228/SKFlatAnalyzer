@@ -282,7 +282,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
     for(unsigned int i=0; i<Electron_TrigWithPtRange.Triggers.size(); i++){
       TString this_trigger = Electron_TrigWithPtRange.Triggers.at(i);
 
-      if(ev.PassTrigger(this_trigger)){
+      if(PassTrigger(ev, this_trigger)){
 
         double weight = 1.;
         if(!IsDATA){
@@ -338,7 +338,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
         }
       }
 
-      if(ev.PassTrigger(this_trigger)){
+      if(PassTrigger(ev, this_trigger)){
 
         double weight = 1.;
         if(!IsDATA){
@@ -432,7 +432,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
       ThisPtTrigger = Electron_TrigWithPtRange.GetTriggerFromPt(this_pt);
       if(ThisPtTrigger!="PTFAIL"){
-        PassTriggerByPt = ev.PassTrigger(ThisPtTrigger);
+        PassTriggerByPt = PassTrigger(ev, ThisPtTrigger);
       }
       this_SF = SF_Electron;
     }
@@ -443,7 +443,7 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
 
       ThisPtTrigger = Muon_TrigWithPtRange.GetTriggerFromPt(this_pt);
       if(ThisPtTrigger!="PTFAIL"){
-        PassTriggerByPt = ev.PassTrigger(ThisPtTrigger);
+        PassTriggerByPt = PassTrigger(ev, ThisPtTrigger);
       }
       this_SF = SF_Muon;
     }
@@ -587,6 +587,16 @@ void CalcFakeRate::FillFakeRatePlots(TString name, TString frtype, Lepton *lep, 
 }
 
 
+bool CalcFakeRate::PassTrigger(Event ev, TString trg){
+
+  if(DataYear==2016 && trg=="HLT_Mu50_v"){
+    return ev.PassTrigger("HLT_Mu50_v") || ev.PassTrigger("HLT_TkMu50_v");
+  }
+  else{
+    return ev.PassTrigger(trg);
+  }
+
+}
 
 
 

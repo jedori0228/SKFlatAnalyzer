@@ -22,6 +22,8 @@ public:
 
   double weight_Prefire;
 
+  bool PassTrigger(Event ev, TString trg);
+
 };
 
 #endif
