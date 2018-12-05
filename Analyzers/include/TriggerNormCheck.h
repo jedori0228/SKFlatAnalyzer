@@ -18,6 +18,8 @@ public:
   TriggerNormCheck();
   ~TriggerNormCheck();
 
+  bool PassTrigger(Event ev, TString trg);
+
 };
 
 

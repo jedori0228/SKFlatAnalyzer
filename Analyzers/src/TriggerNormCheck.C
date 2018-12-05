@@ -147,7 +147,7 @@ void TriggerNormCheck::executeEventFromParameter(AnalyzerParameter param){
       for(unsigned int i=0; i<this_twpr.Triggers.size(); i++){
         TString this_trigger = this_twpr.Triggers.at(i);
 
-        if(ev.PassTrigger(this_trigger)){
+        if(PassTrigger(ev, this_trigger)){
           //==== TODO Add SFs
           double weight = 1.;
           if(!IsDATA){
@@ -201,5 +201,17 @@ TriggerNormCheck::TriggerNormCheck(){
 TriggerNormCheck::~TriggerNormCheck(){
 
 }
+
+bool TriggerNormCheck::PassTrigger(Event ev, TString trg){
+
+  if(DataYear==2016 && trg=="HLT_Mu50_v"){
+    return ev.PassTrigger("HLT_Mu50_v") || ev.PassTrigger("HLT_TkMu50_v");
+  }
+  else{
+    return ev.PassTrigger(trg);
+  }
+
+}
+
 
 
