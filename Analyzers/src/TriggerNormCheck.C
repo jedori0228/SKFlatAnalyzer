@@ -9,8 +9,8 @@ void TriggerNormCheck::executeEvent(){
 
   AnalyzerParameter param;
 
-  param.Electron_Tight_ID = "passMVAID_iso_WP80";
-  param.Electron_ID_SF_Key = "passMVAID_iso_WP80";
+  param.Electron_Tight_ID = "passMediumID";
+  param.Electron_ID_SF_Key = "passMediumID";
 
   param.Muon_Tight_ID = "POGTightWithTightIso";
   param.Muon_ID_SF_Key = "NUM_TightID_DEN_genTracks";
