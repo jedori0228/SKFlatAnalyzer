@@ -27,6 +27,10 @@ public:
 
   double weight_Prefire;
 
+  vector<TString> Triggers_Electron, Triggers_Muon;
+  TString TriggerNameForSF_Electron, TriggerNameForSF_Muon;
+  double TriggerSafePt_Electron, TriggerSafePt_Muon;
+
 };
 
 

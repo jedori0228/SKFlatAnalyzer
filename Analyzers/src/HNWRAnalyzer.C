@@ -2,6 +2,10 @@
 
 void HNWRAnalyzer::initializeAnalyzer(){
 
+  //================
+  //==== Userflags
+  //================
+
   RunFake = HasFlag("RunFake");
   RunCF = HasFlag("RunCF");
   RunSyst = HasFlag("RunSyst");
@@ -11,6 +15,45 @@ void HNWRAnalyzer::initializeAnalyzer(){
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunSyst = " << RunSyst << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
+
+  //===============================
+  //==== Year-dependent variables
+  //===============================
+
+  //==== Triggers
+
+  Triggers_Electron.clear();
+  Triggers_Muon.clear();
+
+  if(DataYear==2016){
+
+    Triggers_Electron = {
+      "HLT_Ele27_WPTight_Gsf_v",
+    };
+    Triggers_Muon = {
+      "HLT_Mu50",
+      "HLT_TkMu50_v",
+    };
+    TriggerNameForSF_Electron = "Ele27_WPTight_Gsf";
+    TriggerNameForSF_Muon = "Mu50";
+    TriggerSafePt_Electron = 30.;
+    TriggerSafePt_Muon = 52.;
+
+  }
+  else if(DataYear==2017){
+
+    Triggers_Electron = {
+      "HLT_Ele35_WPTight_Gsf_v",
+    };
+    Triggers_Muon = {
+      "HLT_Mu50_v",
+    };
+    TriggerNameForSF_Electron = "Ele35_WPTight_Gsf";
+    TriggerNameForSF_Muon = "Mu50";
+    TriggerSafePt_Electron = 38.;
+    TriggerSafePt_Muon = 52.;
+
+  }
 
 }
 
@@ -106,8 +149,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   Event ev = GetEvent();
   Particle METv = ev.GetMETVector();
 
-  bool PassMu50 = ev.PassTrigger("HLT_Mu50_v");
-  bool PassSingleElectron = ev.PassTrigger("HLT_Ele35_WPTight_Gsf_v");
+  bool PassSingleElectron = ev.PassTrigger(Triggers_Electron);
+  bool PassMu50 = ev.PassTrigger(Triggers_Muon);
 
   //======================
   //==== Copy AllObjects
@@ -311,14 +354,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     FillHist(Suffix+"_PassTrigger_"+param.Name, 0., 1., 1, 0., 1.);
 
     if(Suffix.Contains("SingleMuon")){
-      if( Loose_muons.at(0).Pt() < 52. ) continue;
+      if( Loose_muons.at(0).Pt() < TriggerSafePt_Muon ) continue;
     }
     else if(Suffix.Contains("SingleElectron")){
-      if( Loose_electrons.at(0).Pt() < 38. ) continue;
+      if( Loose_electrons.at(0).Pt() < TriggerSafePt_Electron ) continue;
     }
     else if(Suffix.Contains("EMu")){
-      if( Loose_muons.at(0).Pt() < 52. ) continue;
-      if( Loose_electrons.at(0).Pt() < 38. ) continue;
+      if( Loose_muons.at(0).Pt() < TriggerSafePt_Muon ) continue;
+      if( Loose_electrons.at(0).Pt() < TriggerSafePt_Electron ) continue;
     }
     else{
 
@@ -385,13 +428,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       double this_trigsf = 1.;
       if(Suffix.Contains("SingleMuon")){
-        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, "Mu50", Loose_muons);
+        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Loose_muons);
       }
       else if(Suffix.Contains("SingleElectron")){
         this_trigsf = 1.;
       }
       else if(Suffix.Contains("EMu")){
-        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, "Mu50", Loose_muons);
+        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Loose_muons);
       }
       else{
 
