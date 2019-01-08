@@ -105,6 +105,7 @@ void FatJet::SetTightLepVetoJetID(double b){
 
 bool FatJet::PassID(TString ID){
 
+  if(ID=="HN") return Pass_HN();
   if(ID=="tight") return Pass_tightJetID();
   if(ID=="tightLepVeto") return Pass_tightLepVetoJetID();
 
@@ -112,6 +113,15 @@ bool FatJet::PassID(TString ID){
   exit(EXIT_FAILURE);
 
   return false;
+
+}
+
+bool FatJet::Pass_HN(){
+
+  if(! Pass_tightJetID() ) return false;
+  if(! (SDMass()>40.) ) return false;
+
+  return true;
 
 }
 
