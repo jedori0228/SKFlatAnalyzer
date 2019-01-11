@@ -5,10 +5,19 @@
 https://jskim.web.cern.ch/jskim/SKFlat/Manual_SKFlat.pdf
 
 ## First time setup
+```
+cp setup_tmp.sh setup.sh
+```
 
 Edit setup.sh :
-```bash
+```
 export SKFlatLogEmail='' # <- put your email address here
+```
+
+Making libraries
+```
+make clean
+make
 ```
 
 ## Initializing
@@ -47,3 +56,20 @@ First two lines will move the files to inclue/ and src/ directory
 Last line is to run a job with the machine, not batch.
 
 This is good for test your analyzer
+
+
+# How To update your forked repo to follow the original repository
+
+To get your forked repo from this one
+```
+push "Fork" button on the right-top side of this web page
+```
+
+Go to you forked repo webpage and copy the address of it, then clone
+
+How to update your forked repo to follow the original repository
+```
+git remote add upstream https://github.com/CMSSNU/SKFlatAnalyzer
+git fetch upstream
+git pull upstream master
+```
