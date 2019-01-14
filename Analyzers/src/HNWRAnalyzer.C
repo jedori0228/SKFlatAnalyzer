@@ -29,6 +29,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
     Triggers_Electron = {
       "HLT_Ele27_WPTight_Gsf_v",
+      "HLT_Photon175_v",
     };
     Triggers_Muon = {
       "HLT_Mu50",
@@ -44,6 +45,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
     Triggers_Electron = {
       "HLT_Ele35_WPTight_Gsf_v",
+      "HLT_Photon200_v",
     };
     Triggers_Muon = {
       "HLT_Mu50_v",
@@ -334,12 +336,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< TString > Suffixs = {
     "SingleMuon",
     "SingleElectron",
-    "EMu",
+    //"EMu",
   };
   std::vector< bool > PassTriggers = {
-    PassMu50           && (Loose_electrons.size()==0) && (Loose_muons.size()>=1),
-    PassSingleElectron && (Loose_electrons.size()>=1) && (Loose_muons.size()==0),
-    PassMu50           && (Loose_electrons.size()==1) && (Loose_muons.size()==1),
+    PassMu50           && (Loose_electrons.size()==0) && (Loose_muons.size()>=1) && (Tight_muons.size()>=1),
+    PassSingleElectron && (Loose_electrons.size()>=1) && (Loose_muons.size()==0) && (Tight_electrons.size()>=1),
+    //PassMu50           && (Loose_electrons.size()==1) && (Loose_muons.size()==1) && (n_Tight_leptons>=1),
   };
 
   //=================
@@ -355,9 +357,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(Suffix.Contains("SingleMuon")){
       if( Loose_muons.at(0).Pt() < TriggerSafePt_Muon ) continue;
+      if(! (Loose_muons.at(0).PassID(param.Muon_Tight_ID)) ) continue;
     }
     else if(Suffix.Contains("SingleElectron")){
       if( Loose_electrons.at(0).Pt() < TriggerSafePt_Electron ) continue;
+      if(! (Loose_electrons.at(0).PassID(param.Electron_Tight_ID)) ) continue;
     }
     else if(Suffix.Contains("EMu")){
       if( Loose_muons.at(0).Pt() < TriggerSafePt_Muon ) continue;
@@ -474,6 +478,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     FillHist(Suffix+"_NLepton_"+param.Name, leps.size(), 1., 5, 0., 5.);
 
+/*
     //==== If only one lepton, it should be boosted
     if(leps.size()==1){
 
@@ -581,6 +586,52 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
 
     }
+*/
+
+    //==== UMN
+
+    Lepton LeadLep = (*leps[0]);
+    bool LeadLepPtCut = (LeadLep.Pt() > 60.);
+    if(!LeadLepPtCut) continue;
+
+    bool IsBoosted = false;
+    for(unsigned int i=0; i<fatjets.size(); i++){
+      FatJet this_fatjet = fatjets.at(i);
+      if(this_fatjet.LSF() > 0.7){
+        if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
+          double m_ll = 300.; //FIXME
+          if(m_ll > 200.){
+            IsBoosted = true;
+            HNFatJet = this_fatjet;
+            NCand = HNFatJet;
+            WRCand = LeadLep+HNFatJet;
+            break;
+          }
+        }
+      }
+    }
+    if(IsBoosted){
+      map_bool_To_Region["Boosted"] = true;
+      if(leps.size()==2){
+        Lepton SubLeadLep = (*leps[1]);
+        bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
+        if(SubLeadLepPtCut){
+          map_bool_To_Region["Boosted_TwoLepton"] = true;
+        }
+      }
+    }
+    else if(leps.size()==2){
+      Lepton SubLeadLep = (*leps[1]);
+      bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
+      bool IsResolved = SubLeadLepPtCut && ( (LeadLep+SubLeadLep).M() >= 200. ) && (jets.size() >= 2);
+      if( IsResolved ){
+        map_bool_To_Region["Resolved"] = true;
+        WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
+        NCand = SubLeadLep+jets.at(0)+jets.at(1);
+        NCand_1 = LeadLep+jets.at(0)+jets.at(1);
+        NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
+      }
+    }
 
     for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
@@ -603,7 +654,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
-        if(this_region.Contains("OneLepton_AwayFatJet")){
+        if(this_region.Contains("Boosted")){
           JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps[0]->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
 
           JSFillHist(this_region, "HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 1000, 0., 1000.);
@@ -613,10 +664,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           JSFillHist(this_region, "HNFatJet_PuppiTau21_"+this_region, HNFatJet.PuppiTau2()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
           JSFillHist(this_region, "HNFatJet_PuppiTau31_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
           JSFillHist(this_region, "HNFatJet_PuppiTau32_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau2(), weight, 100, 0., 1.);
+          JSFillHist(this_region, "HNFatJet_LSF_"+this_region, HNFatJet.LSF, weight, 100, 0., 1.);
 
         }
 
-        if(this_region.Contains("TwoLepton")){
+        if(this_region.Contains("TwoLepton") || this_region.Contains("Resolved")){
           JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*leps[0])+(*leps[1])).M(), weight, 2000, 0., 2000.);
           JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*leps[0])+(*leps[1])).Pt(), weight, 2000, 0., 2000.);
           JSFillHist(this_region, "dPhi_ll_"+this_region, fabs((*leps[0]).DeltaPhi(*leps[1])), weight, 40, 0., 4.);
