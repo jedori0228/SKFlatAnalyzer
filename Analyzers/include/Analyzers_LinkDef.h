@@ -21,6 +21,7 @@
 #pragma link C++ class GenStudy+;
 #pragma link C++ class HNPairAnalyzer+;
 #pragma link C++ class HNWRAnalyzer+;
+#pragma link C++ class HNWRSignalStudy+;
 #pragma link C++ class HNWRGenMatching+;
 #pragma link C++ class TriggerNormCheck+;
 #pragma link C++ class TriggerWithPtRange+;
