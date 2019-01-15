@@ -303,7 +303,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //===========
 
   std::vector<FatJet>   fatjets         = SelectFatJets(this_AllFatJets, param.FatJet_ID, 200, 2.4);
+  std::vector<FatJet>   fatjets_LSF    = SelectFatJets(this_AllFatJets, "HNLSF", 200, 2.4);
   std::sort(fatjets.begin(), fatjets.end(), PtComparing);
+  std::sort(fatjets_LSF.begin(), fatjets_LSF.end(), PtComparing);
 
   std::vector<Jet>      alljets         = SelectJets(this_AllJets, param.Jet_ID, 40., 2.4);
   std::sort(alljets.begin(), alljets.end(), PtComparing);
@@ -595,18 +597,16 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if(!LeadLepPtCut) continue;
 
     bool IsBoosted = false;
-    for(unsigned int i=0; i<fatjets.size(); i++){
-      FatJet this_fatjet = fatjets.at(i);
-      if(this_fatjet.LSF() > 0.7){
-        if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
-          double m_ll = 300.; //FIXME
-          if(m_ll > 200.){
-            IsBoosted = true;
-            HNFatJet = this_fatjet;
-            NCand = HNFatJet;
-            WRCand = LeadLep+HNFatJet;
-            break;
-          }
+    for(unsigned int i=0; i<fatjets_LSF.size(); i++){
+      FatJet this_fatjet = fatjets_LSF.at(i);
+      if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
+        double m_ll = 300.; //FIXME
+        if(m_ll > 200.){
+          IsBoosted = true;
+          HNFatJet = this_fatjet;
+          NCand = HNFatJet;
+          WRCand = LeadLep+HNFatJet;
+          break;
         }
       }
     }
@@ -630,6 +630,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         NCand = SubLeadLep+jets.at(0)+jets.at(1);
         NCand_1 = LeadLep+jets.at(0)+jets.at(1);
         NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
+        if(fatjets_LSF.size()==0){
+          map_bool_To_Region["Resolved_NoLSFFatJet"] = true;
+        }
       }
     }
 
@@ -652,6 +655,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         JSFillHist(this_region, "Lepton_Size_"+this_region, leps.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
+        JSFillHist(this_region, "LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
+        JSFillHist(this_region, "FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
         if(this_region.Contains("Boosted")){

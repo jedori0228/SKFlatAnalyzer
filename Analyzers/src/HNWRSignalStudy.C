@@ -92,6 +92,11 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   }
 */
 
+  //==== # of LSF jets
+
+  vector<FatJet> fatjets_LSF = GetFatJets("HNLSF", 200., 2.4);
+  FillHist("FatJet_LSF_Size", fatjets_LSF.size(), 1., 10, 0., 10.);
+
   //==== Find Gen objects
   Gen gen_WR, gen_N, gen_priLep, gen_secLep, gen_jet1, gen_jet2;
   int gen_N_PID = -1;
