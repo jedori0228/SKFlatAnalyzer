@@ -619,6 +619,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           map_bool_To_Region["Boosted_TwoLepton"] = true;
         }
       }
+      if(fatjets_LSF.size()==1){
+         map_bool_To_Region["Boosted_OneLSFFatJet"] = true;
+      }
     }
     else if(leps.size()==2){
       Lepton SubLeadLep = (*leps[1]);
