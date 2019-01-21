@@ -229,7 +229,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   //==== RECO vs GEN matching
   TString GENLepChannel = "";
   vector<Lepton> leps;
-  vector<Lepton> Tight_leps;
+  vector<Lepton> Loose_leps, Tight_leps;
   vector<Lepton> NoIso_leps;
   std::vector<Electron> NoIso_electrons = GetElectrons("HNWRNoIso", 50., 2.5);
   std::vector<Muon> NoIso_muons = GetMuons("HNWRNoIso", 50., 2.4);
@@ -238,11 +238,14 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     vector<Electron> els = GetAllElectrons();
     for(unsigned int i=0; i<els.size(); i++){
       Lepton lep(els.at(i));
-      if(lep.Pt()<50) continue;
+      if(lep.Pt()<53) continue;
       lep.SetRelIso( els.at(i).TrkIso()/els.at(i).Pt() );
       leps.push_back( lep );
       if( els.at(i).PassID("HNWRTight") ){
         Tight_leps.push_back( lep );
+      }
+      if( els.at(i).PassID("HNWRNoIso") ){
+        Loose_leps.push_back( lep );
       }
     }
     for(unsigned int i=0; i<NoIso_electrons.size(); i++){
@@ -257,12 +260,15 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     vector<Muon> mus = GetAllMuons();
     for(unsigned int i=0; i<mus.size(); i++){
       Lepton lep(mus.at(i));
-      if(lep.Pt()<50) continue;
+      if(lep.Pt()<53) continue;
       lep.SetRelIso( mus.at(i).TrkIso()/mus.at(i).TuneP4().Pt() );
       leps.push_back( lep );
       if( mus.at(i).PassID("HNWRTight") ){
         Tight_leps.push_back( lep );
       } 
+      if( mus.at(i).PassID("POGLoose") ){
+        Loose_leps.push_back( lep );
+      }
     }
     for(unsigned int i=0; i<NoIso_muons.size(); i++){
       Lepton lep(NoIso_muons.at(i));
@@ -293,8 +299,8 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   Lepton lep_mathced_gen_secLep;
   bool Found_lep_mathced_gen_secLep = false;
   dummy_dR = 0.15;
-  for(unsigned int i=0; i<leps.size(); i++){
-    Lepton lep = leps.at(i);
+  for(unsigned int i=0; i<Loose_leps.size(); i++){
+    Lepton lep = Loose_leps.at(i);
     if( gen_secLep.DeltaR( lep ) < dummy_dR ){
       lep_mathced_gen_secLep = lep;
       dummy_dR = gen_secLep.DeltaR( lep );
@@ -304,6 +310,63 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   if(Found_lep_mathced_gen_secLep){
     JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_secLep__RelIso_"+GENLepChannel, lep_mathced_gen_secLep.RelIso(), 1., 100, 0., 1.);
   }
+
+  vector<Jet> jets = GetJets("HN", 40., 2.4);
+  vector<Jet> jet_matched_gen_jets;
+  for(int j=0; j<2; j++){
+    Gen this_gen_jet = tmp_gen_jets.at(j);
+
+    dummy_dR = 0.15;
+    Jet jet_matched_gen_jet;
+    bool this_found = false;
+    for(unsigned int i=0; i<jets.size(); i++){
+      Jet jet = jets.at(i);
+      if( this_gen_jet.DeltaR( jet ) < dummy_dR ){
+        this_found = true;
+        jet_matched_gen_jet = jet;
+        dummy_dR = this_gen_jet.DeltaR( jet );
+      }
+    }
+    if(this_found){
+      jet_matched_gen_jets.push_back( jet_matched_gen_jet );
+    }
+
+  }
+
+  if(Found_lep_mathced_gen_secLep && jet_matched_gen_jets.size()==2){
+
+    //==== Max
+    double dR_ak4_max = max( lep_mathced_gen_secLep.DeltaR( jet_matched_gen_jets.at(0) ), lep_mathced_gen_secLep.DeltaR( jet_matched_gen_jets.at(1) ) );
+    JSFillHist(GENLepChannel, "GenStudy__MaxdR_matchedAK4_secLep_"+GENLepChannel, dR_ak4_max, 1., 60, 0., 6.);
+
+    //==== find matched AK4 
+    dummy_dR = 0.15;
+    Jet jet_matched_secLep;
+    bool Found_jet_matched_secLep = false;
+    for(unsigned int j=0; j<jets.size(); j++){
+      if( lep_mathced_gen_secLep.DeltaR( jets.at(j) ) < dummy_dR ){
+        Found_jet_matched_secLep = true;
+        jet_matched_secLep = jets.at(j);
+        dummy_dR = lep_mathced_gen_secLep.DeltaR( jets.at(j) );
+      }
+    }
+    if(Found_jet_matched_secLep){
+      JSFillHist(GENLepChannel, "GenStudy__dR_matchedAK4_secLep_"+GENLepChannel, jet_matched_secLep.DeltaR( lep_mathced_gen_secLep ), 1., 60, 0., 0.15);
+    }
+
+    double this_max_dR = -1;
+    double this_min_dR = 9999;
+    for(unsigned int j=0; j<jets.size(); j++){
+      JSFillHist(GENLepChannel, "GenStudy__dR_AK4_secLep_"+GENLepChannel, jets.at(j).DeltaR( lep_mathced_gen_secLep ), 1., 60, 0., 6.);
+      this_max_dR = max(this_max_dR, jets.at(j).DeltaR( lep_mathced_gen_secLep ));
+      this_min_dR = min(this_max_dR, jets.at(j).DeltaR( lep_mathced_gen_secLep ));
+    }
+    JSFillHist(GENLepChannel, "GenStudy__MaxdR_AK4_secLep_"+GENLepChannel, this_max_dR, 1., 60, 0., 6.);
+    JSFillHist(GENLepChannel, "GenStudy__MindR_AK4_secLep_"+GENLepChannel, this_min_dR, 1., 100, 0., 1.);
+
+
+  }
+
 
   vector<FatJet> fatjets = GetFatJets("tight", 200., 2.4);
   FatJet fatjet_matched_gen_N;
@@ -332,9 +395,10 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
 
       //==== Fast vs Full
 
-      JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_priLep__Pt_"+GENLepChannel, lep_mathced_gen_priLep.Pt(), 1., 1000, 0., 1000.);
+      JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_priLep__Pt_"+GENLepChannel, lep_mathced_gen_priLep.Pt(), 1., 1000, 0., 1000.);
       if(Found_lep_mathced_gen_secLep){
-        JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_secLep__Pt_"+GENLepChannel, lep_mathced_gen_secLep.Pt(), 1., 1000, 0., 1000.);
+        JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_secLep__Pt_"+GENLepChannel, lep_mathced_gen_secLep.Pt(), 1., 1000, 0., 1000.);
+        JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_secLep_Found_"+GENLepChannel, 0., 1., 1, 0., 1.);
       }
 
     }
