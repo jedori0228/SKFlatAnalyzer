@@ -105,7 +105,7 @@ void SKFlatValidation::executeEvent(){
   if(DataYear==2016) param.MCCorrrectionIgnoreNoHist = true; //FIXME remove this later
 
   param.Electron_Tight_ID = "passHEEPID";
-  param.Electron_ID_SF_Key = "Default";
+  param.Electron_ID_SF_Key = "passHEEPID";
 
   param.Muon_Tight_ID = "POGHighPtWithLooseTrkIso";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";

@@ -82,6 +82,12 @@ void Muon::SetTuneP4(double pt, double pt_err, double eta, double phi, double q)
 }
 
 bool Muon::PassID(TString ID){
+
+  if(ID=="HNWRTight") return Pass_HNWRTight();
+  if(ID=="HNWRLoose") return Pass_HNWRLoose();
+  if(ID=="HNWRVeto") return Pass_HNWRVeto();
+  if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
+
   //==== POG
   if(ID=="POGTight") return isPOGTight();
   if(ID=="POGHighPt") return isPOGHighPt();
@@ -90,6 +96,9 @@ bool Muon::PassID(TString ID){
   if(ID=="POGTightWithTightIso") return Pass_POGTightWithTightIso();
   if(ID=="POGHighPtWithLooseTrkIso") return Pass_POGHighPtWithLooseTrkIso();
   //==== Customized
+  if(ID=="HNPairTight") return Pass_HNPairTight();
+  if(ID=="HNPairLoose") return Pass_HNPairLoose();
+  if(ID=="HNPairVeto") return Pass_HNPairVeto();
   if(ID=="TEST") return Pass_TESTID();
 
   cout << "[Electron::PassID] No id : " << ID << endl;
@@ -107,6 +116,57 @@ bool Muon::Pass_POGHighPtWithLooseTrkIso(){
   if(!( isPOGHighPt() )) return false;
   if(!( TrkIso()/TuneP4().Pt()<0.1 )) return false;
   return true;
+}
+
+//==== HN Pair
+
+bool Muon::Pass_HNPairTight(){
+  if(! isPOGMedium() ) return false;
+  if(! (MiniRelIso()<0.2) ) return false;
+  if(! (fabs(dXY())<0.05 && fabs(dZ())<0.1 && fabs(IP3D()/IP3Derr())<4.) ) return false;
+  return true;
+}
+bool Muon::Pass_HNPairLoose(){
+  if(! isPOGMedium() ) return false;
+  if(! (MiniRelIso()<0.6) ) return false;
+  return true;
+}
+bool Muon::Pass_HNPairVeto(){
+  if(! isPOGLoose() ) return false;
+  if(! (MiniRelIso()<0.6) ) return false;
+  return true;
+}
+
+//==== HN WR
+
+bool Muon::Pass_HNWRTight(){
+
+  if(! isPOGHighPt() ) return false;
+  if(! ( (TrkIso()/TuneP4().Pt())<0.1 ) ) return false;
+
+  return true;
+}
+bool Muon::Pass_HNWRLoose(){
+
+  if(! isPOGHighPt() ) return false;
+  if(! ( (TrkIso()/TuneP4().Pt())<0.4 ) ) return false;
+
+  return true;
+}
+bool Muon::Pass_HNWRVeto(){
+
+  if(! isPOGHighPt() ) return false;
+  if(! ( (TrkIso()/TuneP4().Pt())<0.4 ) ) return false;
+
+  return true;
+}
+
+bool Muon::Pass_HNWRNoIso(){
+
+  if(! isPOGLoose() ) return false;
+
+  return true;
+
 }
 
 //==== TEST ID
