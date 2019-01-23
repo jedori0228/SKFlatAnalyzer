@@ -32,7 +32,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
       "HLT_Photon175_v",
     };
     Triggers_Muon = {
-      "HLT_Mu50",
+      "HLT_Mu50_v",
       "HLT_TkMu50_v",
     };
     TriggerNameForSF_Electron = "Ele27_WPTight_Gsf";
