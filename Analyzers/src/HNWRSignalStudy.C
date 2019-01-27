@@ -386,6 +386,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__LSF_"+GENLepChannel, fatjet_matched_gen_N.LSF(), 1., 100, 0., 1.);
     double reldpf = fabs( fatjet_matched_gen_N.Pt() - gen_N.Pt() )/ gen_N.Pt();
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__reldpt_"+GENLepChannel, reldpf, 1., 200, 0., 2.);
+    JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__Pt_"+GENLepChannel, fatjet_matched_gen_N.Pt(), 1., 2000, 0., 2000.);
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__dRgen_"+GENLepChannel, fatjet_matched_gen_N.DeltaR(gen_N), 1., 60, 0., 6.);
     if(Found_lep_mathced_gen_secLep) JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__dR_lep_mathced_gen_secLep_"+GENLepChannel, fatjet_matched_gen_N.DeltaR(lep_mathced_gen_secLep), 1., 60, 0., 6.);
 
@@ -395,9 +396,9 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
 
       //==== Fast vs Full
 
-      JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_priLep__Pt_"+GENLepChannel, lep_mathced_gen_priLep.Pt(), 1., 1000, 0., 1000.);
+      JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_priLep__Pt_"+GENLepChannel, lep_mathced_gen_priLep.Pt(), 1., 2000, 0., 2000.);
       if(Found_lep_mathced_gen_secLep){
-        JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_secLep__Pt_"+GENLepChannel, lep_mathced_gen_secLep.Pt(), 1., 1000, 0., 1000.);
+        JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_secLep__Pt_"+GENLepChannel, lep_mathced_gen_secLep.Pt(), 1., 2000, 0., 2000.);
         JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_secLep_Found_"+GENLepChannel, 0., 1., 1, 0., 1.);
       }
 
