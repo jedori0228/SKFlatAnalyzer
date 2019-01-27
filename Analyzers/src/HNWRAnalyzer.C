@@ -352,10 +352,17 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   for(unsigned int it_Suffix=0; it_Suffix<Suffixs.size(); it_Suffix++){
 
+    std::map<TString, bool> TMP_map_bool_To_Region; // For SS/OS
+    std::map<TString, bool> map_bool_To_Region;
+
+    //==== Event Selection : Trigger
+
     TString Suffix = Suffixs.at(it_Suffix);
     if( !PassTriggers.at(it_Suffix) ) continue;
 
     FillHist(Suffix+"_PassTrigger_"+param.Name, 0., 1., 1, 0., 1.);
+
+    //==== Event Selection : Trigger Safe Pt Selection
 
     if(Suffix.Contains("SingleMuon")){
       if( Loose_muons.at(0).Pt() < TriggerSafePt_Muon ) continue;
@@ -372,6 +379,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     else{
 
     }
+
+    map_bool_To_Region["PassTrigger"] = true;
 
     if(this->IsDATA){
       if( Suffix.Contains("SingleMuon") ){
@@ -468,9 +477,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     //=======================
     //==== Analysis Regions
     //=======================
-
-    std::map<TString, bool> TMP_map_bool_To_Region; // For SS/OS
-    std::map<TString, bool> map_bool_To_Region;
 
     FatJet HNFatJet;
 
