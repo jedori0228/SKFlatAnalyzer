@@ -125,7 +125,8 @@ bool Electron::PassID(TString ID){
   if(etaRegion()==GAP) return false;
 
   if(ID=="HNWRTight") return Pass_HNWRTight();
-  if(ID=="HNWRLoose") return Pass_HNWRLoose();
+  //if(ID=="HNWRLoose") return Pass_HNWRLoose(); //FIXME test
+  if(ID=="HNWRLoose") return Pass_HNWRTight() || Pass_CutBasedLooseNoIso(); //FIXME test
   if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
 

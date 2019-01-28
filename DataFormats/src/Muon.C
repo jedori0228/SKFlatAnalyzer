@@ -84,7 +84,8 @@ void Muon::SetTuneP4(double pt, double pt_err, double eta, double phi, double q)
 bool Muon::PassID(TString ID){
 
   if(ID=="HNWRTight") return Pass_HNWRTight();
-  if(ID=="HNWRLoose") return Pass_HNWRLoose();
+  //if(ID=="HNWRLoose") return Pass_HNWRLoose(); //FIXME test
+  if(ID=="HNWRLoose") return Pass_HNWRTight() || isPOGLoose(); //FIXME test
   if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
 
