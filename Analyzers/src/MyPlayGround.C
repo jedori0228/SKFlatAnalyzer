@@ -24,7 +24,7 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
 
   FillHist("PassMETFilter", 0., 1., 1, 0., 1.);
 
-  if(muons.size()==2) return;
+  if(muons.size()!=2) return;
 
   FillHist("TwoTightMuons", 0., 1., 1, 0., 1.);
 
