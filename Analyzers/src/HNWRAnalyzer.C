@@ -649,7 +649,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     //==== tmep
     if(jets.size()>=2 && leps.size()==2 && IsAllTight){
-      map_bool_To_Region["TwoLepVetoAK4Jets"] = true;
+      map_bool_To_Region["TwoLepVetoAK4Jets_Resolved"] = true;
     }
     else{
       if(IsBoosted){
