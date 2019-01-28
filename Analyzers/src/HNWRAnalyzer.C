@@ -278,6 +278,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   FillHist("NoExtraLepton_"+param.Name, 0., 1., 1, 0., 1.);
 
+/*
   //==== Loose sample or not
   if(RunFake){
     if(IsAllTight) return;
@@ -285,6 +286,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else{
     if(!IsAllTight) return;
   }
+*/
 
   FillHist("AllTight_"+param.Name, 0., 1., 1, 0., 1.);
 
@@ -629,7 +631,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
          map_bool_To_Region["Boosted_OneLSFFatJet"] = true;
       }
     }
-    else if(leps.size()==2){
+    else if(leps.size()==2 && IsAllTight){
       Lepton SubLeadLep = (*leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
       bool IsResolved = SubLeadLepPtCut && ( (LeadLep+SubLeadLep).M() >= 200. ) && (jets.size() >= 2);
@@ -642,6 +644,16 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         if(fatjets_LSF.size()==0){
           map_bool_To_Region["Resolved_NoLSFFatJet"] = true;
         }
+      }
+    }
+
+    //==== tmep
+    if(jets.size()>=2 && leps.size()==2 && IsAllTight){
+      map_bool_To_Region["TwoLepVetoAK4Jets"] = true;
+    }
+    else{
+      if(IsBoosted){
+        map_bool_To_Region["NoTwoLepVetoAK4Jets_Boosted"] = true;
       }
     }
 

@@ -26,4 +26,6 @@
 #pragma link C++ class TriggerNormCheck+;
 #pragma link C++ class TriggerWithPtRange+;
 
+#pragma link C++ class  MyPlayGround+;
+
 #endif
