@@ -604,37 +604,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     bool LeadLepPtCut = (LeadLep.Pt() > 60.);
     if(!LeadLepPtCut) continue;
 
-    bool IsBoosted = false;
-    for(unsigned int i=0; i<fatjets_LSF.size(); i++){
-      FatJet this_fatjet = fatjets_LSF.at(i);
-      if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
-        double m_ll = 300.; //FIXME
-        if(m_ll > 200.){
-          IsBoosted = true;
-          HNFatJet = this_fatjet;
-          NCand = HNFatJet;
-          WRCand = LeadLep+HNFatJet;
-          break;
-        }
-      }
-    }
-    if(IsBoosted){
-      map_bool_To_Region["Boosted"] = true;
-      if(leps.size()==2){
-        Lepton SubLeadLep = (*leps[1]);
-        bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
-        if(SubLeadLepPtCut){
-          map_bool_To_Region["Boosted_TwoLepton"] = true;
-        }
-      }
-      if(fatjets_LSF.size()==1){
-         map_bool_To_Region["Boosted_OneLSFFatJet"] = true;
-      }
-    }
-    else if(leps.size()==2 && IsAllTight){
+    if(leps.size()==2 && IsAllTight){
       Lepton SubLeadLep = (*leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
       bool IsResolved = SubLeadLepPtCut && ( (LeadLep+SubLeadLep).M() >= 200. ) && (jets.size() >= 2);
+      IsResolved = IsResolved && (LeadLep.DeltaR( SubLeadLep ) > 0.4);
+      IsResolved = IsResolved && (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
       if( IsResolved ){
         map_bool_To_Region["Resolved"] = true;
         WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
@@ -645,15 +620,32 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           map_bool_To_Region["Resolved_NoLSFFatJet"] = true;
         }
       }
-    }
 
-    //==== tmep
-    if(jets.size()>=2 && leps.size()==2 && IsAllTight){
-      map_bool_To_Region["TwoLepVetoAK4Jets_Resolved"] = true;
     }
     else{
+      bool IsBoosted = false;
+      for(unsigned int i=0; i<fatjets_LSF.size(); i++){
+        FatJet this_fatjet = fatjets_LSF.at(i);
+        if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
+          double m_ll = 300.; //FIXME
+          if(m_ll > 200.){
+            IsBoosted = true;
+            HNFatJet = this_fatjet;
+            NCand = HNFatJet;
+            WRCand = LeadLep+HNFatJet;
+            break;
+          }
+        }
+      }
       if(IsBoosted){
-        map_bool_To_Region["NoTwoLepVetoAK4Jets_Boosted"] = true;
+        map_bool_To_Region["Boosted"] = true;
+        if(leps.size()==2){
+          Lepton SubLeadLep = (*leps[1]);
+          bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
+          if(SubLeadLepPtCut){
+            map_bool_To_Region["Boosted_TwoLepton"] = true;
+          }
+        }
       }
     }
 
