@@ -430,28 +430,28 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if(!IsDATA){
       weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire;
 
-      mcCorr.IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
+      mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
       for(unsigned int i=0; i<Loose_electrons.size(); i++){
-        double this_recosf = mcCorr.ElectronReco_SF(Loose_electrons.at(i).scEta(),Loose_electrons.at(i).Pt());
-        double this_idsf = mcCorr.ElectronID_SF(param.Electron_ID_SF_Key, Loose_electrons.at(i).scEta(), Loose_electrons.at(i).Pt());
+        double this_recosf = mcCorr->ElectronReco_SF(Loose_electrons.at(i).scEta(),Loose_electrons.at(i).Pt());
+        double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, Loose_electrons.at(i).scEta(), Loose_electrons.at(i).Pt());
         weight *= this_recosf*this_idsf;
       }
       for(unsigned int i=0; i<Loose_muons.size(); i++){
-        double this_idsf  = mcCorr.MuonID_SF (param.Muon_ID_SF_Key,  Loose_muons.at(i).Eta(), Loose_muons.at(i).MiniAODPt());
-        double this_isosf = mcCorr.MuonISO_SF(param.Muon_ISO_SF_Key, Loose_muons.at(i).Eta(), Loose_muons.at(i).MiniAODPt());
+        double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Loose_muons.at(i).Eta(), Loose_muons.at(i).MiniAODPt());
+        double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Loose_muons.at(i).Eta(), Loose_muons.at(i).MiniAODPt());
         weight *= this_idsf*this_isosf;
       }
 
       double this_trigsf = 1.;
       if(Suffix.Contains("SingleMuon")){
-        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Loose_muons);
+        this_trigsf = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Loose_muons);
       }
       else if(Suffix.Contains("SingleElectron")){
         this_trigsf = 1.;
       }
       else if(Suffix.Contains("EMu")){
-        this_trigsf = mcCorr.MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Loose_muons);
+        this_trigsf = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Loose_muons);
       }
       else{
 
@@ -463,15 +463,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     else{
 
       if(RunFake){
-        weight = fakeEst.GetWeight(leps, param);
-        if(! (fakeEst.HasLooseLepton) ){
+        weight = fakeEst->GetWeight(leps, param);
+        if(! (fakeEst->HasLooseLepton) ){
           cout << "--> WTF" << endl;
           exit(EXIT_FAILURE);
         }
       }
 
       if(RunCF){
-        weight = cfEst.GetWeight(leps, param);
+        weight = cfEst->GetWeight(leps, param);
       }
 
     }

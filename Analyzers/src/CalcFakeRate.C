@@ -223,8 +223,8 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
       if(PassTight){
         n_TightElectron++;
         if(!IsDATA){
-          double this_recosf = mcCorr.ElectronReco_SF(el->scEta(),el->Pt());
-          double this_idsf = mcCorr.ElectronID_SF(param.Electron_ID_SF_Key, el->scEta(), el->Pt());
+          double this_recosf = mcCorr->ElectronReco_SF(el->scEta(),el->Pt());
+          double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, el->scEta(), el->Pt());
           SF_Electron *= this_recosf*this_idsf;
         }
       }
@@ -243,8 +243,8 @@ void CalcFakeRate::executeEventFromParameter(AnalyzerParameter param){
             this_pt = mu->Pt();
             this_eta = mu->Eta();
           }
-          double this_idsf  = mcCorr.MuonID_SF (param.Muon_ID_SF_Key,  this_eta, this_pt);
-          double this_isosf = mcCorr.MuonISO_SF(param.Muon_ISO_SF_Key, this_eta, this_pt);
+          double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  this_eta, this_pt);
+          double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, this_eta, this_pt);
           SF_Muon *= this_idsf*this_isosf;
         }
       }

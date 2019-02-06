@@ -89,16 +89,16 @@ void TriggerNormCheck::executeEventFromParameter(AnalyzerParameter param){
 
   if(!IsDATA){
     for(unsigned int i=0; i<electrons.size(); i++){
-      double this_recosf = mcCorr.ElectronReco_SF(electrons.at(i).scEta(),electrons.at(i).Pt());
-      double this_idsf = mcCorr.ElectronID_SF(param.Electron_ID_SF_Key, electrons.at(i).scEta(), electrons.at(i).Pt());
+      double this_recosf = mcCorr->ElectronReco_SF(electrons.at(i).scEta(),electrons.at(i).Pt());
+      double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, electrons.at(i).scEta(), electrons.at(i).Pt());
       sf_electrons *= this_recosf*this_idsf;
     }
     for(unsigned int i=0; i<muons.size(); i++){
       double this_pt = muons.at(i).MiniAODPt();
       double this_eta = muons.at(i).Eta();
 
-      double this_idsf  = mcCorr.MuonID_SF (param.Muon_ID_SF_Key,  this_eta, this_pt);
-      double this_isosf = mcCorr.MuonISO_SF(param.Muon_ISO_SF_Key, this_eta, this_pt);
+      double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  this_eta, this_pt);
+      double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, this_eta, this_pt);
 
       sf_muons *= this_idsf*this_isosf;
     }
