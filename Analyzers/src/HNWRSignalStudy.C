@@ -229,6 +229,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   //==== RECO vs GEN matching
   TString GENLepChannel = "";
   vector<Lepton> leps;
+  vector<Lepton *> leps_ptr;
   vector<Lepton> Loose_leps, Tight_leps;
   vector<Lepton> NoIso_leps;
   std::vector<Electron> NoIso_electrons = GetElectrons("HNWRNoIso", 50., 2.5);
@@ -241,6 +242,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
       if(lep.Pt()<53) continue;
       lep.SetRelIso( els.at(i).TrkIso()/els.at(i).Pt() );
       leps.push_back( lep );
+      leps_ptr.push_back( &(els.at(i)) );
       if( els.at(i).PassID("HNWRTight") ){
         Tight_leps.push_back( lep );
       }
@@ -263,6 +265,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
       if(lep.Pt()<53) continue;
       lep.SetRelIso( mus.at(i).TrkIso()/mus.at(i).TuneP4().Pt() );
       leps.push_back( lep );
+      leps_ptr.push_back( &(mus.at(i)) );
       if( mus.at(i).PassID("HNWRTight") ){
         Tight_leps.push_back( lep );
       } 
@@ -317,14 +320,26 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   JSFillHist(GENLepChannel, "GenStudy__FatJet_LSF_Away2p7_Size_"+GENLepChannel, N_FatJet_LSF_Away2p7, 1., 10, 0., 10.);
 
   Lepton lep_mathced_gen_secLep;
+  Lepton *lep_mathced_gen_secLep_ptr;
   bool Found_lep_mathced_gen_secLep = false;
+  dummy_dR = 0.15;
+  for(unsigned int i=0; i<leps.size(); i++){
+    Lepton lep = leps.at(i);
+    if( gen_secLep.DeltaR( lep ) < dummy_dR ){
+      lep_mathced_gen_secLep = lep;
+      lep_mathced_gen_secLep_ptr = leps_ptr.at(i);
+      dummy_dR = gen_secLep.DeltaR( lep );
+      Found_lep_mathced_gen_secLep = true;
+    }
+  }
+
+  bool Found_lep_mathced_gen_secLep_ID = false;
   dummy_dR = 0.15;
   for(unsigned int i=0; i<Loose_leps.size(); i++){
     Lepton lep = Loose_leps.at(i);
     if( gen_secLep.DeltaR( lep ) < dummy_dR ){
-      lep_mathced_gen_secLep = lep;
       dummy_dR = gen_secLep.DeltaR( lep );
-      Found_lep_mathced_gen_secLep = true;
+      Found_lep_mathced_gen_secLep_ID = true;
     }
   }
   if(Found_lep_mathced_gen_secLep){
@@ -373,7 +388,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
 
   JSFillHist(GENLepChannel, "GenStudy__LeptonVetoJet_Size_"+GENLepChannel, N_LepVetoJet, 1., 10, 0., 10.);
 
-  if(Found_lep_mathced_gen_secLep && jet_matched_gen_jets.size()==2){
+  if(Found_lep_mathced_gen_secLep_ID && jet_matched_gen_jets.size()==2){
 
     //==== Max
     double dR_ak4_max = max( lep_mathced_gen_secLep.DeltaR( jet_matched_gen_jets.at(0) ), lep_mathced_gen_secLep.DeltaR( jet_matched_gen_jets.at(1) ) );
@@ -429,7 +444,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__reldpt_"+GENLepChannel, reldpf, 1., 200, 0., 2.);
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__Pt_"+GENLepChannel, fatjet_matched_gen_N.Pt(), 1., 5000, 0., 5000.);
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__dRgen_"+GENLepChannel, fatjet_matched_gen_N.DeltaR(gen_N), 1., 60, 0., 6.);
-    if(Found_lep_mathced_gen_secLep) JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__dR_lep_mathced_gen_secLep_"+GENLepChannel, fatjet_matched_gen_N.DeltaR(lep_mathced_gen_secLep), 1., 60, 0., 6.);
+    if(Found_lep_mathced_gen_secLep_ID) JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__dR_lep_mathced_gen_secLep_"+GENLepChannel, fatjet_matched_gen_N.DeltaR(lep_mathced_gen_secLep), 1., 60, 0., 6.);
 
     bool PassUMNTag = (fatjet_matched_gen_N.SDMass() > 40.) && (fatjet_matched_gen_N.LSF() > 0.7);;
     if(PassUMNTag){
@@ -438,7 +453,23 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
       //==== Fast vs Full
 
       JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_priLep__Pt_"+GENLepChannel, lep_mathced_gen_priLep.Pt(), 1., 5000, 0., 5000.);
-      if(Found_lep_mathced_gen_secLep){
+
+      //==== To see which ID cut kill second lepton reco
+
+      if(Found_lep_mathced_gen_secLep && gen_SignalLeptonChannel==0){
+        Electron *el_mathced_gen_secLep = (Electron *)lep_mathced_gen_secLep_ptr;
+        bool HoverE_cut = -999;
+        if( fabs(el_mathced_gen_secLep->scEta()) <= 1.479 ){
+          HoverE_cut = 0.05 + 1.16/el_mathced_gen_secLep->scE() + 0.0324*el_mathced_gen_secLep->Rho()/el_mathced_gen_secLep->scE();
+        }
+        else{
+          HoverE_cut = 0.0441 + 2.54/el_mathced_gen_secLep->scE() + 0.183*el_mathced_gen_secLep->Rho()/el_mathced_gen_secLep->scE();
+        }
+        JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__secLep__HoverE_"+GENLepChannel, el_mathced_gen_secLep->HoverE()-HoverE_cut, 1., 400, -0.2, 0.2);
+      }
+
+
+      if(Found_lep_mathced_gen_secLep_ID){
         JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_secLep__Pt_"+GENLepChannel, lep_mathced_gen_secLep.Pt(), 1., 5000, 0., 5000.);
         JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__lep_mathced_gen_secLep_Found_"+GENLepChannel, 0., 1., 1, 0., 1.);
       }
