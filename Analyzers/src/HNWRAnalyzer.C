@@ -639,12 +639,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
       if(IsBoosted){
         map_bool_To_Region["Boosted"] = true;
-        if(leps.size()==2){
-          Lepton SubLeadLep = (*leps[1]);
-          bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
-          if(SubLeadLepPtCut){
-            map_bool_To_Region["Boosted_TwoLepton"] = true;
+        if(leps.size()>=2){
+
+          for(unsigned int k=1; k<leps.size(); k++){
+            if( leps.at(k)->Pt() <= 53. ) continue;
+            if( HNFatJet.DeltaR( *(leps.at(k)) ) < 0.8 ){
+              map_bool_To_Region["Boosted_TwoLepton"] = true;
+            }
           }
+
         }
       }
     }

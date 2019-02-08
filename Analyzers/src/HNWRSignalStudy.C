@@ -458,14 +458,18 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
 
       if(Found_lep_mathced_gen_secLep && gen_SignalLeptonChannel==0){
         Electron *el_mathced_gen_secLep = (Electron *)lep_mathced_gen_secLep_ptr;
-        bool HoverE_cut = -999;
+        double HoverE_cut = -999;
+        double InvEminusInvP_cut = 999;
         if( fabs(el_mathced_gen_secLep->scEta()) <= 1.479 ){
           HoverE_cut = 0.05 + 1.16/el_mathced_gen_secLep->scE() + 0.0324*el_mathced_gen_secLep->Rho()/el_mathced_gen_secLep->scE();
+          InvEminusInvP_cut = 0.193;
         }
         else{
           HoverE_cut = 0.0441 + 2.54/el_mathced_gen_secLep->scE() + 0.183*el_mathced_gen_secLep->Rho()/el_mathced_gen_secLep->scE();
+          InvEminusInvP_cut = 0.111;
         }
         JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__secLep__HoverE_"+GENLepChannel, el_mathced_gen_secLep->HoverE()-HoverE_cut, 1., 400, -0.2, 0.2);
+        JSFillHist(GENLepChannel, "GenStudy__PassUMNTag__secLep__InvEminusInvP_"+GENLepChannel, fabs(el_mathced_gen_secLep->InvEminusInvP())-InvEminusInvP_cut, 1., 200, 0., 0.2);
       }
 
 
