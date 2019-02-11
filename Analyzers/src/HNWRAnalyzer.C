@@ -87,7 +87,7 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Electron_Tight_ID = "HNWRTight";
   param.Electron_Loose_ID = "HNWRLoose";
-  param.Electron_Veto_ID = "HNWRVeto";
+  param.Electron_Veto_ID = "HNWRLoose";
   param.Electron_ID_SF_Key = "Default";
   param.Electron_FR_ID = "HNWR";
   param.Electron_FR_Key = "AwayJetPt40";
@@ -99,7 +99,7 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Muon_Tight_ID = "HNWRTight";
   param.Muon_Loose_ID = "HNWRLoose";
-  param.Muon_Veto_ID = "HNWRVeto";
+  param.Muon_Veto_ID = "HNWRLoose";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
   param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
   param.Muon_Trigger_SF_Key = "POGHighPtLooseTrkIso";
