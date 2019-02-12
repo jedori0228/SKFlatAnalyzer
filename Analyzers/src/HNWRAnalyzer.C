@@ -257,16 +257,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   }
 */
 
-  FillHist("AfterAllTight_n_Tight_electrons_"+param.Name, Tight_electrons.size(), 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Loose_electrons_"+param.Name, Loose_electrons.size(), 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Veto_electrons_"+param.Name, Veto_electrons.size(), 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Tight_muons_"+param.Name, Tight_muons.size(), 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Loose_muons_"+param.Name, Loose_muons.size(), 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Veto_muons_"+param.Name, Veto_muons.size(), 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Tight_leptons_"+param.Name, n_Tight_leptons, 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Loose_leptons_"+param.Name, n_Loose_leptons, 1., 5, 0., 5.);
-  FillHist("AfterAllTight_n_Veto_leptons_"+param.Name, n_Veto_leptons, 1., 5, 0., 5.);
-
   //===========
   //==== Jets
   //===========
@@ -278,7 +268,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   std::vector<Jet>      alljets         = SelectJets(this_AllJets, param.Jet_ID, 40., 2.4);
   std::sort(alljets.begin(), alljets.end(), PtComparing);
-  std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Veto_electrons, Veto_muons);
+  std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Tight_electrons, Tight_muons);
 
   int NBJets=0;
   for(unsigned int i=0; i<alljets.size(); i++){
@@ -474,18 +464,16 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(IsBoosted){
         map_bool_To_Region["Boosted"] = true;
         Used_leps.push_back( Tight_leps.at(0) );
-        if(Loose_leps.size()>=2){
 
-          for(unsigned int k=0; k<Loose_leps.size(); k++){
-            if( Loose_leps.at(k)->Pt() <= 53. ) continue;
-            if( HNFatJet.DeltaR( *(Loose_leps.at(k)) ) < 0.8 ){
-              map_bool_To_Region["Boosted_TwoLepton"] = true;
-              Used_leps.push_back( Loose_leps.at(k) );
-              break;
-            }
+        for(unsigned int k=0; k<Loose_leps.size(); k++){
+          if( Loose_leps.at(k)->Pt() <= 53. ) continue;
+          if( HNFatJet.DeltaR( *(Loose_leps.at(k)) ) < 0.8 ){
+            map_bool_To_Region["Boosted_TwoLepton"] = true;
+            Used_leps.push_back( Loose_leps.at(k) );
+            break;
           }
-
         }
+
       }
     }
 
