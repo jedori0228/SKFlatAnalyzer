@@ -426,10 +426,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     bool LeadLepPtCut = (LeadLep.Pt() > 60.);
     if(!LeadLepPtCut) continue;
 
-    if(Tight_leps.size()==2){
+    if(Tight_leps.size()==2 && (jets.size() >= 2)){
       Lepton SubLeadLep = (*Tight_leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
-      bool IsResolved = SubLeadLepPtCut && ( (LeadLep+SubLeadLep).M() >= 200. ) && (jets.size() >= 2);
+      bool IsResolved = SubLeadLepPtCut && ( (LeadLep+SubLeadLep).M() >= 200. );
       IsResolved = IsResolved && (LeadLep.DeltaR( SubLeadLep ) > 0.4);
       IsResolved = IsResolved && (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
       if( IsResolved ){
