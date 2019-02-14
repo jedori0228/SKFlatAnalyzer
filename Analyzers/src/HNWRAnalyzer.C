@@ -247,16 +247,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   FillHist("n_Loose_leptons_"+param.Name, n_Loose_leptons, 1., 5, 0., 5.);
   FillHist("n_Veto_leptons_"+param.Name, n_Veto_leptons, 1., 5, 0., 5.);
 
-/*
-  //==== Loose sample or not
-  if(RunFake){
-    if(IsAllTight) return;
-  }
-  else{
-    if(!IsAllTight) return;
-  }
-*/
-
   //===========
   //==== Jets
   //===========
@@ -459,11 +449,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         for(unsigned int k=0; k<Loose_leps.size(); k++){
           if( Loose_leps.at(k)->Pt() <= 53. ) continue;
           if( HNFatJet.DeltaR( *(Loose_leps.at(k)) ) < 0.8 ){
-            if( ( LeadLep+*(Loose_leps.at(k)) ).M() > 200. ){
-              map_bool_To_Region["Boosted"] = true;
-              Used_leps.push_back( Loose_leps.at(k) );
-              break;
-            }
+            //if( ( LeadLep+*(Loose_leps.at(k)) ).M() > 200. ){ //TODO Check if this cut is good
+            map_bool_To_Region["Boosted"] = true;
+            Used_leps.push_back( Loose_leps.at(k) );
+            break;
           }
         }
 
@@ -507,7 +496,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         }
 
-        if(this_region.Contains("TwoLepton") || this_region.Contains("Resolved")){
+        if( Used_leps.size()>=2 ){
           JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*Used_leps.at(0))+(*Used_leps.at(1))).M(), weight, 2000, 0., 2000.);
           JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*Used_leps.at(0))+(*Used_leps.at(1))).Pt(), weight, 2000, 0., 2000.);
           JSFillHist(this_region, "dPhi_ll_"+this_region, fabs((*Used_leps.at(0)).DeltaPhi(*Used_leps.at(1))), weight, 40, 0., 4.);
