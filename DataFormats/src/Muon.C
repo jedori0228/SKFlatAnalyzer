@@ -84,8 +84,8 @@ void Muon::SetTuneP4(double pt, double pt_err, double eta, double phi, double q)
 bool Muon::PassID(TString ID){
 
   if(ID=="HNWRTight") return Pass_HNWRTight();
-  if(ID=="HNWRLoose") return isPOGLoose();
-  if(ID=="HNWRVeto") return isPOGLoose();
+  if(ID=="HNWRLoose") return Pass_HNWRLoose();
+  if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
 
   //==== POG
@@ -148,15 +148,13 @@ bool Muon::Pass_HNWRTight(){
 }
 bool Muon::Pass_HNWRLoose(){
 
-  if(! isPOGHighPt() ) return false;
-  if(! ( (TrkIso()/TuneP4().Pt())<0.4 ) ) return false;
+  if(! isPOGLoose() ) return false;
 
   return true;
 }
 bool Muon::Pass_HNWRVeto(){
 
-  if(! isPOGHighPt() ) return false;
-  if(! ( (TrkIso()/TuneP4().Pt())<0.4 ) ) return false;
+  if(! isPOGLoose() ) return false;
 
   return true;
 }

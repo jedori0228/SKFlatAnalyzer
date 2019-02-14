@@ -87,7 +87,7 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Electron_Tight_ID = "HNWRTight";
   param.Electron_Loose_ID = "HNWRLoose";
-  param.Electron_Veto_ID = "HNWRLoose";
+  param.Electron_Veto_ID = "HNWRVeto";
   param.Electron_ID_SF_Key = "Default";
   param.Electron_FR_ID = "HNWR";
   param.Electron_FR_Key = "AwayJetPt40";
@@ -99,7 +99,7 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Muon_Tight_ID = "HNWRTight";
   param.Muon_Loose_ID = "HNWRLoose";
-  param.Muon_Veto_ID = "HNWRLoose";
+  param.Muon_Veto_ID = "HNWRVeto";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
   param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
   param.Muon_Trigger_SF_Key = "POGHighPtLooseTrkIso";
@@ -297,12 +297,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< TString > Suffixs = {
     "SingleMuon",
     "SingleElectron",
-    //"EMu",
   };
   std::vector< bool > PassTriggers = {
     PassMu50           && (Tight_electrons.size()==0) && (Tight_muons.size()>=1),
     PassSingleElectron && (Tight_electrons.size()>=1) && (Tight_muons.size()==0),
-    //PassMu50           && (Tight_electrons.size()==1) && (Tight_muons.size()==1) && (n_Tight_leptons>=1),
   };
 
   //=================
@@ -440,9 +438,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
         Used_leps.push_back( Tight_leps.at(0) );
         Used_leps.push_back( Tight_leps.at(1) );
-        if(fatjets_LSF.size()==0){
-          map_bool_To_Region["Resolved_NoLSFFatJet"] = true;
-        }
       }
 
     }
@@ -451,26 +446,24 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       for(unsigned int i=0; i<fatjets_LSF.size(); i++){
         FatJet this_fatjet = fatjets_LSF.at(i);
         if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
-          double m_ll = 300.; //FIXME
-          if(m_ll > 200.){
-            IsBoosted = true;
-            HNFatJet = this_fatjet;
-            NCand = HNFatJet;
-            WRCand = LeadLep+HNFatJet;
-            break;
-          }
+          IsBoosted = true;
+          HNFatJet = this_fatjet;
+          NCand = HNFatJet;
+          WRCand = LeadLep+HNFatJet;
+          break;
         }
       }
       if(IsBoosted){
-        map_bool_To_Region["Boosted"] = true;
         Used_leps.push_back( Tight_leps.at(0) );
 
         for(unsigned int k=0; k<Loose_leps.size(); k++){
           if( Loose_leps.at(k)->Pt() <= 53. ) continue;
           if( HNFatJet.DeltaR( *(Loose_leps.at(k)) ) < 0.8 ){
-            map_bool_To_Region["Boosted_TwoLepton"] = true;
-            Used_leps.push_back( Loose_leps.at(k) );
-            break;
+            if( ( LeadLep+*(Loose_leps.at(k)) ).M() > 200. ){
+              map_bool_To_Region["Boosted"] = true;
+              Used_leps.push_back( Loose_leps.at(k) );
+              break;
+            }
           }
         }
 

@@ -125,8 +125,7 @@ bool Electron::PassID(TString ID){
   if(etaRegion()==GAP) return false;
 
   if(ID=="HNWRTight") return Pass_HNWRTight();
-  //if(ID=="HNWRLoose") return Pass_HNWRLoose(); //FIXME test
-  if(ID=="HNWRLoose") return Pass_HNWRTight() || Pass_CutBasedLooseNoIso(); //FIXME test
+  if(ID=="HNWRLoose") return Pass_HNWRLoose();
   if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
 
@@ -294,15 +293,31 @@ bool Electron::Pass_HNWRTight(){
 
 bool Electron::Pass_HNWRLoose(){
 
-  if(! (passHEEPID()||passVetoID()) ) return false;
-
-  //==== Apply HEEP dXY cut
-
   if( fabs(scEta()) <= 1.479 ){
-    if(!( fabs(dXY())<0.02 )) return false;
+
+    if(! (Full5x5_sigmaIetaIeta() < 0.0112) ) return false;
+    if(! (fabs(dEtaSeed()) < 0.00377) ) return false;
+    if(! (fabs(dPhiIn()) < 0.0884) ) return false;
+    //if(! (HoverE() < 0.05 + 1.16/scE() + 0.0324*Rho()/scE()) ) return false;
+    if(! (fabs(InvEminusInvP()) < 0.193) ) return false;
+    if(! (NMissingHits() <= 1) ) return false;
+    if(! (PassConversionVeto()) ) return false;
+
+    return true;
+
   }
   else{
-    if(!( fabs(dXY())<0.05 )) return false;
+
+    if(! (Full5x5_sigmaIetaIeta() < 0.0425) ) return false;
+    if(! (fabs(dEtaSeed()) < 0.00674) ) return false;
+    if(! (fabs(dPhiIn()) <  0.169 ) ) return false;
+    //if(! (HoverE() < 0.0441 + 2.54/scE() + 0.183*Rho()/scE()) ) return false;
+    if(! (fabs(InvEminusInvP()) < 0.111) ) return false;
+    if(! (NMissingHits() <= 1) ) return false;
+    if(! (PassConversionVeto()) ) return false;
+
+    return true;
+
   }
 
   return true;
@@ -311,15 +326,31 @@ bool Electron::Pass_HNWRLoose(){
 
 bool Electron::Pass_HNWRVeto(){
 
-  if(! (passHEEPID()||passVetoID()) ) return false;
-
-  //==== Apply HEEP dXY cut
-
   if( fabs(scEta()) <= 1.479 ){
-    if(!( fabs(dXY())<0.02 )) return false;
+
+    if(! (Full5x5_sigmaIetaIeta() < 0.0112) ) return false;
+    if(! (fabs(dEtaSeed()) < 0.00377) ) return false;
+    if(! (fabs(dPhiIn()) < 0.0884) ) return false;
+    //if(! (HoverE() < 0.05 + 1.16/scE() + 0.0324*Rho()/scE()) ) return false;
+    if(! (fabs(InvEminusInvP()) < 0.193) ) return false;
+    if(! (NMissingHits() <= 1) ) return false;
+    if(! (PassConversionVeto()) ) return false;
+
+    return true;
+
   }
   else{
-    if(!( fabs(dXY())<0.05 )) return false;
+  
+    if(! (Full5x5_sigmaIetaIeta() < 0.0425) ) return false;
+    if(! (fabs(dEtaSeed()) < 0.00674) ) return false;
+    if(! (fabs(dPhiIn()) <  0.169 ) ) return false;
+    //if(! (HoverE() < 0.0441 + 2.54/scE() + 0.183*Rho()/scE()) ) return false;
+    if(! (fabs(InvEminusInvP()) < 0.111) ) return false;
+    if(! (NMissingHits() <= 1) ) return false;
+    if(! (PassConversionVeto()) ) return false;
+
+    return true;
+
   }
 
   return true;
