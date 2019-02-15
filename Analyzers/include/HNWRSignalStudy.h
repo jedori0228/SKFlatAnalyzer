@@ -11,6 +11,8 @@ public:
   void executeEventFromParameter(AnalyzerParameter param);
   void executeEvent();
 
+  bool RunNewPDF;
+
   HNWRSignalStudy();
   ~HNWRSignalStudy();
 
