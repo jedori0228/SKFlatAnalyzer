@@ -351,12 +351,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
     for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
 
-    std::vector<Lepton *> Loose_leps_el, Loose_leps_mu;
     std::vector<Lepton *> Loose_leps;
-    Loose_leps_el = MakeLeptonPointerVector(Loose_electrons);
-    Loose_leps_mu = MakeLeptonPointerVector(Loose_muons);
-    for(unsigned int i=0; i<Loose_leps_el.size(); i++) Loose_leps.push_back( Loose_leps_el.at(i) );
-    for(unsigned int i=0; i<Loose_leps_mu.size(); i++) Loose_leps.push_back( Loose_leps_mu.at(i) );
+
+    if( Suffix.Contains("SingleElectron") ) Loose_leps = MakeLeptonPointerVector(Loose_electrons);
+    if( Suffix.Contains("SingleMuon") ) Loose_leps = MakeLeptonPointerVector(Loose_muons);
 
     double weight = 1.;
     if(!IsDATA){
