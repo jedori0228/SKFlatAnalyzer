@@ -287,10 +287,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< TString > Suffixs = {
     "SingleMuon",
     "SingleElectron",
+    "EMu",
   };
   std::vector< bool > PassTriggers = {
     PassMu50           && (Tight_electrons.size()==0) && (Tight_muons.size()>=1),
     PassSingleElectron && (Tight_electrons.size()>=1) && (Tight_muons.size()==0),
+    PassMu50           && (Tight_electrons.size()==1) && (Tight_muons.size()==1),
   };
 
   //=================
@@ -351,10 +353,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
     for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
 
-    std::vector<Lepton *> Loose_leps;
+    //==== Inside AK8 jet
+    std::vector<Lepton *> Loose_SF_leps, Loose_OF_leps;
 
-    if( Suffix.Contains("SingleElectron") ) Loose_leps = MakeLeptonPointerVector(Loose_electrons);
-    if( Suffix.Contains("SingleMuon") ) Loose_leps = MakeLeptonPointerVector(Loose_muons);
+    if( Suffix.Contains("SingleElectron") ){
+      Loose_SF_leps = MakeLeptonPointerVector(Loose_electrons);
+      Loose_OF_leps = MakeLeptonPointerVector(Loose_muons);
+    }
+    else if( Suffix.Contains("SingleMuon") ){
+      Loose_SF_leps = MakeLeptonPointerVector(Loose_muons);
+      Loose_OF_leps = MakeLeptonPointerVector(Loose_electrons);
+    }
+    else if( Suffix.Contains("EMu") ){
+    }
 
     double weight = 1.;
     if(!IsDATA){
@@ -402,7 +413,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     Particle NCand_1, NCand_2;
 
     FillHist(Suffix+"_NTightLepton_"+param.Name, Tight_leps.size(), 1., 5, 0., 5.);
-    FillHist(Suffix+"_NLooseLepton_"+param.Name, Loose_leps.size(), 1., 5, 0., 5.);
+    FillHist(Suffix+"_NLooseSFLepton_"+param.Name, Loose_SF_leps.size(), 1., 5, 0., 5.);
+    FillHist(Suffix+"_NLooseOFLepton_"+param.Name, Loose_OF_leps.size(), 1., 5, 0., 5.);
 
     vector<Lepton *> Used_leps;
 
@@ -444,12 +456,22 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(IsBoosted){
         Used_leps.push_back( Tight_leps.at(0) );
 
-        for(unsigned int k=0; k<Loose_leps.size(); k++){
-          if( Loose_leps.at(k)->Pt() <= 53. ) continue;
-          if( HNFatJet.DeltaR( *(Loose_leps.at(k)) ) < 0.8 ){
-            //if( ( LeadLep+*(Loose_leps.at(k)) ).M() > 200. ){ //TODO Check if this cut is good
+        for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
+          if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
+          if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
+            //if( ( LeadLep+*(Loose_SF_leps.at(k)) ).M() > 200. ){ //TODO Check if this cut is good
             map_bool_To_Region["Boosted"] = true;
-            Used_leps.push_back( Loose_leps.at(k) );
+            Used_leps.push_back( Loose_SF_leps.at(k) );
+            break;
+          }
+        }
+
+        for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
+          if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
+          if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
+            //if( ( LeadLep+*(Loose_OF_leps.at(k)) ).M() > 200. ){ //TODO Check if this cut is good
+            map_bool_To_Region["Boosted_CR"] = true;
+            Used_leps.push_back( Loose_OF_leps.at(k) );
             break;
           }
         }
