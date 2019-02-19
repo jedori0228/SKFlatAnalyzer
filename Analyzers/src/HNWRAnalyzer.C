@@ -436,8 +436,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
       if( IsResolved ){
 
-        if(DiLepMassGT200) map_bool_To_Region["IsResolved_SR"] = true;
-        if(DiLepMassLT150) map_bool_To_Region["IsResolved_DYCR"] = true;
+        if(DiLepMassGT200) map_bool_To_Region["Resolved_SR"] = true;
+        if(DiLepMassLT150) map_bool_To_Region["Resolved_DYCR"] = true;
 
         WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
         NCand = SubLeadLep+jets.at(0)+jets.at(1);
