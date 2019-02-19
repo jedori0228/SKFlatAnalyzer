@@ -427,11 +427,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if(Tight_leps.size()==2 && (jets.size() >= 2)){
       Lepton SubLeadLep = (*Tight_leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
-      bool IsResolved = SubLeadLepPtCut && ( (LeadLep+SubLeadLep).M() >= 200. );
-      IsResolved = IsResolved && (LeadLep.DeltaR( SubLeadLep ) > 0.4);
-      IsResolved = IsResolved && (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
+      bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
+      bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
+      bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
+      bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
+
+      //==== Resolved without mll cut
+      bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
       if( IsResolved ){
-        map_bool_To_Region["Resolved"] = true;
+
+        if(DiLepMassGT200) map_bool_To_Region["IsResolved_SR"] = true;
+        if(DiLepMassLT150) map_bool_To_Region["IsResolved_DYCR"] = true;
+
         WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
         NCand = SubLeadLep+jets.at(0)+jets.at(1);
         NCand_1 = LeadLep+jets.at(0)+jets.at(1);
@@ -442,26 +449,32 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     }
     else{
-      bool IsBoosted = false;
+
+      bool HasAwayMergedFatJet = false;
       for(unsigned int i=0; i<fatjets_LSF.size(); i++){
         FatJet this_fatjet = fatjets_LSF.at(i);
         if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
-          IsBoosted = true;
+          HasAwayMergedFatJet = true;
           HNFatJet = this_fatjet;
           NCand = HNFatJet;
           WRCand = LeadLep+HNFatJet;
           break;
         }
       }
-      if(IsBoosted){
+
+      if(HasAwayMergedFatJet){
         Used_leps.push_back( Tight_leps.at(0) );
+
+        bool HasSFLooseLepton = false;
+        Lepton *SFLooseLepton;
+        bool HasOFLooseLepton = false;
+        Lepton *OFLooseLepton;
 
         for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
           if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
           if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
-            //if( ( LeadLep+*(Loose_SF_leps.at(k)) ).M() > 200. ){ //TODO Check if this cut is good
-            map_bool_To_Region["Boosted"] = true;
-            Used_leps.push_back( Loose_SF_leps.at(k) );
+            HasSFLooseLepton = true;
+            SFLooseLepton = Loose_SF_leps.at(k);
             break;
           }
         }
@@ -469,11 +482,27 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
           if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
           if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
-            //if( ( LeadLep+*(Loose_OF_leps.at(k)) ).M() > 200. ){ //TODO Check if this cut is good
-            map_bool_To_Region["Boosted_CR"] = true;
-            Used_leps.push_back( Loose_OF_leps.at(k) );
+            HasOFLooseLepton = true;
+            OFLooseLepton = Loose_OF_leps.at(k);
             break;
           }
+        }
+
+        //==== ee or mm
+        if(HasSFLooseLepton && !HasOFLooseLepton){
+          if( (LeadLep+*SFLooseLepton).M() > 200 ){
+            map_bool_To_Region["Boosted_SR"] = true;
+          }
+          else if( (LeadLep+*SFLooseLepton).M() < 150 ){
+            map_bool_To_Region["Boosted_DYCR"] = true;
+          }
+          Used_leps.push_back( SFLooseLepton );
+        }
+
+        //==== em : no DY expected, so no need mll cut. This is TTBar CR
+        if(!HasSFLooseLepton && HasOFLooseLepton){
+          map_bool_To_Region["EMu_Boosted_CR"] = true;
+          Used_leps.push_back( OFLooseLepton );
         }
 
       }
