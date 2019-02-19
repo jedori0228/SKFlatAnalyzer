@@ -212,13 +212,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Leptons
   //==============
 
-  std::vector<Electron> Veto_electrons = SelectElectrons(this_AllElectrons, param.Electron_Veto_ID, 10., 2.5);
+  std::vector<Electron> Veto_electrons = SelectElectrons(this_AllElectrons, param.Electron_Veto_ID, 10., 2.4);
   std::vector<Muon> Veto_muons = SelectMuons(this_AllTunePMuons, param.Muon_Veto_ID, 10., 2.4);
 
-  std::vector<Electron> Loose_electrons = SelectElectrons(this_AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.5);
+  std::vector<Electron> Loose_electrons = SelectElectrons(this_AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.4);
   std::vector<Muon> Loose_muons = SelectMuons(this_AllTunePMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
 
-  std::vector<Electron> Tight_electrons = SelectElectrons(this_AllElectrons, param.Electron_Tight_ID, param.Electron_MinPt, 2.5);
+  std::vector<Electron> Tight_electrons = SelectElectrons(this_AllElectrons, param.Electron_Tight_ID, param.Electron_MinPt, 2.4);
   std::vector<Muon> Tight_muons = SelectMuons(this_AllTunePMuons, param.Muon_Tight_ID, param.Muon_MinPt, 2.4);
 
   if(PromptLeptonOnly){
@@ -308,6 +308,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     TString Suffix = Suffixs.at(it_Suffix);
     if( !PassTriggers.at(it_Suffix) ) continue;
+
+    bool IsEMu = false;
+    if( Suffix.Contains("EMu") ) IsEMu = true;
 
     FillHist(Suffix+"_PassTrigger_"+param.Name, 0., 1., 1, 0., 1.);
 
@@ -422,11 +425,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     Lepton LeadLep = (*Tight_leps.at(0));
     bool LeadLepPtCut = (LeadLep.Pt() > 60.);
+    //==== if emu, at(0) is always electron
+    if( IsEMu ){
+      LeadLepPtCut = max( Tight_leps.at(0)->Pt(), Tight_leps.at(1)->Pt() ) > 60.;
+    }
     if(!LeadLepPtCut) continue;
 
     if(Tight_leps.size()==2 && (jets.size() >= 2)){
       Lepton SubLeadLep = (*Tight_leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
+      if( IsEMu ){
+        LeadLepPtCut = min( Tight_leps.at(0)->Pt(), Tight_leps.at(1)->Pt() ) > 53.;
+      }
       bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
       bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
       bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
@@ -456,7 +466,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     }
     //==== For EMu, do not fill boosted
-    else if(! (Suffix.Contains("EMu")) ){
+    else if(!IsEMu){
 
       bool HasAwayMergedFatJet = false;
       for(unsigned int i=0; i<fatjets_LSF.size(); i++){
