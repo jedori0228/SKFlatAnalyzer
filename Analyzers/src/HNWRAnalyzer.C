@@ -436,7 +436,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
       if( IsResolved ){
 
+        //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR
+        //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR
+        //==== - HNWR_EMu_Resolved_SR : em Resolved CR (ttbar dominant)
         if(DiLepMassGT200) map_bool_To_Region["Resolved_SR"] = true;
+
+        //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
+        //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
+        //==== - HNWR_EMu_Resolved_SR : NOT USED
         if(DiLepMassLT150) map_bool_To_Region["Resolved_DYCR"] = true;
 
         WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
@@ -448,7 +455,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
 
     }
-    else{
+    //==== For EMu, do not fill boosted
+    else if(! (Suffix.Contains("EMu")) ){
 
       bool HasAwayMergedFatJet = false;
       for(unsigned int i=0; i<fatjets_LSF.size(); i++){
@@ -491,17 +499,25 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         //==== ee or mm
         if(HasSFLooseLepton && !HasOFLooseLepton){
           if( (LeadLep+*SFLooseLepton).M() > 200 ){
+            //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR
+            //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR
             map_bool_To_Region["Boosted_SR"] = true;
           }
           else if( (LeadLep+*SFLooseLepton).M() < 150 ){
+            //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted CR (DY dominant) -> extrapolate with fiting
+            //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted CR (DY dominant) -> extrapolate with fiting
             map_bool_To_Region["Boosted_DYCR"] = true;
           }
           Used_leps.push_back( SFLooseLepton );
         }
 
-        //==== em : no DY expected, so no need mll cut. This is TTBar CR
         if(!HasSFLooseLepton && HasOFLooseLepton){
-          map_bool_To_Region["EMu_Boosted_CR"] = true;
+
+          if( (LeadLep+*OFLooseLepton).M() > 200 ){
+            //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant)
+            //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK9jet (ttbar dominant)
+            map_bool_To_Region["EMu_Boosted_CR"] = true;
+          }
           Used_leps.push_back( OFLooseLepton );
         }
 
