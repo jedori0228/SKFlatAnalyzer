@@ -113,6 +113,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     FillHist("GENFIND_no_gen_priLep", 0., 1., 1, 0., 1.);
     GenAllFound = false;
   }
+  FillHist("M_gen_priLepAndN", (gen_N+gen_priLep).M(), 1., 6000, 0., 6000.);
 
   for(unsigned int i=2; i<gens.size(); i++){
     Gen gen = gens.at(i);
@@ -147,6 +148,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     FillHist("GENFIND_size_tmp_gen_jets", tmp_gen_jets.size(), 1., 10, 0., 10.);
     GenAllFound = false;
   }
+  FillHist("M_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).M(), 1., 6000, 0., 6000.);
 
 /*
   //=== 190113_ElectronTriggerTest
