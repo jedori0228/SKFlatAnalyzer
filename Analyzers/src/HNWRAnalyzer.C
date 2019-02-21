@@ -431,6 +431,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
     if(!LeadLepPtCut) continue;
 
+    FillHist(Suffix+"_LeadingLeptonPtCut_"+param.Name, 0., 1., 1, 0., 1.);
 
     bool FourResolvedObject = false;
 
