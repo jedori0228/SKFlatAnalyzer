@@ -432,6 +432,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if(!LeadLepPtCut) continue;
 
     if(Tight_leps.size()==2 && (jets.size() >= 2)){
+
+      FillHist(Suffix+"_TwoLeptonAndTwoJet_"+param.Name, 0., 1., 1, 0., 1.);
+
       Lepton SubLeadLep = (*Tight_leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
       if( IsEMu ){
@@ -439,12 +442,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
       bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
       bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
+      bool DiLepMassOnZ = IsOnZ( (LeadLep+SubLeadLep).M(), 10. );
       bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
       bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
 
       //==== Resolved without mll cut
       bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
       if( IsResolved ){
+
+        FillHist(Suffix+"_ResolvedBeforeMassCut_"+param.Name, 0., 1., 1, 0., 1.);
 
         //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR
         //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR
@@ -455,6 +461,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
         //==== - HNWR_EMu_Resolved_SR : NOT USED
         if(DiLepMassLT150) map_bool_To_Region["Resolved_DYCR"] = true;
+
+        //==== - HNWR_SingleElectron_Resolved_OnZ : ee Resolved SR
+        //==== - HNWR_SingleMuon_Resolved_OnZ : mm Resolved SR
+        //==== - HNWR_EMu_Resolved_OnZ : em Resolved CR (ttbar dominant)
+        if(DiLepMassOnZ) map_bool_To_Region["Resolved_OnZ"] = true;
 
         WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
         NCand = SubLeadLep+jets.at(0)+jets.at(1);
