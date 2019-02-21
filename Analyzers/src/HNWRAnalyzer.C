@@ -432,59 +432,62 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     if(!LeadLepPtCut) continue;
 
 
+    bool FourResolvedObject = false;
+
     if(Tight_leps.size()==2){
 
-      Lepton SubLeadLep = (*Tight_leps[1]);
-      bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
-      bool DiLepMassOnZ = IsOnZ( (LeadLep+SubLeadLep).M(), 10. );
-
-      //==== - HNWR_SingleElectron_OnZ : ee Resolved SR
-      //==== - HNWR_SingleMuon_OnZ : mm Resolved SR
-      //==== - HNWR_EMu_OnZ : em Resolved CR (ttbar dominant)
-      if(SubLeadLepPtCut && DiLepMassOnZ) map_bool_To_Region["OnZ"] = true;
-    }
-
-    if(Tight_leps.size()==2 && (jets.size() >= 2)){
-
-      FillHist(Suffix+"_TwoLeptonAndTwoJet_"+param.Name, 0., 1., 1, 0., 1.);
+      Used_leps.push_back( Tight_leps.at(0) );
+      Used_leps.push_back( Tight_leps.at(1) );
 
       Lepton SubLeadLep = (*Tight_leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
       if( IsEMu ){
         LeadLepPtCut = min( Tight_leps.at(0)->Pt(), Tight_leps.at(1)->Pt() ) > 53.;
       }
-      bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
-      bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
-      bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
-      bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
+      bool DiLepMassOnZ = IsOnZ( (LeadLep+SubLeadLep).M(), 10. );
 
-      //==== Resolved without mll cut
-      bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
-      if( IsResolved ){
+      //==== - HNWR_SingleElectron_OnZ : ee Resolved SR
+      //==== - HNWR_SingleMuon_OnZ : mm Resolved SR
+      //==== - HNWR_EMu_OnZ : em Resolved CR (ttbar dominant)
+      if(SubLeadLepPtCut && DiLepMassOnZ) map_bool_To_Region["OnZ"] = true;
 
-        FillHist(Suffix+"_ResolvedBeforeMassCut_"+param.Name, 0., 1., 1, 0., 1.);
+      if( jets.size() >= 2 ){
 
-        //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR
-        //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR
-        //==== - HNWR_EMu_Resolved_SR : em Resolved CR (ttbar dominant)
-        if(DiLepMassGT200) map_bool_To_Region["Resolved_SR"] = true;
+        FourResolvedObject = true;
 
-        //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
-        //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
-        //==== - HNWR_EMu_Resolved_SR : NOT USED
-        if(DiLepMassLT150) map_bool_To_Region["Resolved_DYCR"] = true;
+        FillHist(Suffix+"_TwoLeptonAndTwoJet_"+param.Name, 0., 1., 1, 0., 1.);
 
-        WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
-        NCand = SubLeadLep+jets.at(0)+jets.at(1);
-        NCand_1 = LeadLep+jets.at(0)+jets.at(1);
-        NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
-        Used_leps.push_back( Tight_leps.at(0) );
-        Used_leps.push_back( Tight_leps.at(1) );
+        bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
+        bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
+        bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
+        bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
+
+        //==== Resolved without mll cut
+        bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
+        if( IsResolved ){
+
+          FillHist(Suffix+"_ResolvedBeforeMassCut_"+param.Name, 0., 1., 1, 0., 1.);
+
+          //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR
+          //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR
+          //==== - HNWR_EMu_Resolved_SR : em Resolved CR (ttbar dominant)
+          if(DiLepMassGT200) map_bool_To_Region["Resolved_SR"] = true;
+
+          //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
+          //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
+          //==== - HNWR_EMu_Resolved_SR : NOT USED
+          if(DiLepMassLT150) map_bool_To_Region["Resolved_DYCR"] = true;
+
+          WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
+          NCand = SubLeadLep+jets.at(0)+jets.at(1);
+          NCand_1 = LeadLep+jets.at(0)+jets.at(1);
+          NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
+        }
       }
-
     }
+
     //==== For EMu, do not fill boosted
-    else if(!IsEMu){
+    if(!FourResolvedObject && !IsEMu){
 
       bool HasAwayMergedFatJet = false;
       for(unsigned int i=0; i<fatjets_LSF.size(); i++){
