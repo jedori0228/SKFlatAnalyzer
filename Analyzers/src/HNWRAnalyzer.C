@@ -290,8 +290,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     "EMu",
   };
   std::vector< bool > PassTriggers = {
-    PassMu50           && (Tight_electrons.size()==0) && (Tight_muons.size()>=1),
-    PassSingleElectron && (Tight_electrons.size()>=1) && (Tight_muons.size()==0),
+    PassMu50           && (Tight_electrons.size()<=1) && (Tight_muons.size()>=1),
+    PassSingleElectron && (Tight_electrons.size()>=1) && (Tight_muons.size()<=1),
     PassMu50           && (Tight_electrons.size()==1) && (Tight_muons.size()==1),
   };
 
@@ -309,22 +309,21 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     TString Suffix = Suffixs.at(it_Suffix);
     if( !PassTriggers.at(it_Suffix) ) continue;
 
-    bool IsEMu = false;
-    if( Suffix.Contains("EMu") ) IsEMu = true;
+    bool IsEE = Suffix.Contains("SingleElectron");
+    bool IsMM = Suffix.Contains("SingleMuon");
+    bool IsEMu = Suffix.Contains("EMu");
 
     FillHist(Suffix+"_PassTrigger_"+param.Name, 0., 1., 1, 0., 1.);
 
     //==== Event Selection : Trigger Safe Pt Selection
 
-    if(Suffix.Contains("SingleMuon")){
+    if(IsMM){
       if( Tight_muons.at(0).Pt() < TriggerSafePt_Muon ) continue;
-      if(! (Tight_muons.at(0).PassID(param.Muon_Tight_ID)) ) continue;
     }
-    else if(Suffix.Contains("SingleElectron")){
+    else if(IsEE){
       if( Tight_electrons.at(0).Pt() < TriggerSafePt_Electron ) continue;
-      if(! (Tight_electrons.at(0).PassID(param.Electron_Tight_ID)) ) continue;
     }
-    else if(Suffix.Contains("EMu")){
+    else if(IsEMu){
       if( Tight_muons.at(0).Pt() < TriggerSafePt_Muon ) continue;
       if( Tight_electrons.at(0).Pt() < TriggerSafePt_Electron ) continue;
     }
@@ -335,13 +334,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     map_bool_To_Region["PassTrigger"] = true;
 
     if(this->IsDATA){
-      if( Suffix.Contains("SingleMuon") ){
+      if( IsMM ){
         if( !(this->DataStream == "SingleMuon") ) continue;
       }
-      else if( Suffix.Contains("SingleElectron") ){
+      else if( IsEE ){
         if( !(this->DataStream == "SingleElectron") ) continue;
       }
-      else if( Suffix.Contains("EMu") ){
+      else if( IsEMu ){
         if( !(this->DataStream == "SingleMuon") ) continue;
       }
       else{
@@ -353,21 +352,26 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     std::vector<Lepton *> Tight_leps;
     Tight_leps_el = MakeLeptonPointerVector(Tight_electrons);
     Tight_leps_mu = MakeLeptonPointerVector(Tight_muons);
-    for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
-    for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
+
+    if( IsEE || IsEMu ){
+      for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
+    }
+    if( IsMM || IsEMu ){
+      for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
+    }
 
     //==== Inside AK8 jet
     std::vector<Lepton *> Loose_SF_leps, Loose_OF_leps;
 
-    if( Suffix.Contains("SingleElectron") ){
+    if( IsEE ){
       Loose_SF_leps = MakeLeptonPointerVector(Loose_electrons);
       Loose_OF_leps = MakeLeptonPointerVector(Loose_muons);
     }
-    else if( Suffix.Contains("SingleMuon") ){
+    else if( IsMM ){
       Loose_SF_leps = MakeLeptonPointerVector(Loose_muons);
       Loose_OF_leps = MakeLeptonPointerVector(Loose_electrons);
     }
-    else if( Suffix.Contains("EMu") ){
+    else if( IsEMu ){
     }
 
     double weight = 1.;
@@ -388,13 +392,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
 
       double this_trigsf = 1.;
-      if(Suffix.Contains("SingleMuon")){
+      if(IsMM){
         this_trigsf = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons);
       }
-      else if(Suffix.Contains("SingleElectron")){
+      else if(IsEE){
         this_trigsf = 1.;
       }
-      else if(Suffix.Contains("EMu")){
+      else if(IsEMu){
         this_trigsf = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons);
       }
       else{
@@ -510,7 +514,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         bool HasOFLooseLepton = false;
         Lepton *OFLooseLepton;
 
+/*
+        //==== Pointer checked.. address changed
+        cout << "================================" << endl;
+        cout << "Suffix = " << Suffix << endl;
+        cout << "Isolated : " << Tight_leps.at(0) << " (" << Tight_leps.at(0)->LeptonFlavour() << ") : pt = " << Tight_leps.at(0)->Pt() << ", eta = " << Tight_leps.at(0)->Eta() << endl;
+*/
         for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
+/*
+          cout << "  " << Loose_SF_leps.at(k) << " (" << Loose_SF_leps.at(k)->LeptonFlavour() << ") : pt = " << Loose_SF_leps.at(k)->Pt() << ", eta = " << Loose_SF_leps.at(k)->Eta() << endl;
+*/
+
+          if( Tight_leps.at(0)->DeltaR( *(Loose_SF_leps.at(k)) ) < 0.01 ) continue;
           if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
           if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
             HasSFLooseLepton = true;
@@ -520,6 +535,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         }
 
         for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
+
+          if( Tight_leps.at(0)->DeltaR( *(Loose_OF_leps.at(k)) ) < 0.01 ) continue;
           if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
           if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
             HasOFLooseLepton = true;
@@ -528,6 +545,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           }
         }
 
+        //==== For isolated el + isolated mu event, it can be both "el + mu-jet" and "mu + el-jet" event.
+        //==== Veto if the other side has AK8 jet
+        bool NoTwoMergedJet = false;
+        for(unsigned int i=0; i<fatjets_LSF.size(); i++){
+          FatJet this_fatjet = fatjets_LSF.at(i);
+          if( fabs( LeadLep.DeltaR(this_fatjet) ) < 0.8 ){
+            NoTwoMergedJet = true;
+            break;
+          }
+        }
+
+        FillHist(Suffix+"_HasSFLooseLepton_"+param.Name, HasSFLooseLepton, 1., 2, 0., 2.);
+        FillHist(Suffix+"_HasOFLooseLepton_"+param.Name, HasOFLooseLepton, 1., 2, 0., 2.);
         //==== ee or mm
         if(HasSFLooseLepton && !HasOFLooseLepton){
           if( (LeadLep+*SFLooseLepton).M() > 200 ){
@@ -543,7 +573,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           Used_leps.push_back( SFLooseLepton );
         }
 
-        if(!HasSFLooseLepton && HasOFLooseLepton){
+        if(!HasSFLooseLepton && HasOFLooseLepton && NoTwoMergedJet){
 
           if( (LeadLep+*OFLooseLepton).M() > 200 ){
             //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant)
@@ -611,7 +641,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
 
         FillLeptonPlots(Used_leps, this_region, weight);
-        FillJetPlots(jets, fatjets, this_region, weight);
+        FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
       } // END if(pass Region)
 
