@@ -31,6 +31,14 @@ public:
   TString TriggerNameForSF_Electron, TriggerNameForSF_Muon;
   double TriggerSafePt_Electron, TriggerSafePt_Muon;
 
+  //==== DYPtReweight
+  bool ApplyDYPtReweight;
+  TH1D *hist_DYPtReweight_Electron;
+  TH1D *hist_DYPtReweight_Muon;
+
+  double GetDYPtReweight(double zpt, int flav);
+
+
 };
 
 

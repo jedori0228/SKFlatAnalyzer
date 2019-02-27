@@ -10,11 +10,13 @@ void HNWRAnalyzer::initializeAnalyzer(){
   RunCF = HasFlag("RunCF");
   RunSyst = HasFlag("RunSyst");
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
+  ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
 
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunSyst = " << RunSyst << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
 
   //===============================
   //==== Year-dependent variables
@@ -55,6 +57,13 @@ void HNWRAnalyzer::initializeAnalyzer(){
     TriggerSafePt_Electron = 38.;
     TriggerSafePt_Muon = 52.;
 
+  }
+
+  if(ApplyDYPtReweight){
+    TString datapath = getenv("DATA_DIR");
+    TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/DYPtReweight/DYPtReweight.root");
+    hist_DYPtReweight_Electron = (TH1D *)file_DYPtReweight->Get("Electron");
+    hist_DYPtReweight_Muon = (TH1D *)file_DYPtReweight->Get("Muon");
   }
 
 }
@@ -586,6 +595,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
     }
 
+    if(ApplyDYPtReweight && Used_leps.size()>=2){
+      double this_zpt = ((*Used_leps.at(0))+(*Used_leps.at(1))).Pt();
+      if(IsEE) weight *= GetDYPtReweight(this_zpt, 0);
+      else if(IsMM) weight *= GetDYPtReweight(this_zpt, 1);
+      else {}
+    }
+
     for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
       TString this_region = it_map->first;
@@ -660,5 +676,23 @@ HNWRAnalyzer::HNWRAnalyzer(){
 }
 
 HNWRAnalyzer::~HNWRAnalyzer(){
+
+}
+
+double HNWRAnalyzer::GetDYPtReweight(double zpt, int flav){
+
+  if(zpt>=500.) zpt = 499.;
+  if(flav==0){
+    int this_bin = hist_DYPtReweight_Electron->FindBin(zpt);
+    return hist_DYPtReweight_Electron->GetBinContent(this_bin);
+  }
+  else if(flav==1){
+    int this_bin = hist_DYPtReweight_Muon->FindBin(zpt);
+    return hist_DYPtReweight_Muon->GetBinContent(this_bin);
+  }
+  else{
+    cout << "[HNWRAnalyzer::GetDYPtReweight] wrong flavour : " << flav << endl;
+    exit(EXIT_FAILURE);
+  }
 
 }
