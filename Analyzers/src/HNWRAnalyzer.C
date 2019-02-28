@@ -279,11 +279,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==============
 
   double HT(0.);
-  for(unsigned int i=0; i<jets.size(); i++){
-    HT += jets.at(i).Pt();
-  }
-  for(unsigned int i=0; i<fatjets.size(); i++){
-    HT += fatjets.at(i).Pt();
+  for(unsigned int i=0; i<this_AllJets.size(); i++){
+    HT += this_AllJets.at(i).Pt();
   }
 
   //====================================================
@@ -624,6 +621,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
+
+        JSFillHist(this_region, "HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
         if(this_region.Contains("Boosted")){
           JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( Used_leps.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
