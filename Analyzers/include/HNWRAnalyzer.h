@@ -38,6 +38,8 @@ public:
 
   double GetDYPtReweight(double zpt, int flav);
 
+  double PUReweight;
+  int N_VTX;
 
 };
 

@@ -81,6 +81,12 @@ void HNWRAnalyzer::executeEvent(){
 
   weight_Prefire = GetPrefireWeight(0);
 
+  //==== Nvtx
+
+  N_VTX = nPV;
+  if(!IsDATA) N_VTX = nPileUp;
+  //PUReweight =  //TODO
+
   //========================
   //==== AnalyzerParameter
   //========================
@@ -447,6 +453,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(Tight_leps.size()==2){
 
+      Used_leps.clear();
       Used_leps.push_back( Tight_leps.at(0) );
       Used_leps.push_back( Tight_leps.at(1) );
 
@@ -513,6 +520,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
 
       if(HasAwayMergedFatJet){
+        Used_leps.clear();
         Used_leps.push_back( Tight_leps.at(0) );
 
         bool HasSFLooseLepton = false;
@@ -615,6 +623,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         JSFillHist(this_region, "nPileUp_"+this_region, nPileUp, weight, 200., 0., 200.);
         JSFillHist(this_region, "nPV_"+this_region, nPV, weight, 200., 0., 200.);
+        JSFillHist(this_region, "N_VTX_"+this_region, N_VTX, weight, 200., 0., 200.);
 
         JSFillHist(this_region, "Lepton_Size_"+this_region, Used_leps.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
