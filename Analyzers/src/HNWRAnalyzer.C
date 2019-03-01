@@ -435,7 +435,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     FillHist(Suffix+"_NLooseSFLepton_"+param.Name, Loose_SF_leps.size(), 1., 5, 0., 5.);
     FillHist(Suffix+"_NLooseOFLepton_"+param.Name, Loose_OF_leps.size(), 1., 5, 0., 5.);
 
-    vector<Lepton *> Used_leps;
+    vector<Lepton *> OnZ_leps, Used_leps;
+    OnZ_leps.clear();
+    Used_leps.clear();
 
     //==== UMN
 
@@ -453,9 +455,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(Tight_leps.size()==2){
 
-      Used_leps.clear();
-      Used_leps.push_back( Tight_leps.at(0) );
-      Used_leps.push_back( Tight_leps.at(1) );
+      OnZ_leps.push_back( Tight_leps.at(0) );
+      OnZ_leps.push_back( Tight_leps.at(1) );
 
       Lepton SubLeadLep = (*Tight_leps[1]);
       bool SubLeadLepPtCut = (SubLeadLep.Pt() > 53.);
@@ -470,6 +471,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(SubLeadLepPtCut && DiLepMassOnZ) map_bool_To_Region["OnZ"] = true;
 
       if( jets.size() >= 2 ){
+
+        Used_leps.push_back( Tight_leps.at(0) );
+        Used_leps.push_back( Tight_leps.at(1) );
 
         FourResolvedObject = true;
 
@@ -618,6 +622,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       if(it_map->second){
 
+        vector<Lepton *> this_leps;
+        if(this_region.Contains("OnZ")) this_leps = OnZ_leps;
+        else this_leps = Used_leps;
+
         JSFillHist(this_region, "NEvent_"+this_region, 0., weight, 1, 0., 1.);
         JSFillHist(this_region, "MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
 
@@ -625,7 +633,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "nPV_"+this_region, nPV, weight, 200., 0., 200.);
         JSFillHist(this_region, "N_VTX_"+this_region, N_VTX, weight, 200., 0., 200.);
 
-        JSFillHist(this_region, "Lepton_Size_"+this_region, Used_leps.size(), weight, 10, 0., 10.);
+        JSFillHist(this_region, "Lepton_Size_"+this_region, this_leps.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
@@ -634,7 +642,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
         if(this_region.Contains("Boosted")){
-          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( Used_leps.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
+          JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( this_leps.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
 
           JSFillHist(this_region, "HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 1000, 0., 1000.);
           JSFillHist(this_region, "HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
@@ -647,10 +655,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         }
 
-        if( Used_leps.size()>=2 ){
-          JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*Used_leps.at(0))+(*Used_leps.at(1))).M(), weight, 2000, 0., 2000.);
-          JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*Used_leps.at(0))+(*Used_leps.at(1))).Pt(), weight, 2000, 0., 2000.);
-          JSFillHist(this_region, "dPhi_ll_"+this_region, fabs((*Used_leps.at(0)).DeltaPhi(*Used_leps.at(1))), weight, 40, 0., 4.);
+        if( this_leps.size()>=2 ){
+          JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*this_leps.at(0))+(*this_leps.at(1))).M(), weight, 2000, 0., 2000.);
+          JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*this_leps.at(0))+(*this_leps.at(1))).Pt(), weight, 2000, 0., 2000.);
+          JSFillHist(this_region, "dPhi_ll_"+this_region, fabs((*this_leps.at(0)).DeltaPhi(*this_leps.at(1))), weight, 40, 0., 4.);
         }
 
         JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
@@ -664,7 +672,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "NCand_2_Pt_"+this_region, NCand_2.Pt(), weight, 300, 0., 3000.);
 
 
-        FillLeptonPlots(Used_leps, this_region, weight);
+        FillLeptonPlots(this_leps, this_region, weight);
         FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
       } // END if(pass Region)
