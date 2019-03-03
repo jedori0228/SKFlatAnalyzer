@@ -59,12 +59,25 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   }
 
+  //==== DY Pt Reweighting
+
   if(ApplyDYPtReweight){
     TString datapath = getenv("DATA_DIR");
     TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/DYPtReweight/DYPtReweight.root");
     hist_DYPtReweight_Electron = (TH1D *)file_DYPtReweight->Get("Electron");
     hist_DYPtReweight_Muon = (TH1D *)file_DYPtReweight->Get("Muon");
   }
+
+  //==== B-tagging
+
+  std::vector<Jet::Tagger> vtaggers;
+  vtaggers.push_back(Jet::DeepCSV);
+
+  std::vector<Jet::WP> v_wps;
+  v_wps.push_back(Jet::Medium);
+
+  //=== list of taggers, WP, setup systematics, use period SFs
+  SetupBTagger(vtaggers,v_wps, true, true);
 
 }
 
@@ -277,7 +290,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   int NBJets=0;
   for(unsigned int i=0; i<alljets.size(); i++){
-    if(alljets.at(i).IsTagged(Jet::CSVv2, Jet::Medium)) NBJets++;
+    if(IsBTagged(alljets.at(i), Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
   }
 
   //==============
@@ -639,6 +652,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
+        JSFillHist(this_region, "NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
         JSFillHist(this_region, "HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
         if(this_region.Contains("Boosted")){
