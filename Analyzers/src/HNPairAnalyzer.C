@@ -8,6 +8,17 @@ void HNPairAnalyzer::initializeAnalyzer(){
   cout << "[HNPairAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
   cout << "[HNPairAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
 
+  //==== B-tagging
+
+  std::vector<Jet::Tagger> vtaggers;
+  vtaggers.push_back(Jet::DeepCSV);
+
+  std::vector<Jet::WP> v_wps;
+  v_wps.push_back(Jet::Medium);
+
+  //=== list of taggers, WP, setup systematics, use period SFs
+  SetupBTagger(vtaggers,v_wps, true, true);
+
 }
 
 void HNPairAnalyzer::executeEvent(){
@@ -183,7 +194,7 @@ void HNPairAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   int NBJets=0;
   for(unsigned int i=0; i<alljets.size(); i++){
-    if(alljets.at(i).IsTagged(Jet::CSVv2, Jet::Medium)) NBJets++;
+    if(IsBTagged(alljets.at(i), Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
   }
 
   //==============
