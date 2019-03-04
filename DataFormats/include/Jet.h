@@ -74,7 +74,6 @@ public:
   }
 
   double GetTaggerResult(Tagger tg);
-  bool IsTagged(Tagger tg, WP wp);
 
 private:
 

@@ -102,6 +102,17 @@ void SKFlatValidation::initializeAnalyzer(){
 
   }
 
+  //==== B-Tagging
+  //==== add taggers and WP that you want to use in analysis
+  std::vector<Jet::Tagger> vtaggers;
+  vtaggers.push_back(Jet::DeepCSV);
+
+  std::vector<Jet::WP> v_wps;
+  v_wps.push_back(Jet::Medium);
+
+  //=== list of taggers, WP, setup systematics, use period SFs
+  SetupBTagger(vtaggers,v_wps, true, true);
+
 }
 
 void SKFlatValidation::executeEvent(){
@@ -185,17 +196,13 @@ void SKFlatValidation::executeEventFromParameter(AnalyzerParameter param){
   std::vector<Muon> muons = GetMuons(param.Muon_Tight_ID, MinLeptonPt, 2.4);
   std::vector<Electron> electrons = GetElectrons(param.Electron_Tight_ID, MinLeptonPt, 2.5);
 
-  std::vector<Jet> alljets = GetAllJets();
-  std::vector<Jet> myjets;
+  std::vector<Jet> myjets = JetsVetoLeptonInside( GetJets("tight", 30., 2.4), electrons, muons);
   int NBJets=0;
   double HT=0;
-  for(unsigned int i=0; i<alljets.size(); i++){
-    Jet this_jet = alljets.at(i);
-    if(this_jet.Pt() > 30. && fabs(this_jet.Eta())<2.5){
-      myjets.push_back(this_jet);
-      HT += this_jet.Pt();
-      if(this_jet.IsTagged(Jet::CSVv2, Jet::Medium)) NBJets++;
-    }
+  for(unsigned int i=0; i<myjets.size(); i++){
+    Jet this_jet = myjets.at(i);
+    HT += this_jet.Pt();
+    if(IsBTagged(this_jet, Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
   }
 
   //==== Based on which trigger is fired
