@@ -57,12 +57,14 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   }
   if(gen_WR.IsEmpty()){
     IsOffShellWR = true;
-    cout << "Can't file gen_WR" << endl;
-    PrintGen(gens);
+    //cout << "Can't file gen_WR" << endl;
+    //PrintGen(gens);
     FillHist("GENFIND_no_gen_WR", 0., 1., 1, 0., 1.);
     GenAllFound = false;
   }
   FillHist("M_gen_WR", gen_WR.M(), 1., 6000, 0., 6000.);
+  FillHist("Pt_gen_WR", gen_WR.Pt(), 1., 6000, 0., 6000.);
+  FillHist("Eta_gen_WR", gen_WR.Eta(), 1., 120, -6., 6.);
 
   for(unsigned int i=2; i<gens.size(); i++){
     Gen gen = gens.at(i);
@@ -76,12 +78,14 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     }
   }
   if(gen_N.IsEmpty()){
-    cout << "Can't file gen_N" << endl;
-    PrintGen(gens);
+    //cout << "Can't file gen_N" << endl;
+    //PrintGen(gens);
     FillHist("GENFIND_no_gen_N", 0., 1., 1, 0., 1.);
     GenAllFound = false;
   }
-  FillHist("M_gen_N", gen_N.M(), 1., 6000, 0., 6000.);
+  FillHist("M_gen_N", gen_N.M(), 1., 12000, 0., 1200.);
+  FillHist("Pt_gen_N", gen_N.Pt(), 1., 6000, 0., 6000.);
+  FillHist("Eta_gen_N", gen_N.Eta(), 1., 120, -6., 6.);
   FillHist("gen_SignalLeptonChannel", gen_SignalLeptonChannel, 1., 2, 0., 2.);
 
 
@@ -108,12 +112,18 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     }
   }
   if(gen_priLep.IsEmpty()){
-    cout << "Can't file gen_priLep" << endl;
-    PrintGen(gens);
+    //cout << "Can't file gen_priLep" << endl;
+    //PrintGen(gens);
     FillHist("GENFIND_no_gen_priLep", 0., 1., 1, 0., 1.);
     GenAllFound = false;
   }
   FillHist("M_gen_priLepAndN", (gen_N+gen_priLep).M(), 1., 6000, 0., 6000.);
+  FillHist("Pt_gen_priLepAndN", (gen_N+gen_priLep).Pt(), 1., 6000, 0., 6000.);
+  FillHist("Eta_gen_priLepAndN", (gen_N+gen_priLep).Eta(), 1., 120, -6., 6.);
+  //cout << (gen_N+gen_priLep).Pt() << "\t" << (gen_N+gen_priLep).Eta() << endl;
+
+  FillHist("Pt_gen_priLep", gen_priLep.Pt(), 1., 6000, 0., 6000.);
+  FillHist("Eta_gen_priLep", gen_priLep.Eta(), 1., 120, -6., 6.);
 
   for(unsigned int i=2; i<gens.size(); i++){
     Gen gen = gens.at(i);
@@ -126,11 +136,13 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     }
   }
   if(gen_secLep.IsEmpty()){
-    cout << "Can't file gen_secLep" << endl;
-    PrintGen(gens);
+    //cout << "Can't file gen_secLep" << endl;
+    //PrintGen(gens);
     FillHist("GENFIND_no_gen_secLep", 0., 1., 1, 0., 1.);
     GenAllFound = false;
   }
+  FillHist("Pt_gen_secLep", gen_secLep.Pt(), 1., 6000, 0., 6000.);
+  FillHist("Eta_gen_secLep", gen_secLep.Eta(), 1., 120, -6., 6.);
 
   vector<Gen> tmp_gen_jets; //gen_jet1, genjet2;
   for(unsigned int i=2; i<gens.size(); i++){
@@ -143,12 +155,19 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     }
   }
   if(tmp_gen_jets.size()!=2){
-    cout << "Can't file correct jets : tmp_gen_jets.size() = tmp_gen_jets" << endl;
-    PrintGen(gens);
+    //cout << "Can't file correct jets : tmp_gen_jets.size() = tmp_gen_jets" << endl;
+    //PrintGen(gens);
     FillHist("GENFIND_size_tmp_gen_jets", tmp_gen_jets.size(), 1., 10, 0., 10.);
     GenAllFound = false;
   }
   FillHist("M_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).M(), 1., 6000, 0., 6000.);
+  FillHist("Pt_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).Pt(), 1., 6000, 0., 6000.);
+  FillHist("Eta_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).Eta(), 1., 120, -6., 6.);
+
+  FillHist("dR_gen_WRStar", tmp_gen_jets.at(0).DeltaR( tmp_gen_jets.at(1) ), 1., 60, 0., 6.);
+  FillHist("dR_gen_WRStar_gen_secLep", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).DeltaR( gen_secLep ), 1., 60, 0., 6.);
+
+  FillHist("GenAllFound", GenAllFound, 1., 2, 0., 2.);
 
 /*
   //=== 190113_ElectronTriggerTest
@@ -233,7 +252,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   vector<FatJet> fatjets_LSF = GetFatJets("HNLSF", 200., 2.4);
 
   //==== Gen All Found
-  if(!GenAllFound) return;
+  //if(!GenAllFound) return;
 
   double this_weight = 1.;
   if(RunNewPDF && !IsDATA){
