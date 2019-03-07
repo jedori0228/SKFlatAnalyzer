@@ -144,7 +144,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   FillHist("Pt_gen_secLep", gen_secLep.Pt(), 1., 6000, 0., 6000.);
   FillHist("Eta_gen_secLep", gen_secLep.Eta(), 1., 120, -6., 6.);
 
-  vector<Gen> tmp_gen_jets; //gen_jet1, genjet2;
+  vector<Gen> tmp_gen_jets; //gen_jet1, gen_jet2;
   for(unsigned int i=2; i<gens.size(); i++){
     Gen gen = gens.at(i);
     Gen mother = gens.at(gen.MotherIndex());
@@ -160,6 +160,8 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     FillHist("GENFIND_size_tmp_gen_jets", tmp_gen_jets.size(), 1., 10, 0., 10.);
     GenAllFound = false;
   }
+  gen_jet1 = tmp_gen_jets.at(0);
+  gen_jet2 = tmp_gen_jets.at(1);
   FillHist("M_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).M(), 1., 6000, 0., 6000.);
   FillHist("Pt_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).Pt(), 1., 6000, 0., 6000.);
   FillHist("Eta_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).Eta(), 1., 120, -6., 6.);
@@ -246,6 +248,33 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   //==========
   //=== MAIN
   //==========
+
+  //==== Apply reco pt cut to gen
+  //==== Gen gen_WR, gen_N, gen_priLep, gen_secLep, gen_jet1, gen_jet2;
+
+  bool PassRECOMuonPtCut = (max(gen_priLep.Pt(), gen_secLep.Pt()) > 60.) && (min(gen_priLep.Pt(), gen_secLep.Pt()) > 53.);
+  if(PassRECOMuonPtCut){
+    FillHist("PassRECOMuonPtCut", 0., 1., 1, 0., 1.);
+    bool GenAllResolved = 
+(gen_priLep.DeltaR(gen_secLep) > 0.4) &&
+(gen_priLep.DeltaR(gen_jet1) > 0.4) &&
+(gen_priLep.DeltaR(gen_jet2) > 0.4) &&
+(gen_secLep.DeltaR(gen_jet1) > 0.4) &&
+(gen_secLep.DeltaR(gen_jet2) > 0.4) &&
+(gen_jet1.DeltaR(gen_jet2) > 0.4);
+    if(GenAllResolved){
+      FillHist("PassRECOMuonPtCut_Resolved", 0., 1., 1, 0., 1.);
+      if(gen_jet1.Pt()>40. && gen_jet2.Pt()>40.){
+        FillHist("PassRECOMuonPtCut_ResolvedPtCut", 0., 1., 1, 0., 1.);
+      }
+    }
+    else{
+      FillHist("PassRECOMuonPtCut_Boosted", 0., 1., 1, 0., 1.);
+      if(gen_N.Pt()>200.){
+        FillHist("PassRECOMuonPtCut_BoostedPtCut", 0., 1., 1, 0., 1.);
+      }
+    }
+  }
 
   //==== # of LSF jets
 
