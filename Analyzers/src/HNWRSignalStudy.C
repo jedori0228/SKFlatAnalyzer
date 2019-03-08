@@ -165,7 +165,11 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   FillHist("M_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).M(), 1., 6000, 0., 6000.);
   FillHist("Pt_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).Pt(), 1., 6000, 0., 6000.);
   FillHist("Eta_gen_WRStar", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).Eta(), 1., 120, -6., 6.);
+  FillHist("Pt_gen_LeadJet", tmp_gen_jets.at(0).Pt(), 1., 6000, 0., 6000.);
+  FillHist("Pt_gen_LSubeadJet", tmp_gen_jets.at(1).Pt(), 1., 6000, 0., 6000.);
 
+  FillHist("dR_gen_Jet_gen_secLep", tmp_gen_jets.at(0).DeltaR( gen_secLep ), 1., 60, 0., 6.);
+  FillHist("dR_gen_Jet_gen_secLep", tmp_gen_jets.at(1).DeltaR( gen_secLep ), 1., 60, 0., 6.);
   FillHist("dR_gen_WRStar", tmp_gen_jets.at(0).DeltaR( tmp_gen_jets.at(1) ), 1., 60, 0., 6.);
   FillHist("dR_gen_WRStar_gen_secLep", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).DeltaR( gen_secLep ), 1., 60, 0., 6.);
 
