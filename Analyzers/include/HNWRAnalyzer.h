@@ -17,6 +17,7 @@ public:
   bool RunFake, RunCF;
   bool RunSyst;
   bool PromptLeptonOnly;
+  bool NoTrigger;
 
   vector<Gen> gens;
 

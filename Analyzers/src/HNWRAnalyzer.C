@@ -9,6 +9,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
   RunFake = HasFlag("RunFake");
   RunCF = HasFlag("RunCF");
   RunSyst = HasFlag("RunSyst");
+  NoTrigger = HasFlag("NoTrigger");
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
 
@@ -181,6 +182,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   bool PassSingleElectron = ev.PassTrigger(Triggers_Electron);
   bool PassMu50 = ev.PassTrigger(Triggers_Muon);
+  if(NoTrigger){
+    PassSingleElectron = true;
+    PassMu50 = true;
+  }
 
   //======================
   //==== Copy AllObjects
