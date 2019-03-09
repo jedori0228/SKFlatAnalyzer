@@ -380,14 +380,23 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     std::vector<Lepton *> Tight_leps_el, Tight_leps_mu;
     std::vector<Lepton *> Tight_leps;
+    std::vector<Lepton *> Tight_leps_opposite;
     Tight_leps_el = MakeLeptonPointerVector(Tight_electrons);
     Tight_leps_mu = MakeLeptonPointerVector(Tight_muons);
 
     if( IsEE || IsEMu ){
       for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
+      //==== For EE
+      if(IsEE){
+        for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps_opposite.push_back( Tight_leps_mu.at(i) );
+      }
     }
     if( IsMM || IsEMu ){
       for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
+      //==== For MM
+      if(IsMM){
+        for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps_opposite.push_back( Tight_leps_el.at(i) );
+      }
     }
 
     //==== Inside AK8 jet
@@ -486,7 +495,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       //==== - HNWR_SingleElectron_OnZ : ee Resolved SR
       //==== - HNWR_SingleMuon_OnZ : mm Resolved SR
       //==== - HNWR_EMu_OnZ : em Resolved CR (ttbar dominant)
-      if(SubLeadLepPtCut && DiLepMassOnZ) map_bool_To_Region["OnZ"] = true;
+      if(SubLeadLepPtCut && DiLepMassOnZ && Tight_leps_opposite.size()==0) map_bool_To_Region["OnZ"] = true;
 
       if( jets.size() >= 2 ){
 
@@ -652,6 +661,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "N_VTX_"+this_region, N_VTX, weight, 200., 0., 200.);
 
         JSFillHist(this_region, "Lepton_Size_"+this_region, this_leps.size(), weight, 10, 0., 10.);
+        JSFillHist(this_region, "OFLepton_Size_"+this_region, Tight_leps_opposite.size(), weight, 10, 0., 10.);
+
         JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
         JSFillHist(this_region, "FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
