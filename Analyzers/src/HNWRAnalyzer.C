@@ -329,6 +329,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Start loop
   //=================
 
+  //==== Check double counting
+  bool IsEMuResolved = false;
+  bool IsMMBoostedSR = false;
+  bool IsMMBoostedCR = false;
+  bool IsEEBoostedSR = false;
+  bool IsEEBoostedCR = false;
+
   for(unsigned int it_Suffix=0; it_Suffix<Suffixs.size(); it_Suffix++){
 
     std::map<TString, bool> TMP_map_bool_To_Region; // For SS/OS
@@ -520,7 +527,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR
           //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR
           //==== - HNWR_EMu_Resolved_SR : em Resolved CR (ttbar dominant)
-          if(DiLepMassGT200) map_bool_To_Region["Resolved_SR"] = true;
+          if(DiLepMassGT200){
+            map_bool_To_Region["Resolved_SR"] = true;
+            if(IsEMu){
+              IsEMuResolved = true;
+            }
+          }
 
           //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
           //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
@@ -609,6 +621,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR
             //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR
             map_bool_To_Region["Boosted_SR"] = true;
+            if(IsMM){
+              IsMMBoostedSR = true;
+            }
+            if(IsEE){
+              IsEEBoostedSR = true;
+            }
           }
           else if( (LeadLep+*SFLooseLepton).M() < 150 ){
             //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted CR (DY dominant) -> extrapolate with fiting
@@ -624,6 +642,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant)
             //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK9jet (ttbar dominant)
             map_bool_To_Region["EMu_Boosted_CR"] = true;
+            if(IsMM){
+              IsMMBoostedCR = true;
+            }
+            if(IsEE){
+              IsEEBoostedCR = true;
+            }
           }
           Used_leps.push_back( OFLooseLepton );
         }
@@ -711,6 +735,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   } // END Loop Suffixs
 
+
+  if(IsEMuResolved){
+
+    if(IsMMBoostedSR) FillHist("DoubleCountingFromEMuResolved", 0., 1., 4, 0., 4.);
+    if(IsMMBoostedCR) FillHist("DoubleCountingFromEMuResolved", 1., 1., 4, 0., 4.);
+    if(IsEEBoostedSR) FillHist("DoubleCountingFromEMuResolved", 2., 1., 4, 0., 4.);
+    if(IsEEBoostedCR) FillHist("DoubleCountingFromEMuResolved", 3., 1., 4, 0., 4.);
+
+  }
 
 
 }
