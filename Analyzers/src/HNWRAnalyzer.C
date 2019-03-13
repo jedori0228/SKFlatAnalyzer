@@ -317,11 +317,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::vector< TString > Suffixs = {
     "SingleMuon",
     "SingleElectron",
-    "EMu",
+    "EMu", // This is only for resolved emu
   };
   std::vector< bool > PassTriggers = {
-    PassMu50           && (Tight_electrons.size()<=1) && (Tight_muons.size()>=1),
-    PassSingleElectron && (Tight_electrons.size()>=1) && (Tight_muons.size()<=1),
+    PassMu50           && (Tight_electrons.size()<=1) && (Tight_muons.size()>=1) && (Tight_electrons.size()+Tight_muons.size()<=2),
+    PassSingleElectron && (Tight_electrons.size()>=1) && (Tight_muons.size()<=1) && (Tight_electrons.size()+Tight_muons.size()<=2),
     PassMu50           && (Tight_electrons.size()==1) && (Tight_muons.size()==1),
   };
 
@@ -380,7 +380,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     std::vector<Lepton *> Tight_leps_el, Tight_leps_mu;
     std::vector<Lepton *> Tight_leps;
-    std::vector<Lepton *> Tight_leps_opposite;
+    std::vector<Lepton *> Tight_leps_opposite; // This will be empty when Suffix=="EMu"
     Tight_leps_el = MakeLeptonPointerVector(Tight_electrons);
     Tight_leps_mu = MakeLeptonPointerVector(Tight_muons);
 
@@ -466,7 +466,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     OnZ_leps.clear();
     Used_leps.clear();
 
-    //==== UMN
+    //==== [CUT] Leading lepton pt > 60 GeV
 
     Lepton LeadLep = (*Tight_leps.at(0));
     bool LeadLepPtCut = (LeadLep.Pt() > 60.);
@@ -495,7 +495,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       //==== - HNWR_SingleElectron_OnZ : ee Resolved SR
       //==== - HNWR_SingleMuon_OnZ : mm Resolved SR
       //==== - HNWR_EMu_OnZ : em Resolved CR (ttbar dominant)
-      if(SubLeadLepPtCut && DiLepMassOnZ && Tight_leps_opposite.size()==0) map_bool_To_Region["OnZ"] = true;
+      if(SubLeadLepPtCut && DiLepMassOnZ) map_bool_To_Region["OnZ"] = true;
 
       if( jets.size() >= 2 ){
 
