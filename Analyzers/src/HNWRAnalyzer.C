@@ -315,14 +315,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //====================================================
 
   std::vector< TString > Suffixs = {
+    "EMu", // This is only for resolved emu
     "SingleMuon",
     "SingleElectron",
-    "EMu", // This is only for resolved emu
   };
   std::vector< bool > PassTriggers = {
+    PassMu50           && (Tight_electrons.size()==1) && (Tight_muons.size()==1),
     PassMu50           && (Tight_electrons.size()<=1) && (Tight_muons.size()>=1) && (Tight_electrons.size()+Tight_muons.size()<=2),
     PassSingleElectron && (Tight_electrons.size()>=1) && (Tight_muons.size()<=1) && (Tight_electrons.size()+Tight_muons.size()<=2),
-    PassMu50           && (Tight_electrons.size()==1) && (Tight_muons.size()==1),
   };
 
   //=================
@@ -330,7 +330,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //=================
 
   //==== Check double counting
-  bool IsEMuResolved = false;
+  bool EMuFourResolvedObject = false;
   bool IsMMBoostedSR = false;
   bool IsMMBoostedCR = false;
   bool IsEEBoostedSR = false;
@@ -349,6 +349,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     bool IsEE = Suffix.Contains("SingleElectron");
     bool IsMM = Suffix.Contains("SingleMuon");
     bool IsEMu = Suffix.Contains("EMu");
+
+    //==== If the event is already emu resolved,
+    //==== this can be also emu-boosted CR
+    //==== So, first check if this event is EMu resolved, and if so, skip it
+    if(EMuFourResolvedObject){
+      if(IsEE||IsMM) continue;
+    }
 
     FillHist(Suffix+"_PassTrigger_"+param.Name, 0., 1., 1, 0., 1.);
 
@@ -504,48 +511,56 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       //==== - HNWR_EMu_OnZ : em Resolved CR (ttbar dominant)
       if(SubLeadLepPtCut && DiLepMassOnZ) map_bool_To_Region["OnZ"] = true;
 
+      //==== Now, require # of jets >= 2
+
       if( jets.size() >= 2 ){
 
         Used_leps.push_back( Tight_leps.at(0) );
         Used_leps.push_back( Tight_leps.at(1) );
 
-        FourResolvedObject = true;
-
-        FillHist(Suffix+"_TwoLeptonAndTwoJet_"+param.Name, 0., 1., 1, 0., 1.);
-
-        bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
-        bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
+        //==== jets : JetsVetoLeptonInside() is already done, so jets are away from the tightleptons
+        //==== should also check dR(LaedLep, SubLeadLep) and dR(jet1, jet2)
         bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
         bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
-
-        //==== Resolved without mll cut
-        bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
-        if( IsResolved ){
-
-          FillHist(Suffix+"_ResolvedBeforeMassCut_"+param.Name, 0., 1., 1, 0., 1.);
-
-          //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR
-          //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR
-          //==== - HNWR_EMu_Resolved_SR : em Resolved CR (ttbar dominant)
-          if(DiLepMassGT200){
-            map_bool_To_Region["Resolved_SR"] = true;
-            if(IsEMu){
-              IsEMuResolved = true;
-            }
+        if(dRTwoLepton && dRTwoJets){
+          FourResolvedObject = true;
+          if(IsEMu){
+            EMuFourResolvedObject = true;
           }
 
-          //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
-          //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
-          //==== - HNWR_EMu_Resolved_SR : NOT USED
-          if(DiLepMassLT150) map_bool_To_Region["Resolved_DYCR"] = true;
+          FillHist(Suffix+"_TwoLeptonAndTwoJet_"+param.Name, 0., 1., 1, 0., 1.);
 
-          WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
-          NCand = SubLeadLep+jets.at(0)+jets.at(1);
-          NCand_1 = LeadLep+jets.at(0)+jets.at(1);
-          NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
-        }
-      }
-    }
+          bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
+          bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
+
+          //==== Resolved without mll cut
+          bool IsResolved = SubLeadLepPtCut && dRTwoLepton && dRTwoJets;
+          if( IsResolved ){
+
+            FillHist(Suffix+"_ResolvedBeforeMassCut_"+param.Name, 0., 1., 1, 0., 1.);
+
+            //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR
+            //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR
+            //==== - HNWR_EMu_Resolved_SR : em Resolved CR (ttbar dominant)
+            if(DiLepMassGT200){
+              map_bool_To_Region["Resolved_SR"] = true;
+            }
+
+            //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
+            //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
+            //==== - HNWR_EMu_Resolved_SR : NOT USED
+            if(DiLepMassLT150) map_bool_To_Region["Resolved_DYCR"] = true;
+
+            WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
+            NCand = SubLeadLep+jets.at(0)+jets.at(1);
+            NCand_1 = LeadLep+jets.at(0)+jets.at(1);
+            NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
+          }
+
+        } // END if all mutually separated
+
+      } // END if # of jets >= 2
+    } // END if # of tight lepton >= 2
 
     //==== For EMu, do not fill boosted
     if(!FourResolvedObject && !IsEMu){
@@ -636,7 +651,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           Used_leps.push_back( SFLooseLepton );
         }
 
-        if(!HasSFLooseLepton && HasOFLooseLepton && NoTwoMergedJet){
+        if(!HasSFLooseLepton && HasOFLooseLepton && !NoTwoMergedJet){
 
           if( (LeadLep+*OFLooseLepton).M() > 200 ){
             //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant)
@@ -736,12 +751,59 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   } // END Loop Suffixs
 
 
-  if(IsEMuResolved){
+  if(EMuFourResolvedObject){
 
     if(IsMMBoostedSR) FillHist("DoubleCountingFromEMuResolved", 0., 1., 4, 0., 4.);
     if(IsMMBoostedCR) FillHist("DoubleCountingFromEMuResolved", 1., 1., 4, 0., 4.);
     if(IsEEBoostedSR) FillHist("DoubleCountingFromEMuResolved", 2., 1., 4, 0., 4.);
     if(IsEEBoostedCR) FillHist("DoubleCountingFromEMuResolved", 3., 1., 4, 0., 4.);
+
+    if(IsMMBoostedSR||IsMMBoostedCR||IsEEBoostedSR||IsEEBoostedCR){
+
+      cout << "====================================================" << endl;
+      cout << "DOUBLE COUNTING" << endl;
+      cout << "IsMMBoostedSR = " << IsMMBoostedSR << endl;
+      cout << "IsMMBoostedCR = " << IsMMBoostedCR << endl;
+      cout << "IsEEBoostedSR = " << IsEEBoostedSR << endl;
+      cout << "IsEEBoostedCR = " << IsEEBoostedCR << endl;
+      cout << endl;
+      cout << "[Tight_electrons]" << endl;
+      cout << "pt\teta\tphi\tM" << endl;
+      for(unsigned int i=0; i<Tight_electrons.size(); i++){
+        cout << Tight_electrons.at(i).Pt() << "\t" << Tight_electrons.at(i).Eta() << "\t" << Tight_electrons.at(i).Phi() << "\t" << Tight_electrons.at(i).M() << endl;
+      }
+      cout << "[Loose_electrons]" << endl;
+      cout << "pt\teta\tphi\tM" << endl;
+      for(unsigned int i=0; i<Loose_electrons.size(); i++){
+        cout << Loose_electrons.at(i).Pt() << "\t" << Loose_electrons.at(i).Eta() << "\t" << Loose_electrons.at(i).Phi() << "\t" << Loose_electrons.at(i).M() << endl;
+      }
+
+      cout << "[Tight_muons]" << endl;
+      cout << "pt\teta\tphi\tM" << endl;
+      for(unsigned int i=0; i<Tight_muons.size(); i++){
+        cout << Tight_muons.at(i).Pt() << "\t" << Tight_muons.at(i).Eta() << "\t" << Tight_muons.at(i).Phi() << "\t" << Tight_muons.at(i).M() << endl;
+      }
+      cout << "[Loose_muons]" << endl;
+      cout << "pt\teta\tphi\tM" << endl;
+      for(unsigned int i=0; i<Loose_muons.size(); i++){
+        cout << Loose_muons.at(i).Pt() << "\t" << Loose_muons.at(i).Eta() << "\t" << Loose_muons.at(i).Phi() << "\t" << Loose_muons.at(i).M() << endl;
+      }
+
+      cout << "[jets]" << endl;
+      cout << "pt\teta\tphi\tM" << endl;
+      for(unsigned int i=0; i<jets.size(); i++){
+        cout << jets.at(i).Pt() << "\t" << jets.at(i).Eta() << "\t" << jets.at(i).Phi() << "\t" << jets.at(i).M() << endl;
+      }
+
+      cout << "[LSF Jets]" << endl;
+      cout << "pt\teta\tphi\tM\tLSF" << endl;
+      for(unsigned int i=0; i<fatjets_LSF.size(); i++){
+        cout << fatjets_LSF.at(i).Pt() << "\t" << fatjets_LSF.at(i).Eta() << "\t" << fatjets_LSF.at(i).Phi() << "\t" << fatjets_LSF.at(i).M() << "\t" << fatjets_LSF.at(i).LSF() << endl;
+      }
+
+    }
+
+
 
   }
 
