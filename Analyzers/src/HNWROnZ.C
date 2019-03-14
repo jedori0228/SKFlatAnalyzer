@@ -351,53 +351,57 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
   if(n_Tight_leptons==2){
 
     TString Suffix = "";
+    bool this_triggerpass(false);
     if(      (Tight_electrons.size()==2) && (Tight_muons.size()==0) ){
-      if(PassSingleElectron){
-        IsEE = true;
-        Suffix = "SingleElectron";
-      }
+      Suffix = "SingleElectron";
+      this_triggerpass = PassSingleElectron;
+      IsEE = true;
     }
     else if( (Tight_electrons.size()==0) && (Tight_muons.size()==2) ){
-      if(PassMu50){
-        IsMM = true;
-        Suffix = "SingleMuon";
+      Suffix = "SingleMuon";
+      this_triggerpass = PassMu50;
+      IsMM = true;
+    }
+
+    if(this_triggerpass){
+
+      std::vector<Lepton *> Tight_leps; // let's keep electron first for EM
+      if( IsEE ){
+        for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
       }
-    }
-    else if( (Tight_electrons.size()==1) && (Tight_muons.size()==1) ){
-      return;
-    }
-
-    std::vector<Lepton *> Tight_leps; // let's keep electron first for EM
-    if( IsEE ){
-      for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
-    }
-    if( IsMM ){
-      for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
-    }
-
-    //==== Lepton pt cuts
-    Lepton LeadLep = (*Tight_leps.at(0));
-    Lepton SubLeadLep = (*Tight_leps.at(1));
-    bool LeadLepPtCut = max( LeadLep.Pt(), SubLeadLep.Pt() ) > 60.;
-    bool SubLeadLepPtCut = min( LeadLep.Pt(), SubLeadLep.Pt() ) > 53.;
-
-    //==== lepton pt cuts
-    if(LeadLepPtCut && SubLeadLepPtCut){
-
-      if(IsOnZ( (LeadLep+SubLeadLep).M(), 10. )){
-
-        map_bool_To_Region[Suffix+"_OnZ"] = true;
-
+      if( IsMM ){
+        for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
       }
 
-    } // END if pt1>63 && pt2>50
+      //==== Lepton pt cuts
+      Lepton LeadLep = (*Tight_leps.at(0));
+      Lepton SubLeadLep = (*Tight_leps.at(1));
+      bool LeadLepPtCut = max( LeadLep.Pt(), SubLeadLep.Pt() ) > 60.;
+      bool SubLeadLepPtCut = min( LeadLep.Pt(), SubLeadLep.Pt() ) > 53.;
+
+      //==== lepton pt cuts
+      if(LeadLepPtCut && SubLeadLepPtCut){
+
+        if(IsOnZ( (LeadLep+SubLeadLep).M(), 10. )){
+
+          map_bool_To_Region[Suffix+"_OnZ"] = true;
+
+        }
+
+      } // END if pt1>63 && pt2>50
+
+    } // END if trigger fired
 
   } // END if # of tight lepton == 2
 
   if( map_bool_To_Region.size() == 0 ) return;
 
-  double trigger_sf_SingleElectron = 1.; // TODO Measure it
-  double trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons);
+  double trigger_sf_SingleElectron = 1.;
+  double trigger_sf_SingleMuon = 1.;
+  if(!IsDATA){
+    trigger_sf_SingleElectron = 1.; // TODO Measure it
+    trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons);
+  }
 
   if( IsEE ){
     weight *= trigger_sf_SingleElectron;
