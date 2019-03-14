@@ -117,7 +117,7 @@ void HNWRAnalyzer::executeEvent(){
   param.Electron_Tight_ID = "HNWRTight";
   param.Electron_Loose_ID = "HNWRLoose";
   param.Electron_Veto_ID = "HNWRVeto";
-  param.Electron_ID_SF_Key = "Default";
+  param.Electron_ID_SF_Key = "HEEP";
   param.Electron_FR_ID = "HNWR";
   param.Electron_FR_Key = "AwayJetPt40";
   param.Electron_CF_ID = "HNWRTight";
