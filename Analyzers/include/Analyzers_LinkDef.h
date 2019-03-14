@@ -16,6 +16,7 @@
 #pragma link C++ class CalcFakeRate+;
 #pragma link C++ class GenStudy+;
 #pragma link C++ class HNPairAnalyzer+;
+#pragma link C++ class HNWROnZ+;
 #pragma link C++ class HNWRAnalyzer+;
 #pragma link C++ class HNWRSignalStudy+;
 #pragma link C++ class HNWRGenMatching+;

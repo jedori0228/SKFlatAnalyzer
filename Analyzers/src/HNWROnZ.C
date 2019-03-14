@@ -1,6 +1,6 @@
-#include "HNWRAnalyzer.h"
+#include "HNWROnZ.h"
 
-void HNWRAnalyzer::initializeAnalyzer(){
+void HNWROnZ::initializeAnalyzer(){
 
   //================
   //==== Userflags
@@ -13,11 +13,11 @@ void HNWRAnalyzer::initializeAnalyzer(){
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
 
-  cout << "[HNWRAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] RunSyst = " << RunSyst << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
+  cout << "[HNWROnZ::initializeAnalyzer] RunFake = " << RunFake << endl;
+  cout << "[HNWROnZ::initializeAnalyzer] RunCF = " << RunCF << endl;
+  cout << "[HNWROnZ::initializeAnalyzer] RunSyst = " << RunSyst << endl;
+  cout << "[HNWROnZ::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
+  cout << "[HNWROnZ::initializeAnalyzer] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
 
   //===============================
   //==== Year-dependent variables
@@ -82,7 +82,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
 }
 
-void HNWRAnalyzer::executeEvent(){
+void HNWROnZ::executeEvent(){
 
   //==========================
   //==== Gen for genmatching
@@ -163,7 +163,7 @@ void HNWRAnalyzer::executeEvent(){
 
 }
 
-void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
+void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
 
   //=============
   //==== No Cut
@@ -238,7 +238,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     this_AllElectrons = ScaleElectrons( this_AllElectrons, -1 );
   }
   else{
-    cerr << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst" << endl;
+    cerr << "[HNWROnZ::executeEventFromParameter] Wrong syst" << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -345,47 +345,33 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //=====================
 
   std::map<TString, bool> map_bool_To_Region;
-
-  FatJet HNFatJet;
-  Particle WRCand;
-  Particle NCand;
-  Particle NCand_1, NCand_2;
-
   vector<Lepton *> leps_for_plot;
+  bool IsEE(false), IsMM(false);
 
-  //==== Check Resolved first
-
-  bool IsResolvedEvent = false;
-  bool IsResolved_SR_EE(false), IsResolved_SR_MM(false), IsResolved_SR_EM(false);
-  bool IsResolved_DYCR_EE(false), IsResolved_DYCR_MM(false), IsResolved_DYCR_EM(false);
   if(n_Tight_leptons==2){
 
     TString Suffix = "";
-    bool tmp_IsEE(false), tmp_IsMM(false), tmp_IsEM(false);
     if(      (Tight_electrons.size()==2) && (Tight_muons.size()==0) ){
       if(PassSingleElectron){
-        tmp_IsEE = true;
+        IsEE = true;
         Suffix = "SingleElectron";
       }
     }
     else if( (Tight_electrons.size()==0) && (Tight_muons.size()==2) ){
       if(PassMu50){
-        tmp_IsMM = true;
+        IsMM = true;
         Suffix = "SingleMuon";
       }
     }
     else if( (Tight_electrons.size()==1) && (Tight_muons.size()==1) ){
-      if(PassMu50){
-        tmp_IsEM = true;
-        Suffix = "EMu";
-      }
+      return;
     }
 
     std::vector<Lepton *> Tight_leps; // let's keep electron first for EM
-    if( tmp_IsEE || tmp_IsEM ){
+    if( IsEE ){
       for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
     }
-    if( tmp_IsMM || tmp_IsEM ){
+    if( IsMM ){
       for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
     }
 
@@ -398,203 +384,29 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     //==== lepton pt cuts
     if(LeadLepPtCut && SubLeadLepPtCut){
 
-      //==== lljj
+      if(IsOnZ( (LeadLep+SubLeadLep).M(), 10. )){
 
-      if( jets.size()>=2 ){
+        map_bool_To_Region[Suffix+"_OnZ"] = true;
 
-        bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
-        bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
-
-        if( dRTwoLepton && dRTwoJets ){
-
-          IsResolvedEvent = true;
-
-          bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
-          bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
-
-          if(DiLepMassGT200){
-            map_bool_To_Region[Suffix+"_Resolved_SR"] = true;
-            if(tmp_IsEE) IsResolved_SR_EE = true;
-            else if(tmp_IsMM) IsResolved_SR_MM = true;
-            else if(tmp_IsEM) IsResolved_SR_EM = true;
-          }
-
-          leps_for_plot.push_back( Tight_leps.at(0) );
-          leps_for_plot.push_back( Tight_leps.at(1) );
-
-          //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
-          //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
-          //==== - HNWR_EMu_Resolved_SR : NOT USED
-          if(DiLepMassLT150){
-            map_bool_To_Region["Resolved_DYCR"] = true;
-            if(tmp_IsEE) IsResolved_DYCR_EE = true;
-            else if(tmp_IsMM) IsResolved_DYCR_MM = true;
-            else if(tmp_IsEM) IsResolved_DYCR_EM = true;
-          }
-
-          WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
-          NCand = SubLeadLep+jets.at(0)+jets.at(1);
-          NCand_1 = LeadLep+jets.at(0)+jets.at(1);
-          NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
-
-
-        } // END if dR(l,l)>0.4 && dR(j,j)>0.4
-
-      } // END if # of jets >= 2
+      }
 
     } // END if pt1>63 && pt2>50
 
   } // END if # of tight lepton == 2
-
-  bool IsBoostedEvent(false);
-  bool IsBoosted_SR_EE(false), IsBoosted_SR_MM(false);
-  bool IsBoosted_DYCR_EE(false), IsBoosted_DYCR_MM(false);
-  bool IsBoosted_CR_EMJet(false), IsBoosted_CR_MEJet(false);
-  if(!IsResolvedEvent){
-
-    //==== Select the leading lepton
-    std::vector<Lepton *> Tight_leps;
-    for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
-    for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
-    std::sort(Tight_leps.begin(), Tight_leps.end(), PtComparingPtr);
-
-    Lepton LeadLep = (*Tight_leps.at(0));
-    bool tmp_IsLeadE(false), tmp_IsLeadM(false);
-    TString Suffix = "";
-    if(LeadLep.LeptonFlavour()==Lepton::ELECTRON){
-      if(PassSingleElectron){
-        tmp_IsLeadE = true;
-        Suffix = "SingleElectron";
-      }
-    }
-    else if(LeadLep.LeptonFlavour()==Lepton::MUON){
-      if(PassMu50){
-        tmp_IsLeadM = true;
-        Suffix = "SingleMuon";
-      }
-    }
-    else{
-      cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong flavour : " << LeadLep.LeptonFlavour() << endl;
-      exit(EXIT_FAILURE);
-    }
-
-    std::vector<Lepton *> Loose_SF_leps, Loose_OF_leps;
-    if(tmp_IsLeadE){
-      Loose_SF_leps = MakeLeptonPointerVector(Loose_electrons);
-      Loose_OF_leps = MakeLeptonPointerVector(Loose_muons);
-    }
-    else if(tmp_IsLeadM){
-      Loose_SF_leps = MakeLeptonPointerVector(Loose_muons);
-      Loose_OF_leps = MakeLeptonPointerVector(Loose_electrons);
-    }
-
-    bool HasAwayMergedFatJet = false;
-    for(unsigned int i=0; i<fatjets_LSF.size(); i++){
-      FatJet this_fatjet = fatjets_LSF.at(i);
-      if( fabs( LeadLep.DeltaPhi(this_fatjet) ) > 2.0 ){
-        HasAwayMergedFatJet = true;
-        HNFatJet = this_fatjet;
-        NCand = HNFatJet;
-        WRCand = LeadLep+HNFatJet;
-        break;
-      }
-    }
-
-    bool HasSFLooseLepton = false;
-    Lepton *SFLooseLepton;
-    bool HasOFLooseLepton = false;
-    Lepton *OFLooseLepton;
-
-    for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
-      if( LeadLep.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.01 ) continue;
-      if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
-      if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
-        HasSFLooseLepton = true;
-        SFLooseLepton = Loose_SF_leps.at(k);
-        break;
-      }
-    }
-
-    for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
-
-      if( LeadLep.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.01 ) continue;
-      if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
-      if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
-        HasOFLooseLepton = true;
-        OFLooseLepton = Loose_OF_leps.at(k);
-        break;
-      }
-    }
-
-    leps_for_plot.push_back( Tight_leps.at(0) );
-    if(HasSFLooseLepton && !HasOFLooseLepton){
-
-      leps_for_plot.push_back( SFLooseLepton );
-
-      if( (LeadLep+*SFLooseLepton).M() > 200 ){
-        //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR
-        //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR
-        map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
-        if(tmp_IsLeadE) IsBoosted_SR_EE = true;
-        else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
-      }
-      else if( (LeadLep+*SFLooseLepton).M() < 150 ){
-        //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted CR (DY dominant) -> extrapolate with fiting
-        //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted CR (DY dominant) -> extrapolate with fiting
-        map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
-        if(tmp_IsLeadE) IsBoosted_DYCR_EE = true; 
-        else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
-      }
-    }
-
-    if(!HasSFLooseLepton && HasOFLooseLepton){
-
-      leps_for_plot.push_back( OFLooseLepton );
-
-      if( (LeadLep+*OFLooseLepton).M() > 200 ){
-        //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant)
-        //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK9jet (ttbar dominant)
-        map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
-        if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
-        else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
-      }
-    }
-
-  }
-
-  //==== TODO : trigger SFs
-
-/*
-  bool IsResolved_SR_EE(false), IsResolved_SR_MM(false), IsResolved_SR_EM(false);
-  bool IsResolved_DYCR_EE(false), IsResolved_DYCR_MM(false), IsResolved_DYCR_EM(false);
-  bool IsBoosted_SR_EE(false), IsBoosted_SR_MM(false);
-  bool IsBoosted_DYCR_EE(false), IsBoosted_DYCR_MM(false);
-  bool IsBoosted_CR_EMJet(false), IsBoosted_CR_MEJet(false);
-*/
-
-/*
-  //==== TODO : DYPT
-    if(ApplyDYPtReweight && Used_leps.size()>=2){
-      double this_zpt = ((*Used_leps.at(0))+(*Used_leps.at(1))).Pt();
-      if(IsEE) weight *= GetDYPtReweight(this_zpt, 0);
-      else if(IsMM) weight *= GetDYPtReweight(this_zpt, 1);
-      else {}
-    }
-*/
 
   if( map_bool_To_Region.size() == 0 ) return;
 
   double trigger_sf_SingleElectron = 1.; // TODO Measure it
   double trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons);
 
-  if( IsResolved_SR_EE || IsResolved_DYCR_EE || IsBoosted_SR_EE || IsBoosted_DYCR_EE || IsBoosted_CR_EMJet ){
+  if( IsEE ){
     weight *= trigger_sf_SingleElectron;
   }
-  else if( IsResolved_SR_MM || IsResolved_SR_EM || IsResolved_DYCR_MM || IsResolved_DYCR_EM || IsBoosted_SR_MM || IsBoosted_DYCR_MM || IsBoosted_CR_MEJet ){
+  else if( IsMM ){
     weight *= trigger_sf_SingleMuon;
   }
   else{
-    cerr << "[HNWRAnalyzer::executeEventFromParameter] Unkown event.." << endl;
+    cerr << "[HNWROnZ::executeEventFromParameter] Unkown event.." << endl;
     exit(EXIT_FAILURE);
   }
 
@@ -606,10 +418,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       ZPtReweight_MM = GetDYPtReweight(this_zpt, 1);
     }
   }
-  if( IsResolved_SR_EE || IsResolved_DYCR_EE || IsBoosted_SR_EE || IsBoosted_DYCR_EE ){
+  if( IsEE ){
     weight *= ZPtReweight_EE;
   }
-  else if( IsResolved_SR_MM || IsResolved_DYCR_MM || IsBoosted_SR_MM || IsBoosted_DYCR_MM ){
+  else if( IsMM ){
     weight *= ZPtReweight_MM;
   }
   else{
@@ -640,36 +452,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       JSFillHist(this_region, "NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
       JSFillHist(this_region, "HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
-      if(this_region.Contains("Boosted")){
-        JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
-
-        JSFillHist(this_region, "HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 1000, 0., 1000.);
-        JSFillHist(this_region, "HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
-        JSFillHist(this_region, "HNFatJet_Mass_"+this_region, HNFatJet.M(), weight, 3000, 0., 3000.);
-        JSFillHist(this_region, "HNFatJet_SDMass_"+this_region, HNFatJet.SDMass(), weight, 3000, 0., 3000.);
-        JSFillHist(this_region, "HNFatJet_PuppiTau21_"+this_region, HNFatJet.PuppiTau2()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
-        JSFillHist(this_region, "HNFatJet_PuppiTau31_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
-        JSFillHist(this_region, "HNFatJet_PuppiTau32_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau2(), weight, 100, 0., 1.);
-        JSFillHist(this_region, "HNFatJet_LSF_"+this_region, HNFatJet.LSF(), weight, 100, 0., 1.);
-
-      }
-
       if( leps_for_plot.size()>=2 ){
         JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).M(), weight, 2000, 0., 2000.);
         JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt(), weight, 2000, 0., 2000.);
         JSFillHist(this_region, "dPhi_ll_"+this_region, fabs((*leps_for_plot.at(0)).DeltaPhi(*leps_for_plot.at(1))), weight, 40, 0., 4.);
       }
-
-      JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
-      JSFillHist(this_region, "WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
-
-      JSFillHist(this_region, "NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
-      JSFillHist(this_region, "NCand_Pt_"+this_region, NCand.Pt(), weight, 300, 0., 3000.);
-      JSFillHist(this_region, "NCand_1_Mass_"+this_region, NCand_1.M(), weight, 800, 0., 8000.);
-      JSFillHist(this_region, "NCand_1_Pt_"+this_region, NCand_1.Pt(), weight, 300, 0., 3000.);
-      JSFillHist(this_region, "NCand_2_Mass_"+this_region, NCand_2.M(), weight, 800, 0., 8000.);
-      JSFillHist(this_region, "NCand_2_Pt_"+this_region, NCand_2.Pt(), weight, 300, 0., 3000.);
-
 
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
@@ -680,17 +467,17 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
 }
 
-HNWRAnalyzer::HNWRAnalyzer(){
+HNWROnZ::HNWROnZ(){
 
   RunFake = false;
 
 }
 
-HNWRAnalyzer::~HNWRAnalyzer(){
+HNWROnZ::~HNWROnZ(){
 
 }
 
-double HNWRAnalyzer::GetDYPtReweight(double zpt, int flav){
+double HNWROnZ::GetDYPtReweight(double zpt, int flav){
 
   if(zpt>=500.) zpt = 499.;
   if(flav==0){
@@ -702,7 +489,7 @@ double HNWRAnalyzer::GetDYPtReweight(double zpt, int flav){
     return hist_DYPtReweight_Muon->GetBinContent(this_bin);
   }
   else{
-    cerr << "[HNWRAnalyzer::GetDYPtReweight] wrong flavour : " << flav << endl;
+    cerr << "[HNWROnZ::GetDYPtReweight] wrong flavour : " << flav << endl;
     exit(EXIT_FAILURE);
   }
 
