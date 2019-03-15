@@ -386,6 +386,9 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
 
           map_bool_To_Region[Suffix+"_OnZ"] = true;
 
+          leps_for_plot.push_back( Tight_leps.at(0) );
+          leps_for_plot.push_back( Tight_leps.at(1) );
+
         }
 
       } // END if pt1>63 && pt2>50

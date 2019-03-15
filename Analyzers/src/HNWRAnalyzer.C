@@ -503,65 +503,69 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         }
       }
 
-      bool HasSFLooseLepton = false;
-      Lepton *SFLooseLepton;
-      bool HasOFLooseLepton = false;
-      Lepton *OFLooseLepton;
+      if(HasAwayMergedFatJet){
 
-      for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
-        if( LeadLep.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.01 ) continue;
-        if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
-        if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
-          HasSFLooseLepton = true;
-          SFLooseLepton = Loose_SF_leps.at(k);
-          break;
+        bool HasSFLooseLepton = false;
+        Lepton *SFLooseLepton;
+        bool HasOFLooseLepton = false;
+        Lepton *OFLooseLepton;
+
+        for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
+          if( LeadLep.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.01 ) continue;
+          if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
+          if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
+            HasSFLooseLepton = true;
+            SFLooseLepton = Loose_SF_leps.at(k);
+            break;
+          }
         }
-      }
 
-      for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
+        for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
 
-        if( LeadLep.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.01 ) continue;
-        if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
-        if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
-          HasOFLooseLepton = true;
-          OFLooseLepton = Loose_OF_leps.at(k);
-          break;
+          if( LeadLep.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.01 ) continue;
+          if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
+          if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
+            HasOFLooseLepton = true;
+            OFLooseLepton = Loose_OF_leps.at(k);
+            break;
+          }
         }
-      }
 
-      leps_for_plot.push_back( Tight_leps.at(0) );
-      if(HasSFLooseLepton && !HasOFLooseLepton){
+        leps_for_plot.push_back( Tight_leps.at(0) );
+        if(HasSFLooseLepton && !HasOFLooseLepton){
 
-        leps_for_plot.push_back( SFLooseLepton );
+          leps_for_plot.push_back( SFLooseLepton );
 
-        if( (LeadLep+*SFLooseLepton).M() > 200 ){
-          //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR
-          //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR
-          map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
-          if(tmp_IsLeadE) IsBoosted_SR_EE = true;
-          else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
+          if( (LeadLep+*SFLooseLepton).M() > 200 ){
+            //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR
+            //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR
+            map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
+            if(tmp_IsLeadE) IsBoosted_SR_EE = true;
+            else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
+          }
+          else if( (LeadLep+*SFLooseLepton).M() < 150 ){
+            //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted CR (DY dominant) -> extrapolate with fiting
+            //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted CR (DY dominant) -> extrapolate with fiting
+            map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
+            if(tmp_IsLeadE) IsBoosted_DYCR_EE = true; 
+            else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
+          }
         }
-        else if( (LeadLep+*SFLooseLepton).M() < 150 ){
-          //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted CR (DY dominant) -> extrapolate with fiting
-          //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted CR (DY dominant) -> extrapolate with fiting
-          map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
-          if(tmp_IsLeadE) IsBoosted_DYCR_EE = true; 
-          else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
+
+        if(!HasSFLooseLepton && HasOFLooseLepton){
+
+          leps_for_plot.push_back( OFLooseLepton );
+
+          if( (LeadLep+*OFLooseLepton).M() > 200 ){
+            //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant)
+            //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK9jet (ttbar dominant)
+            map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
+            if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
+            else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
+          }
         }
-      }
 
-      if(!HasSFLooseLepton && HasOFLooseLepton){
-
-        leps_for_plot.push_back( OFLooseLepton );
-
-        if( (LeadLep+*OFLooseLepton).M() > 200 ){
-          //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant)
-          //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK9jet (ttbar dominant)
-          map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
-          if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
-          else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
-        }
-      }
+      } // END If has merged jet
 
     } // END If trigger fired
   } // END If not resolved
