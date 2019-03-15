@@ -426,7 +426,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
             //==== - HNWR_EMu_Resolved_SR : NOT USED
             if(DiLepMassLT150){
-              map_bool_To_Region["Resolved_DYCR"] = true;
+              map_bool_To_Region[Suffix+"_Resolved_DYCR"] = true;
               if(tmp_IsEE) IsResolved_DYCR_EE = true;
               else if(tmp_IsMM) IsResolved_DYCR_MM = true;
               else if(tmp_IsEM) IsResolved_DYCR_EM = true;
