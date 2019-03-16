@@ -124,7 +124,7 @@ void HNWROnZ::executeEvent(){
   param.Electron_CF_Key = "ZToLL";
   param.Electron_UseMini = false;
   param.Electron_UsePtCone = false;
-  param.Electron_MinPt = 35.;
+  param.Electron_MinPt = 53.;
 
   param.Muon_Tight_ID = "HNWRTight";
   param.Muon_Loose_ID = "HNWRLoose";
@@ -139,7 +139,7 @@ void HNWROnZ::executeEvent(){
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
   param.Muon_UseTuneP = true;
-  param.Muon_MinPt = 10.;
+  param.Muon_MinPt = 53.;
 
   param.Jet_ID = "HN";
   param.FatJet_ID = "HN";
