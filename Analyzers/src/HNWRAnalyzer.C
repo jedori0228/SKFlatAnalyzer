@@ -124,7 +124,7 @@ void HNWRAnalyzer::executeEvent(){
   param.Electron_CF_Key = "ZToLL";
   param.Electron_UseMini = false;
   param.Electron_UsePtCone = false;
-  param.Electron_MinPt = 35.;
+  param.Electron_MinPt = 53.;
 
   param.Muon_Tight_ID = "HNWRTight";
   param.Muon_Loose_ID = "HNWRLoose";
@@ -139,7 +139,7 @@ void HNWRAnalyzer::executeEvent(){
   param.Muon_UseMini = false;
   param.Muon_UsePtCone = false;
   param.Muon_UseTuneP = true;
-  param.Muon_MinPt = 10.;
+  param.Muon_MinPt = 53.;
 
   param.Jet_ID = "HN";
   param.FatJet_ID = "HN";
@@ -289,6 +289,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   Tight_leps_el = MakeLeptonPointerVector(Tight_electrons);
   Tight_leps_mu = MakeLeptonPointerVector(Tight_muons);
 
+  //==== Collect all leptons and sort in pt
+  std::vector<Lepton *> Tight_leps;
+  for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
+  for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
+  std::sort(Tight_leps.begin(), Tight_leps.end(), PtComparingPtr);
+  //==== [CUT] return if lead pt <= 60 GeV
+  if(Tight_leps.at(0)->Pt()<=60.) return;
+
   //===========
   //==== Jets
   //===========
@@ -381,68 +389,51 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(this_triggerpass){
 
-      std::vector<Lepton *> Tight_leps; // let's keep electron first for EM
-      if( tmp_IsEE || tmp_IsEM ){
-        for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
-      }
-      if( tmp_IsMM || tmp_IsEM ){
-        for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
-      }
+      //==== lljj
 
-      //==== Lepton pt cuts
-      Lepton LeadLep = (*Tight_leps.at(0));
-      Lepton SubLeadLep = (*Tight_leps.at(1));
-      bool LeadLepPtCut = max( LeadLep.Pt(), SubLeadLep.Pt() ) > 60.;
-      bool SubLeadLepPtCut = min( LeadLep.Pt(), SubLeadLep.Pt() ) > 53.;
+      if( jets.size()>=2 ){
 
-      //==== lepton pt cuts
-      if(LeadLepPtCut && SubLeadLepPtCut){
+        Lepton LeadLep = (*Tight_leps.at(0));
+        Lepton SubLeadLep = (*Tight_leps.at(1));
 
-        //==== lljj
+        bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
+        bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
 
-        if( jets.size()>=2 ){
+        if( dRTwoLepton && dRTwoJets ){
 
-          bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
-          bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
+          IsResolvedEvent = true;
 
-          if( dRTwoLepton && dRTwoJets ){
+          bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
+          bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
 
-            IsResolvedEvent = true;
+          if(DiLepMassGT200){
+            map_bool_To_Region[Suffix+"_Resolved_SR"] = true;
+            if(tmp_IsEE) IsResolved_SR_EE = true;
+            else if(tmp_IsMM) IsResolved_SR_MM = true;
+            else if(tmp_IsEM) IsResolved_SR_EM = true;
+          }
 
-            bool DiLepMassGT200 = ((LeadLep+SubLeadLep).M() > 200.);
-            bool DiLepMassLT150 = ((LeadLep+SubLeadLep).M() < 150.);
+          leps_for_plot.push_back( Tight_leps.at(0) );
+          leps_for_plot.push_back( Tight_leps.at(1) );
 
-            if(DiLepMassGT200){
-              map_bool_To_Region[Suffix+"_Resolved_SR"] = true;
-              if(tmp_IsEE) IsResolved_SR_EE = true;
-              else if(tmp_IsMM) IsResolved_SR_MM = true;
-              else if(tmp_IsEM) IsResolved_SR_EM = true;
-            }
+          //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
+          //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
+          //==== - HNWR_EMu_Resolved_SR : NOT USED
+          if(DiLepMassLT150){
+            map_bool_To_Region[Suffix+"_Resolved_DYCR"] = true;
+            if(tmp_IsEE) IsResolved_DYCR_EE = true;
+            else if(tmp_IsMM) IsResolved_DYCR_MM = true;
+            else if(tmp_IsEM) IsResolved_DYCR_EM = true;
+          }
 
-            leps_for_plot.push_back( Tight_leps.at(0) );
-            leps_for_plot.push_back( Tight_leps.at(1) );
+          WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
+          NCand = SubLeadLep+jets.at(0)+jets.at(1);
+          NCand_1 = LeadLep+jets.at(0)+jets.at(1);
+          NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
 
-            //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved CR (DY domiant) -> extrapolate with fiting
-            //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved CR (DY domiant) -> extrapolate with fiting
-            //==== - HNWR_EMu_Resolved_SR : NOT USED
-            if(DiLepMassLT150){
-              map_bool_To_Region[Suffix+"_Resolved_DYCR"] = true;
-              if(tmp_IsEE) IsResolved_DYCR_EE = true;
-              else if(tmp_IsMM) IsResolved_DYCR_MM = true;
-              else if(tmp_IsEM) IsResolved_DYCR_EM = true;
-            }
+        } // END if dR(l,l)>0.4 && dR(j,j)>0.4
 
-            WRCand = LeadLep+SubLeadLep+jets.at(0)+jets.at(1);
-            NCand = SubLeadLep+jets.at(0)+jets.at(1);
-            NCand_1 = LeadLep+jets.at(0)+jets.at(1);
-            NCand_2 = SubLeadLep+jets.at(0)+jets.at(1);
-
-
-          } // END if dR(l,l)>0.4 && dR(j,j)>0.4
-
-        } // END if # of jets >= 2
-
-      } // END if pt1>63 && pt2>50
+      } // END if # of jets >= 2
 
     } // END Trigger fired
 
@@ -453,12 +444,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool IsBoosted_DYCR_EE(false), IsBoosted_DYCR_MM(false);
   bool IsBoosted_CR_EMJet(false), IsBoosted_CR_MEJet(false);
   if(!IsResolvedEvent){
-
-    //==== Select the leading lepton
-    std::vector<Lepton *> Tight_leps;
-    for(unsigned int i=0; i<Tight_leps_el.size(); i++) Tight_leps.push_back( Tight_leps_el.at(i) );
-    for(unsigned int i=0; i<Tight_leps_mu.size(); i++) Tight_leps.push_back( Tight_leps_mu.at(i) );
-    std::sort(Tight_leps.begin(), Tight_leps.end(), PtComparingPtr);
 
     Lepton LeadLep = (*Tight_leps.at(0));
     bool tmp_IsLeadE(false), tmp_IsLeadM(false);
