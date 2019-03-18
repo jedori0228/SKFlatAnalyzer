@@ -1156,7 +1156,7 @@ std::vector<Jet> AnalyzerCore::JetsAwayFromFatJet(std::vector<Jet> jets, std::ve
 
 }
 
-std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron> els, std::vector<Muon> mus){
+std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron> els, std::vector<Muon> mus, double dR){
 
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
@@ -1165,7 +1165,7 @@ std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::
     bool HasLeptonInside = false;
 
     for(unsigned int j=0; j<els.size(); j++){
-      if( this_jet.DeltaR( els.at(j) ) < 0.4 ){
+      if( this_jet.DeltaR( els.at(j) ) < dR ){
         HasLeptonInside = true;
         break;
       }
@@ -1173,7 +1173,7 @@ std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::
     if(HasLeptonInside) continue;
 
     for(unsigned int j=0; j<mus.size(); j++){
-      if( this_jet.DeltaR( mus.at(j) ) < 0.4 ){
+      if( this_jet.DeltaR( mus.at(j) ) < dR ){
         HasLeptonInside = true;
         break;
       }

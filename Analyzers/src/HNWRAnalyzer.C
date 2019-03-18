@@ -150,7 +150,25 @@ void HNWRAnalyzer::executeEvent(){
   AllJets = GetAllJets();
   AllFatJets = GetAllFatJets();
 
+  param.dRSeparation = 0.4;
+
   executeEventFromParameter(param);
+
+/*
+  //==== For dR Separation test
+
+  param.Name = "HNWRdR0p5";
+  param.dRSeparation = 0.5;
+  executeEventFromParameter(param);
+
+  param.Name = "HNWRdR0p6";
+  param.dRSeparation = 0.6;
+  executeEventFromParameter(param);
+
+  param.Name = "HNWRdR0p7";
+  param.dRSeparation = 0.7;
+  executeEventFromParameter(param);
+*/
 
   if(RunSyst){
 
@@ -308,7 +326,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   std::vector<Jet>      alljets         = SelectJets(this_AllJets, param.Jet_ID, 40., 2.4);
   std::sort(alljets.begin(), alljets.end(), PtComparing);
-  std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Tight_electrons, Tight_muons);
+  std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Tight_electrons, Tight_muons, param.dRSeparation);
 
   int NBJets=0;
   for(unsigned int i=0; i<alljets.size(); i++){
@@ -396,8 +414,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         Lepton LeadLep = (*Tight_leps.at(0));
         Lepton SubLeadLep = (*Tight_leps.at(1));
 
-        bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > 0.4);
-        bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > 0.4);
+        bool dRTwoLepton = (LeadLep.DeltaR( SubLeadLep ) > param.dRSeparation);
+        bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > param.dRSeparation);
 
         if( dRTwoLepton && dRTwoJets ){
 
