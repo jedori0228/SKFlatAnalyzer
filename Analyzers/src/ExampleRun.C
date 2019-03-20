@@ -247,7 +247,7 @@ void ExampleRun::executeEvent(){
     treevar_mll = -999.;
     if(AllMuons.size()==2){
       treevar_mll = (AllMuons.at(0)+AllMuons.at(1)).M();
-      mapTree["MyTree"]->Write();
+      mapTree["MyTree"]->Fill();
     }
   }
 
