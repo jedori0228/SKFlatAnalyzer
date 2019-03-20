@@ -226,6 +226,8 @@ public:
 
   virtual void WriteHist();
 
+  std::map<TString, TTree *> mapTree;
+
   //==== Quick Plotters
   void FillLeptonPlots(std::vector<Lepton *> leps, TString this_region, double weight);
   void FillJetPlots(std::vector<Jet> jets, std::vector<FatJet> fatjets, TString this_region, double weight);

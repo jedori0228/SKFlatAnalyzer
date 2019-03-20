@@ -1916,8 +1916,12 @@ void AnalyzerCore::WriteHist(){
 
   }
 
-}
+  outfile->cd();
+  for(std::map<TString, TTree *>::iterator it = mapTree.begin(); it!=mapTree.end(); it++){
+    it->second->Write();
+  }
 
+}
 
 void AnalyzerCore::FillLeptonPlots(std::vector<Lepton *> leps, TString this_region, double weight){
 

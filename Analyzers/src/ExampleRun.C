@@ -94,6 +94,18 @@ void ExampleRun::initializeAnalyzer(){
   RunXSecSyst = HasFlag("RunXSecSyst");
   cout << "[ExampleRun::initializeAnalyzer] RunXSecSyst = " << RunXSecSyst << endl;
 
+  //================================
+  //==== Example 4
+  //==== How to make your own tree
+  //================================
+
+  MakeNewTree = HasFlag("MakeNewTree");
+  if(MakeNewTree){
+    TTree *my_tree= new TTree("MyNewTree", "This is my private tree");
+    my_tree->Branch("mll",&treevar_mll,"treevar_mll/D");
+    mapTree["MyTree"] = my_tree;
+  }
+
 }
 
 ExampleRun::~ExampleRun(){
@@ -229,6 +241,14 @@ void ExampleRun::executeEvent(){
       JSFillHist("XSecError", "MET_Scale_"+TString::Itoa(i,10), MET, PDFWeights_Scale->at(i), 200, 0., 200.);
     }
 
+  }
+
+  if(MakeNewTree){
+    treevar_mll = -999.;
+    if(AllMuons.size()==2){
+      treevar_mll = (AllMuons.at(0)+AllMuons.at(1)).M();
+      mapTree["MyTree"]->Write();
+    }
   }
 
 }

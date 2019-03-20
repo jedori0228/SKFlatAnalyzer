@@ -15,6 +15,7 @@ public:
   bool RunSyst;
   bool RunNewPDF;
   bool RunXSecSyst;
+  bool MakeNewTree;
 
   TString IsoMuTriggerName;
   double TriggerSafePtCut;
@@ -27,6 +28,9 @@ public:
 
   ExampleRun();
   ~ExampleRun();
+
+  //==== My tree variables;
+  double treevar_mll;
 
 };
 
