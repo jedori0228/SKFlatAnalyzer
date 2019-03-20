@@ -70,6 +70,8 @@ AnalyzerParameter::AnalyzerParameter(){
 
   syst_ = Central;
 
+  dRSeparation = 0.4;
+
 }
 
 TString AnalyzerParameter::GetSystType(){

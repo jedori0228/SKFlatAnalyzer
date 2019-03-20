@@ -45,14 +45,15 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
 
   for(unsigned int i=2; i<gens.size(); i++){
     Gen gen = gens.at(i);
-    if(abs( gen.PID() ) == 9900024 || abs( gen.PID() ) == 34){
+    Gen mother = gens.at(gen.MotherIndex());
+    if( (abs( gen.PID() ) == 9900024 || abs( gen.PID() ) == 34) && (abs( mother.PID() ) <= 6) ){
 
      //=== pythia sample has strange things. first WR is nan
      double forchecknan = gen.M();
      if(forchecknan != forchecknan) continue;
 
-      gen_WR = gen;
-      break;
+       gen_WR = gen;
+       break;
     }
   }
   if(gen_WR.IsEmpty()){
@@ -88,7 +89,6 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   FillHist("Eta_gen_N", gen_N.Eta(), 1., 120, -6., 6.);
   FillHist("gen_SignalLeptonChannel", gen_SignalLeptonChannel, 1., 2, 0., 2.);
 
-
   if(!IsOffShellWR){
     for(unsigned int i=2; i<gens.size(); i++){
       Gen gen = gens.at(i);
@@ -112,8 +112,9 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     }
   }
   if(gen_priLep.IsEmpty()){
-    //cout << "Can't file gen_priLep" << endl;
-    //PrintGen(gens);
+    cout << "Can't file gen_priLep" << endl;
+    cout << "IsOffShellWR = " << IsOffShellWR << endl;
+    PrintGen(gens);
     FillHist("GENFIND_no_gen_priLep", 0., 1., 1, 0., 1.);
     GenAllFound = false;
   }
@@ -154,11 +155,26 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
       }
     }
   }
+  Gen gen_secWR;
   if(tmp_gen_jets.size()!=2){
-    //cout << "Can't file correct jets : tmp_gen_jets.size() = tmp_gen_jets" << endl;
-    //PrintGen(gens);
-    FillHist("GENFIND_size_tmp_gen_jets", tmp_gen_jets.size(), 1., 10, 0., 10.);
-    GenAllFound = false;
+
+    //==== if the second WR appeared in gen info, we should use this
+
+    for(unsigned int i=2; i<gens.size(); i++){
+      Gen gen = gens.at(i);
+      Gen mother = gens.at(gen.MotherIndex());
+      if(abs( mother.PID() ) == 9900024 || abs( mother.PID() ) == 34 ){
+        if(abs( gen.PID() ) <= 6){
+          tmp_gen_jets.push_back( gen );
+        }
+      }
+    }
+    if(tmp_gen_jets.size()!=2){
+      cout << "Can't file correct jets : tmp_gen_jets.size() = tmp_gen_jets" << endl;
+      PrintGen(gens);
+      FillHist("GENFIND_size_tmp_gen_jets", tmp_gen_jets.size(), 1., 10, 0., 10.);
+      GenAllFound = false;
+    }
   }
   gen_jet1 = tmp_gen_jets.at(0);
   gen_jet2 = tmp_gen_jets.at(1);
@@ -177,6 +193,7 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   FillHist("dR_gen_WRStar_gen_secLep", (tmp_gen_jets.at(0)+tmp_gen_jets.at(1)).DeltaR( gen_secLep ), 1., 60, 0., 6.);
 
   FillHist("GenAllFound", GenAllFound, 1., 2, 0., 2.);
+  FillHist("Is_gen_priLep_Lead", gen_priLep.Pt() > gen_secLep.Pt(), 1., 2, 0., 2.);
 
 /*
   //=== 190113_ElectronTriggerTest

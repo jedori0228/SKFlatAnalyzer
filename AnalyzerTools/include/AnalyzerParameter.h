@@ -44,6 +44,8 @@ public:
   Syst syst_;
   TString GetSystType();
 
+  double dRSeparation;
+
   void Clear();
 
   AnalyzerParameter();
