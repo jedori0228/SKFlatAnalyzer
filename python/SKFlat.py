@@ -21,6 +21,7 @@ parser.add_argument('-y', dest='Year', default="2017")
 parser.add_argument('--skim', dest='Skim', default="")
 parser.add_argument('--no_exec', action='store_true')
 parser.add_argument('--userflags', dest='Userflags', default="")
+parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
 args = parser.parse_args()
 
 ## make userflags as a list
@@ -341,7 +342,7 @@ source /cvmfs/cms.cern.ch/slc6_amd64_gcc630/cms/cmssw/CMSSW_9_4_4/external/slc6_
 export SKFlatV="{0}"
 export SKFlat_WD=`pwd`
 export SKFlat_LIB_PATH=$SKFlat_WD/lib/
-export DATA_DIR=data/$SKFlatV
+export DATA_DIR=$SKFlat_WD/data/$SKFlatV
 export ROOT_INCLUDE_PATH=$ROOT_INCLUDE_PATH:$SKFlat_WD/DataFormats/include/:$SKFlat_WD/Analyzers/include/:$SKFlat_WD/AnalyzerTools/include/
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SKFlat_LIB_PATH
 
@@ -513,6 +514,9 @@ void {2}(){{
         out.write('  m.SetOutfilePath("hists.root");\n')
       else:
         out.write('  m.SetOutfilePath("'+thisjob_dir+'/hists.root");\n')
+
+    if args.Reduction>1:
+      out.write('  m.MaxEvent=m.fChain->GetEntries()/'+str(args.Reduction)+';\n')
 
     out.write('  m.Init();'+'\n')
     if not IsSkimTree:
