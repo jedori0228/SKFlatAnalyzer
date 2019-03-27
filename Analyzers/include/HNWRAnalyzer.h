@@ -42,6 +42,9 @@ public:
   double PUReweight;
   int N_VTX;
 
+  //==== My tool
+  bool LeptonPassID(Lepton &lepton, TString ID);
+
 };
 
 

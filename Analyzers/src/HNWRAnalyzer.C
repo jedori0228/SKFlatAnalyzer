@@ -702,3 +702,21 @@ double HNWRAnalyzer::GetDYPtReweight(double zpt, int flav){
   }
 
 }
+
+bool HNWRAnalyzer::LeptonPassID(Lepton &lepton, TString ID){
+
+  if(lepton.LeptonFlavour()==Lepton::ELECTRON){
+    Electron *el = (Electron *)&lepton;
+    return el->PassID(ID);
+  }
+  else if(lepton.LeptonFlavour()==Lepton::MUON){
+    Muon *mu = (Muon *)&lepton;
+    return mu->PassID(ID);
+  }
+  else{
+    cout << "[HNWRAnalyzer::LeptonPassID] lepton flavour wrong.." << endl;
+    exit(EXIT_FAILURE);
+    return false;
+  }
+
+}
