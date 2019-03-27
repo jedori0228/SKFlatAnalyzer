@@ -10,6 +10,7 @@ public:
   void initializeAnalyzer();
   void executeEventFromParameter(AnalyzerParameter param);
   void executeEvent();
+  std::vector<Lepton *> TESTFunction(std::vector<Muon>& muons);
 
   MyPlayGround();
   ~MyPlayGround();
