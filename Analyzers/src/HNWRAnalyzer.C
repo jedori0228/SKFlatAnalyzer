@@ -80,6 +80,9 @@ void HNWRAnalyzer::initializeAnalyzer(){
   //=== list of taggers, WP, setup systematics, use period SFs
   SetupBTagger(vtaggers,v_wps, true, true);
 
+  //==== Signal finder
+  genFinder = new GenFinderForHNWRSignal();
+
 }
 
 void HNWRAnalyzer::executeEvent(){
@@ -387,6 +390,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   Particle NCand_1, NCand_2;
 
   vector<Lepton *> leps_for_plot;
+  int NExtraLooseElectron(0),NExtraLooseMuon(0),NExtraLooseLepton(0);
 
   //==== Check Resolved first
 
@@ -457,6 +461,56 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           NCand = *SubLeadLep+jets.at(0)+jets.at(1);
           NCand_1 = *LeadLep+jets.at(0)+jets.at(1);
           NCand_2 = *SubLeadLep+jets.at(0)+jets.at(1);
+
+          for(unsigned int i=0; i<Loose_leps.size(); i++){
+            if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SubLeadLep){
+              //cout << "--> duplicate" << endl;
+              continue;
+            }
+            NExtraLooseLepton++;
+            if(Loose_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraLooseElectron++;
+            else if(Loose_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraLooseMuon++;
+            else{
+              cout << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra loose lepton in RESOLVED" << endl;
+              exit(EXIT_FAILURE);
+            }
+
+          }
+
+          //==== XXX debugging
+          if(IsResolved_SR_MM){
+            if(NExtraLooseLepton>0){
+              cout << "==========================================" << endl;
+              cout << "NExtraLooseElectron = " << NExtraLooseElectron << endl;
+              cout << "NExtraLooseMuon = " << NExtraLooseMuon << endl;
+              //genFinder->Debug=true;
+              genFinder->Run(gens);
+              genFinder->Print();
+              genFinder->PrintGen(gens);
+              cout << "#### RECO ####" << endl;
+              for(unsigned int i=0; i<Loose_leps.size(); i++){
+                if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SubLeadLep){
+                  cout << i << " (Duplicated) ";Loose_leps.at(i)->Print();
+                  //cout << "--> duplicate" << endl;
+                  continue;
+                }
+                if(Loose_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON){
+                  cout << i << " (Electron) ";Loose_leps.at(i)->Print();
+                }
+                else if(Loose_leps.at(i)->LeptonFlavour()==Lepton::MUON){
+                  cout << i << " (Muon) ";Loose_leps.at(i)->Print();
+                }
+                else{
+                  cout << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra loose lepton in RESOLVED" << endl;
+                  exit(EXIT_FAILURE);
+                }
+
+              }
+
+            }
+
+          }
+
 
         } // END if dR(l,l)>0.4 && dR(j,j)>0.4
 
@@ -570,6 +624,21 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           }
         }
 
+        for(unsigned int i=0; i<Loose_leps.size(); i++){
+          if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SFLooseLepton || Loose_leps.at(i)==OFLooseLepton){
+            //cout << "--> duplicate" << endl;
+            continue;
+          }
+          NExtraLooseLepton++;
+          if(Loose_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraLooseElectron++;
+          else if(Loose_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraLooseMuon++;
+          else{
+            cout << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra loose lepton in BOOSTED" << endl;
+            exit(EXIT_FAILURE);
+          }
+
+        }
+
       } // END If has merged jet
 
     } // END If trigger fired
@@ -628,6 +697,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       JSFillHist(this_region, "N_VTX_"+this_region, N_VTX, weight, 200., 0., 200.);
 
       JSFillHist(this_region, "Lepton_Size_"+this_region, leps_for_plot.size(), weight, 10, 0., 10.);
+
+      JSFillHist(this_region, "NExtraLooseElectron_"+this_region, NExtraLooseElectron, weight, 10, 0., 10.);
+      JSFillHist(this_region, "NExtraLooseMuon_"+this_region, NExtraLooseMuon, weight, 10, 0., 10.);
+      JSFillHist(this_region, "NExtraLooseLepton_"+this_region, NExtraLooseLepton, weight, 10, 0., 10.);
 
       JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
       JSFillHist(this_region, "LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
