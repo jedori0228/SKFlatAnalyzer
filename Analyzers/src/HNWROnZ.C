@@ -59,6 +59,23 @@ void HNWROnZ::initializeAnalyzer(){
     TriggerSafePt_Muon = 52.;
 
   }
+  else if(DataYear==2018){
+
+    Triggers_Electron = {
+      "HLT_Ele32_WPTight_Gsf_v",
+      "HLT_Photon200_v",
+    };
+    Triggers_Muon = {
+      "HLT_Mu50_v",
+      "HLT_OldMu100_v",
+      "HLT_TkMu100_v",
+    };
+    TriggerNameForSF_Electron = "Ele32_WPTight_Gsf";
+    TriggerNameForSF_Muon = "Mu50";
+    TriggerSafePt_Electron = 35.;
+    TriggerSafePt_Muon = 52.;
+
+  }
 
   //==== DY Pt Reweighting
 
