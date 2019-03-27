@@ -128,6 +128,7 @@ bool Electron::PassID(TString ID){
   if(ID=="HNWRLoose") return Pass_HNWRLoose();
   if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
+  if(ID=="HNWRLT") return ( Pass_HNWRTight() || Pass_HNWRLoose() );
 
   //==== POG
   if(ID=="passVetoID") return passVetoID();
