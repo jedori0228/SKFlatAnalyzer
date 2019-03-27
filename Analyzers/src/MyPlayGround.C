@@ -43,12 +43,16 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
   cout << "address = " << &( muons.at(0) ) << endl;
   cout << "#### Muon ####" << endl;
   cout << "address  = " << &muon << endl;
+  cout << "Chi2 = " << muon.Chi2() << endl;
   cout << "#### Lepton ####" << endl;
   cout << "address = " << lepton << endl;
-
+  Muon *mu_from_lep = (Muon *)lepton;
+  cout << "Chi2 from lepton = " << mu_from_lep->Chi2() << endl;
   vector<Lepton *> vectest_lepton = TESTFunction(muons);
   cout << "#### Lepton from function ####" << endl;
   cout << "address = " << vectest_lepton.at(0) << endl;
+  Muon *mu_from_lep_from_vec = (Muon *)(vectest_lepton.at(0));
+  cout << "Chi2 from lepton = " << mu_from_lep_from_vec->Chi2() << endl;
 }
 
 MyPlayGround::MyPlayGround(){
