@@ -494,6 +494,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
           }
 
+/*
           //==== XXX debugging
           if(IsResolved_SR_MM){
             if(NExtraLooseLepton>0){
@@ -526,8 +527,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
             }
 
-          }
-
+          } // END Debugging
+*/
 
         } // END if dR(l,l)>0.4 && dR(j,j)>0.4
 
