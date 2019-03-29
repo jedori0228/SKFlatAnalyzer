@@ -43,6 +43,28 @@ AnalyzerCore::~AnalyzerCore(){
 
 }
 
+//==== Attach the historams to ai different direcotry, not outfile
+//==== We will write these histograms in WriteHist() to outfile
+void AnalyzerCore::SwitchToTempDir(){
+
+  gROOT->cd();
+  TDirectory *tempDir = NULL;
+  int counter = 0;
+  while (!tempDir) {
+    //==== First, let's find a directory name that doesn't exist yet
+    std::stringstream dirname;
+    dirname << "AnalyzerCore" << counter;
+    if (gROOT->GetDirectory((dirname.str()).c_str())) {
+      ++counter;
+      continue;
+    }
+    //==== Let's try to make this directory
+    tempDir = gROOT->mkdir((dirname.str()).c_str());
+  }
+  tempDir->cd();
+
+}
+
 void AnalyzerCore::SetOutfilePath(TString outname){
   outfile = new TFile(outname,"RECREATE");
 };
@@ -1948,6 +1970,7 @@ void AnalyzerCore::WriteHist(){
     }
     outfile->cd(this_suffix);
     mapit->second->Write(this_name);
+    outfile->cd();
   }
   for(std::map< TString, TH2D* >::iterator mapit = maphist_TH2D.begin(); mapit!=maphist_TH2D.end(); mapit++){
     TString this_fullname=mapit->second->GetName();
@@ -1959,6 +1982,7 @@ void AnalyzerCore::WriteHist(){
     }
     outfile->cd(this_suffix);
     mapit->second->Write(this_name);
+    outfile->cd();
   }
 
   outfile->cd();
