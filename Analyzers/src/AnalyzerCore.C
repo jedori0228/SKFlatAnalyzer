@@ -13,12 +13,12 @@ AnalyzerCore::~AnalyzerCore(){
 
   //=== hist maps
 
-  for(std::map< TString, TH1D* >::iterator mapit = maphist_TH1D.begin(); mapit!=maphist_TH1D.end(); mapit++){
+  for(std::map< std::string, TH1D* >::iterator mapit = maphist_TH1D.begin(); mapit!=maphist_TH1D.end(); mapit++){
     delete mapit->second;
   }
   maphist_TH1D.clear();
 
-  for(std::map< TString, TH2D* >::iterator mapit = maphist_TH2D.begin(); mapit!=maphist_TH2D.end(); mapit++){
+  for(std::map< std::string, TH2D* >::iterator mapit = maphist_TH2D.begin(); mapit!=maphist_TH2D.end(); mapit++){
     delete mapit->second;
   }
   maphist_TH2D.clear();
@@ -1706,20 +1706,20 @@ bool AnalyzerCore::IsSignalPID(int pid){
 //==== END Gen Matching Tools
 //==============================================================
 
-TH1D* AnalyzerCore::GetHist1D(TString histname){
+TH1D* AnalyzerCore::GetHist1D(std::string histname){
 
   TH1D *h = NULL;
-  std::map<TString, TH1D*>::iterator mapit = maphist_TH1D.find(histname);
+  std::map<std::string, TH1D*>::iterator mapit = maphist_TH1D.find(histname);
   if(mapit != maphist_TH1D.end()) return mapit->second;
 
   return h;
 
 }
 
-TH2D* AnalyzerCore::GetHist2D(TString histname){
+TH2D* AnalyzerCore::GetHist2D(std::string histname){
 
   TH2D *h = NULL;
-  std::map<TString, TH2D*>::iterator mapit = maphist_TH2D.find(histname);
+  std::map<std::string, TH2D*>::iterator mapit = maphist_TH2D.find(histname);
   if(mapit != maphist_TH2D.end()) return mapit->second;
 
   return h;
@@ -1728,10 +1728,10 @@ TH2D* AnalyzerCore::GetHist2D(TString histname){
 
 void AnalyzerCore::FillHist(TString histname, double value, double weight, int n_bin, double x_min, double x_max){
 
-  TH1D *this_hist = GetHist1D(histname);
+  TH1D *this_hist = GetHist1D(histname.Data());
   if( !this_hist ){
     this_hist = new TH1D(histname, "", n_bin, x_min, x_max);
-    maphist_TH1D[histname] = this_hist;
+    maphist_TH1D[histname.Data()] = this_hist;
   }
 
   this_hist->Fill(value, weight);
@@ -1740,10 +1740,10 @@ void AnalyzerCore::FillHist(TString histname, double value, double weight, int n
 
 void AnalyzerCore::FillHist(TString histname, double value, double weight, int n_bin, double *xbins){
 
-  TH1D *this_hist = GetHist1D(histname);
+  TH1D *this_hist = GetHist1D(histname.Data());
   if( !this_hist ){
     this_hist = new TH1D(histname, "", n_bin, xbins);
-    maphist_TH1D[histname] = this_hist;
+    maphist_TH1D[histname.Data()] = this_hist;
   }
 
   this_hist->Fill(value, weight);
@@ -1756,10 +1756,10 @@ void AnalyzerCore::FillHist(TString histname,
                 int n_binx, double x_min, double x_max,
                 int n_biny, double y_min, double y_max){
 
-  TH2D *this_hist = GetHist2D(histname);
+  TH2D *this_hist = GetHist2D(histname.Data());
   if( !this_hist ){
     this_hist = new TH2D(histname, "", n_binx, x_min, x_max, n_biny, y_min, y_max);
-    maphist_TH2D[histname] = this_hist;
+    maphist_TH2D[histname.Data()] = this_hist;
   }
 
   this_hist->Fill(value_x, value_y, weight);
@@ -1772,28 +1772,28 @@ void AnalyzerCore::FillHist(TString histname,
                 int n_binx, double *xbins,
                 int n_biny, double *ybins){
 
-  TH2D *this_hist = GetHist2D(histname);
+  TH2D *this_hist = GetHist2D(histname.Data());
   if( !this_hist ){
     this_hist = new TH2D(histname, "", n_binx, xbins, n_biny, ybins);
-    maphist_TH2D[histname] = this_hist;
+    maphist_TH2D[histname.Data()] = this_hist;
   }
 
   this_hist->Fill(value_x, value_y, weight);
 
 }
 
-TH1D* AnalyzerCore::JSGetHist1D(TString suffix, TString histname){
+TH1D* AnalyzerCore::JSGetHist1D(std::string suffix, std::string histname){
 
   TH1D *h = NULL;
 
-  std::map< TString, std::map<TString, TH1D*> >::iterator mapit = JSmaphist_TH1D.find(suffix);
+  std::map< std::string, std::map<std::string, TH1D*> >::iterator mapit = JSmaphist_TH1D.find(suffix);
   if(mapit==JSmaphist_TH1D.end()){
     return h;
   }
   else{
 
-    std::map<TString, TH1D*> this_maphist = mapit->second;
-    std::map<TString, TH1D*>::iterator mapitit = this_maphist.find(histname);
+    std::map<std::string, TH1D*> this_maphist = mapit->second;
+    std::map<std::string, TH1D*>::iterator mapitit = this_maphist.find(histname);
     if(mapitit != this_maphist.end()) return mapitit->second;
 
   }
@@ -1804,11 +1804,11 @@ TH1D* AnalyzerCore::JSGetHist1D(TString suffix, TString histname){
 
 void AnalyzerCore::JSFillHist(TString suffix, TString histname, double value, double weight, int n_bin, double x_min, double x_max){
 
-  TH1D *this_hist = JSGetHist1D(suffix, histname);
+  TH1D *this_hist = JSGetHist1D(suffix.Data(), histname.Data());
   if( !this_hist ){
 
     this_hist = new TH1D(histname, "", n_bin, x_min, x_max);
-    (JSmaphist_TH1D[suffix])[histname] = this_hist;
+    (JSmaphist_TH1D[suffix.Data()])[histname.Data()] = this_hist;
 
   }
 
@@ -1816,18 +1816,18 @@ void AnalyzerCore::JSFillHist(TString suffix, TString histname, double value, do
 
 }
 
-TH2D* AnalyzerCore::JSGetHist2D(TString suffix, TString histname){
+TH2D* AnalyzerCore::JSGetHist2D(std::string suffix, std::string histname){
 
   TH2D *h = NULL;
 
-  std::map< TString, std::map<TString, TH2D*> >::iterator mapit = JSmaphist_TH2D.find(suffix);
+  std::map< std::string, std::map<std::string, TH2D*> >::iterator mapit = JSmaphist_TH2D.find(suffix);
   if(mapit==JSmaphist_TH2D.end()){
     return h;
   }
   else{
 
-    std::map<TString, TH2D*> this_maphist = mapit->second;
-    std::map<TString, TH2D*>::iterator mapitit = this_maphist.find(histname);
+    std::map<std::string, TH2D*> this_maphist = mapit->second;
+    std::map<std::string, TH2D*>::iterator mapitit = this_maphist.find(histname);
     if(mapitit != this_maphist.end()) return mapitit->second;
 
   }
@@ -1842,11 +1842,11 @@ void AnalyzerCore::JSFillHist(TString suffix, TString histname,
                   int n_binx, double x_min, double x_max,
                   int n_biny, double y_min, double y_max){
 
-  TH2D *this_hist = JSGetHist2D(suffix, histname);
+  TH2D *this_hist = JSGetHist2D(suffix.Data(), histname.Data());
   if( !this_hist ){
 
     this_hist = new TH2D(histname, "", n_binx, x_min, x_max, n_biny, y_min, y_max);
-    (JSmaphist_TH2D[suffix])[histname] = this_hist;
+    (JSmaphist_TH2D[suffix.Data()])[histname.Data()] = this_hist;
 
   }
 
@@ -1860,11 +1860,11 @@ void AnalyzerCore::JSFillHist(TString suffix, TString histname,
                   int n_binx, double *xbins,
                   int n_biny, double *ybins){
 
-  TH2D *this_hist = JSGetHist2D(suffix, histname);
+  TH2D *this_hist = JSGetHist2D(suffix.Data(), histname.Data());
   if( !this_hist ){
 
     this_hist = new TH2D(histname, "", n_binx, xbins, n_biny, ybins);
-    (JSmaphist_TH2D[suffix])[histname] = this_hist;
+    (JSmaphist_TH2D[suffix.Data()])[histname.Data()] = this_hist;
 
   }
 
@@ -1875,45 +1875,65 @@ void AnalyzerCore::JSFillHist(TString suffix, TString histname,
 void AnalyzerCore::WriteHist(){
 
   outfile->cd();
-  for(std::map< TString, TH1D* >::iterator mapit = maphist_TH1D.begin(); mapit!=maphist_TH1D.end(); mapit++){
-    TString this_fullname=mapit->second->GetName();
-    TString this_name=this_fullname(this_fullname.Last('/')+1,this_fullname.Length());
-    TString this_suffix=this_fullname(0,this_fullname.Last('/'));
-    TDirectory *dir = outfile->GetDirectory(this_suffix);
+  for(std::map< std::string, TH1D* >::iterator mapit = maphist_TH1D.begin(); mapit!=maphist_TH1D.end(); mapit++){
+
+    std::string this_fullname = mapit->second->GetName();
+    //==== E.g., this_fullname = "A/B/hist"
+    //====          (position)    01234567
+    const char *last_slash_str = strrchr(this_fullname.c_str(), '/');
+    //==== last_slash_str = "/hist";
+    long last_slash_position = last_slash_str ? last_slash_str - this_fullname.c_str() : std::string::npos;
+    //==== last_slash_position = 3
+    std::string this_name = this_fullname.substr(last_slash_position+1,this_fullname.length());
+    //==== this_name = substring from 3+1 to the end
+    std::string this_suffix = last_slash_position+1==0 ? "" : this_fullname.substr(0,last_slash_position); 
+    //==== this_suffix = substring from 0 to 3
+
+    TDirectory *dir = outfile->GetDirectory(this_suffix.c_str());
     if(!dir){
-      outfile->mkdir(this_suffix);
+      outfile->mkdir(this_suffix.c_str());
     }
-    outfile->cd(this_suffix);
-    mapit->second->Write(this_name);
+    outfile->cd(this_suffix.c_str());
+    mapit->second->Write(this_name.c_str());
     outfile->cd();
   }
-  for(std::map< TString, TH2D* >::iterator mapit = maphist_TH2D.begin(); mapit!=maphist_TH2D.end(); mapit++){
-    TString this_fullname=mapit->second->GetName();
-    TString this_name=this_fullname(this_fullname.Last('/')+1,this_fullname.Length());
-    TString this_suffix=this_fullname(0,this_fullname.Last('/'));
-    TDirectory *dir = outfile->GetDirectory(this_suffix);
+  for(std::map< std::string, TH2D* >::iterator mapit = maphist_TH2D.begin(); mapit!=maphist_TH2D.end(); mapit++){
+
+    std::string this_fullname = mapit->second->GetName();
+    //==== E.g., this_fullname = "A/B/hist"
+    //====          (position)    01234567
+    const char *last_slash_str = strrchr(this_fullname.c_str(), '/');
+    //==== last_slash_str = "/hist";
+    long last_slash_position = last_slash_str ? last_slash_str - this_fullname.c_str() : std::string::npos;
+    //==== last_slash_position = 3
+    std::string this_name = this_fullname.substr(last_slash_position+1,this_fullname.length());
+    //==== this_name = substring from 3+1 to the end
+    std::string this_suffix = last_slash_position+1==0 ? "" : this_fullname.substr(0,last_slash_position);
+    //==== this_suffix = substring from 0 to 3
+
+    TDirectory *dir = outfile->GetDirectory(this_suffix.c_str());
     if(!dir){
-      outfile->mkdir(this_suffix);
+      outfile->mkdir(this_suffix.c_str());
     }
-    outfile->cd(this_suffix);
-    mapit->second->Write(this_name);
+    outfile->cd(this_suffix.c_str());
+    mapit->second->Write(this_name.c_str());
     outfile->cd();
   }
 
   outfile->cd();
-  for(std::map< TString, std::map<TString, TH1D*> >::iterator mapit=JSmaphist_TH1D.begin(); mapit!=JSmaphist_TH1D.end(); mapit++){
+  for(std::map< std::string, std::map<std::string, TH1D*> >::iterator mapit=JSmaphist_TH1D.begin(); mapit!=JSmaphist_TH1D.end(); mapit++){
 
-    TString this_suffix = mapit->first;
-    std::map< TString, TH1D* > this_maphist = mapit->second;
+    std::string this_suffix = mapit->first;
+    std::map< std::string, TH1D* > this_maphist = mapit->second;
 
 
-    TDirectory *dir = outfile->GetDirectory(this_suffix);
+    TDirectory *dir = outfile->GetDirectory(this_suffix.c_str());
     if(!dir){
-      outfile->mkdir(this_suffix);
+      outfile->mkdir(this_suffix.c_str());
     }
-    outfile->cd(this_suffix);
+    outfile->cd(this_suffix.c_str());
 
-    for(std::map< TString, TH1D* >::iterator mapit = this_maphist.begin(); mapit!=this_maphist.end(); mapit++){
+    for(std::map< std::string, TH1D* >::iterator mapit = this_maphist.begin(); mapit!=this_maphist.end(); mapit++){
       mapit->second->Write();
     }
 
@@ -1921,18 +1941,18 @@ void AnalyzerCore::WriteHist(){
 
   }
 
-  for(std::map< TString, std::map<TString, TH2D*> >::iterator mapit=JSmaphist_TH2D.begin(); mapit!=JSmaphist_TH2D.end(); mapit++){
+  for(std::map< std::string, std::map<std::string, TH2D*> >::iterator mapit=JSmaphist_TH2D.begin(); mapit!=JSmaphist_TH2D.end(); mapit++){
 
-    TString this_suffix = mapit->first;
-    std::map< TString, TH2D* > this_maphist = mapit->second;
+    std::string this_suffix = mapit->first;
+    std::map< std::string, TH2D* > this_maphist = mapit->second;
 
-    TDirectory *dir = outfile->GetDirectory(this_suffix);
+    TDirectory *dir = outfile->GetDirectory(this_suffix.c_str());
     if(!dir){
-      outfile->mkdir(this_suffix);
+      outfile->mkdir(this_suffix.c_str());
     }
-    outfile->cd(this_suffix);
+    outfile->cd(this_suffix.c_str());
 
-    for(std::map< TString, TH2D* >::iterator mapit = this_maphist.begin(); mapit!=this_maphist.end(); mapit++){
+    for(std::map< std::string, TH2D* >::iterator mapit = this_maphist.begin(); mapit!=this_maphist.end(); mapit++){
       mapit->second->Write();
     }
 
