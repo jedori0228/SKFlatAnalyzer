@@ -187,8 +187,8 @@ public:
 
   //==== Plotting
 
-  std::map< std::string, TH1D* > maphist_TH1D;
-  std::map< std::string, TH2D* > maphist_TH2D;
+  std::unordered_map< std::string, TH1D* > maphist_TH1D;
+  std::unordered_map< std::string, TH2D* > maphist_TH2D;
 
   TH1D* GetHist1D(std::string histname);
   TH2D* GetHist2D(std::string histname);
@@ -207,11 +207,11 @@ public:
                 int n_biny, double *ybins);
 
   //==== JSFillHist : 1D
-  std::map< std::string, std::map<std::string, TH1D*> > JSmaphist_TH1D;
+  std::unordered_map< std::string, std::unordered_map<std::string, TH1D*> > JSmaphist_TH1D;
   TH1D* JSGetHist1D(std::string suffix, std::string histname);
   void JSFillHist(TString suffix, TString histname, double value, double weight, int n_bin, double x_min, double x_max);
   //==== JSFillHist : 2D
-  std::map< std::string, std::map<std::string, TH2D*> > JSmaphist_TH2D;
+  std::unordered_map< std::string, std::unordered_map<std::string, TH2D*> > JSmaphist_TH2D;
   TH2D* JSGetHist2D(std::string suffix, std::string histname);
   void JSFillHist(TString suffix, TString histname,
                   double value_x, double value_y,
