@@ -37,8 +37,10 @@ public:
     JetResUp, JetResDown,
     JetEnUp, JetEnDown,
     MuonEnUp, MuonEnDown,
+    MuonIDSFUp, MuonIDSFDown,
     ElectronResUp, ElectronResDown,
     ElectronEnUp, ElectronEnDown,
+    ElectronIDSFUp, ElectronIDSFDown,
     NSyst
   };
   Syst syst_;
