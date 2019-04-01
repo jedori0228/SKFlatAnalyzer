@@ -215,6 +215,9 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
   vector<Jet> this_AllJets = AllJets;
   vector<FatJet> this_AllFatJets = AllFatJets;
 
+  int SystDir_MuonIDSF(0);
+  int SystDir_ElectronIDSF(0);
+
   if(param.syst_ == AnalyzerParameter::Central){
 
   }
@@ -236,11 +239,17 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
   }
   else if(param.syst_ == AnalyzerParameter::MuonEnUp){
     this_AllMuons = ScaleMuons( this_AllMuons, +1 );
-    this_AllTunePMuons = ScaleMuons( this_AllTunePMuons , +1 ); //FIXME not sure what to do for TuneP Muons..
+    this_AllTunePMuons = ScaleMuons( this_AllTunePMuons , +1 );
   }
   else if(param.syst_ == AnalyzerParameter::MuonEnDown){
     this_AllMuons = ScaleMuons( this_AllMuons, -1 );
-    this_AllTunePMuons = ScaleMuons( this_AllTunePMuons , -1 ); //FIXME not sure what to do for TuneP Muons..
+    this_AllTunePMuons = ScaleMuons( this_AllTunePMuons , -1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonIDSFUp){
+    SystDir_MuonIDSF = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonIDSFDown){
+    SystDir_MuonIDSF = -1;
   }
   else if(param.syst_ == AnalyzerParameter::ElectronResUp){
     this_AllElectrons = SmearElectrons( this_AllElectrons, +1 );
@@ -253,6 +262,12 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
   }
   else if(param.syst_ == AnalyzerParameter::ElectronEnDown){
     this_AllElectrons = ScaleElectrons( this_AllElectrons, -1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronIDSFUp){
+    SystDir_ElectronIDSF = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronIDSFDown){
+    SystDir_ElectronIDSF = -1;
   }
   else{
     cerr << "[HNWROnZ::executeEventFromParameter] Wrong syst" << endl;
@@ -344,13 +359,13 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
     mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
     for(unsigned int i=0; i<Tight_electrons.size(); i++){
-      double this_recosf = mcCorr->ElectronReco_SF(Tight_electrons.at(i).scEta(),Tight_electrons.at(i).Pt());
-      double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, Tight_electrons.at(i).scEta(), Tight_electrons.at(i).Pt());
+      double this_recosf = mcCorr->ElectronReco_SF(Tight_electrons.at(i).scEta(),Tight_electrons.at(i).Pt(), SystDir_ElectronIDSF);
+      double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, Tight_electrons.at(i).scEta(), Tight_electrons.at(i).Pt(), SystDir_ElectronIDSF);
       weight *= this_recosf*this_idsf;
     }
     for(unsigned int i=0; i<Tight_muons.size(); i++){
-      double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Tight_muons.at(i).Eta(), Tight_muons.at(i).MiniAODPt());
-      double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i).Eta(), Tight_muons.at(i).MiniAODPt());
+      double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Tight_muons.at(i).Eta(), Tight_muons.at(i).MiniAODPt(), SystDir_MuonIDSF);
+      double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i).Eta(), Tight_muons.at(i).MiniAODPt(), SystDir_MuonIDSF);
       weight *= this_idsf*this_isosf;
     }
 
