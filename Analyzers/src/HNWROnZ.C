@@ -12,12 +12,14 @@ void HNWROnZ::initializeAnalyzer(){
   NoTrigger = HasFlag("NoTrigger");
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
+  FindGenZ = HasFlag("FindGenZ");
 
   cout << "[HNWROnZ::initializeAnalyzer] RunFake = " << RunFake << endl;
   cout << "[HNWROnZ::initializeAnalyzer] RunCF = " << RunCF << endl;
   cout << "[HNWROnZ::initializeAnalyzer] RunSyst = " << RunSyst << endl;
   cout << "[HNWROnZ::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
   cout << "[HNWROnZ::initializeAnalyzer] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
+  cout << "[HNWROnZ::initializeAnalyzer] FindGenZ = " << FindGenZ << endl;
 
   //===============================
   //==== Year-dependent variables
@@ -97,6 +99,23 @@ void HNWROnZ::initializeAnalyzer(){
   //=== list of taggers, WP, setup systematics, use period SFs
   SetupBTagger(vtaggers,v_wps, true, true);
 
+  if(FindGenZ){
+    genDY = new GenFinderForDY();
+
+    TDirectory* origDir = gDirectory;
+
+    outfile->cd();
+    tree_DY = new TTree("tree_DY", "tree_DY");
+    tree_DY->Branch("lepch",&treevar_lepch,"treevar_lepch/I");
+    tree_DY->Branch("RECO_Mass",&treevar_RECO_Mass,"treevar_RECO_Mass/D");
+    tree_DY->Branch("RECO_Pt",&treevar_RECO_Pt,"treevar_RECO_Pt/D");
+    tree_DY->Branch("GEN_Mass",&treevar_GEN_Mass, "treevar_GEN_Mass/D");
+    tree_DY->Branch("GEN_Pt",&treevar_GEN_Pt, "treevar_GEN_Pt/D");
+
+    origDir->cd();
+
+  }
+
 }
 
 void HNWROnZ::executeEvent(){
@@ -106,7 +125,6 @@ void HNWROnZ::executeEvent(){
   //==========================
 
   gens = GetGens();
-  //PrintGen(gens); return;
 
   //==== Prefire weight
 
@@ -467,6 +485,24 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
     //==== should be EM events
   }
 
+  if(FindGenZ){
+
+    Particle genZ = genDY->Find(gens);
+    int leppid = genDY->LeptonPID;
+    if(IsEE && leppid!=11) FillHist("WTF_EE_but_GenFindPIDIs..", leppid, 1., 20, 0., 20.);
+    if(IsMM && leppid!=13) FillHist("WTF_MM_but_GenFindPIDIs..", leppid, 1., 20, 0., 20.);
+
+    int this_int_lepch = IsEE ? 0 : 1;
+    treevar_lepch = this_int_lepch;
+    treevar_RECO_Mass = ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).M();
+    treevar_RECO_Pt = ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt();
+    treevar_GEN_Mass = genZ.M();
+    treevar_GEN_Pt = genZ.Pt();
+
+    tree_DY->Fill();
+
+  }
+
   for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
     TString this_region = it_map->first;
@@ -530,6 +566,17 @@ double HNWROnZ::GetDYPtReweight(double zpt, int flav){
   else{
     cerr << "[HNWROnZ::GetDYPtReweight] wrong flavour : " << flav << endl;
     exit(EXIT_FAILURE);
+  }
+
+}
+
+void HNWROnZ::WriteHist(){
+
+  AnalyzerCore::WriteHist();
+
+  if(FindGenZ){
+    outfile->cd();
+    tree_DY->Write();
   }
 
 }

@@ -2,6 +2,7 @@
 #define HNWROnZ_h
 
 #include "AnalyzerCore.h"
+#include "GenFinderForDY.h"
 
 class HNWROnZ : public AnalyzerCore {
 
@@ -18,6 +19,7 @@ public:
   bool RunSyst;
   bool PromptLeptonOnly;
   bool NoTrigger;
+  bool FindGenZ;
 
   vector<Gen> gens;
 
@@ -41,6 +43,16 @@ public:
 
   double PUReweight;
   int N_VTX;
+
+  GenFinderForDY *genDY;
+  TTree *tree_DY;
+  int treevar_lepch;
+  double treevar_RECO_Mass;
+  double treevar_RECO_Pt;
+  double treevar_GEN_Mass;
+  double treevar_GEN_Pt;
+
+  void WriteHist();
 
 };
 
