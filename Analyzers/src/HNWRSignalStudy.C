@@ -394,6 +394,8 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   }
   if(!Found_lep_mathced_gen_priLep) return;
   JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_priLep__RelIso_"+GENLepChannel, lep_mathced_gen_priLep.RelIso(), this_weight, 100, 0., 1.);
+  JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_priLep__Pt_"+GENLepChannel, lep_mathced_gen_priLep.Pt(), this_weight, 5000, 0., 5000.);
+  JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_priLep__Eta_"+GENLepChannel, lep_mathced_gen_priLep.Eta(), this_weight, 60, -3., 3.);
 
   int N_FatJet_LSF_Away2p0 = 0;
   int N_FatJet_LSF_Away2p5 = 0;
@@ -440,6 +442,8 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
   }
   if(Found_lep_mathced_gen_secLep){
     JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_secLep__RelIso_"+GENLepChannel, lep_mathced_gen_secLep.RelIso(), this_weight, 100, 0., 1.);
+    JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_secLep__Pt_"+GENLepChannel, lep_mathced_gen_secLep.Pt(), this_weight, 5000, 0., 5000.);
+    JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_secLep__Eta_"+GENLepChannel, lep_mathced_gen_secLep.Eta(), this_weight, 60, -3., 3.);
     JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_secLep__dR_gen_jets_"+GENLepChannel, lep_mathced_gen_secLep.DeltaR( tmp_gen_jets.at(0) ), this_weight, 60, 0., 6.);
     JSFillHist(GENLepChannel, "GenStudy__lep_mathced_gen_secLep__dR_gen_jets_"+GENLepChannel, lep_mathced_gen_secLep.DeltaR( tmp_gen_jets.at(1) ), this_weight, 60, 0., 6.);
   }
@@ -464,6 +468,8 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     }
     if(this_found){
       jet_matched_gen_jets.push_back( jet_matched_gen_jet );
+      JSFillHist(GENLepChannel, "GenStudy__jet_mathced_gen_Jet__Pt_"+GENLepChannel, jet_matched_gen_jet.Pt(), this_weight, 5000, 0., 5000.);
+      JSFillHist(GENLepChannel, "GenStudy__jet_mathced_gen_Jet__Eta_"+GENLepChannel, jet_matched_gen_jet.Eta(), this_weight, 60, -3., 3.);
     }
 
   }
@@ -532,6 +538,12 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
       dummy_dR = gen_N.DeltaR( fatjet );
     }
   }
+
+  //==== gen-boosted
+  //==== Gen gen_WR, gen_N, gen_priLep, gen_secLep, gen_jet1, gen_jet2;
+  bool IsGenResolved = gen_secLep.DeltaR( gen_jet1 ) > 0.4 && gen_secLep.DeltaR( gen_jet2 ) > 0.4 && gen_jet1.DeltaR( gen_jet2 ) > 0.4;
+
+  FillHist("IsGenResolved", IsGenResolved, this_weight, 2, 0., 2.);
   if(Found_fatjet_matched_gen_N){
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__NotEmpty_"+GENLepChannel, 0., this_weight, 1, 0., 1.);
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__SDMass_"+GENLepChannel, fatjet_matched_gen_N.SDMass(), this_weight, 6000, 0., 6000.);
@@ -539,8 +551,15 @@ void HNWRSignalStudy::executeEventFromParameter(AnalyzerParameter param){
     double reldpf = fabs( fatjet_matched_gen_N.Pt() - gen_N.Pt() )/ gen_N.Pt();
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__reldpt_"+GENLepChannel, reldpf, this_weight, 200, 0., 2.);
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__Pt_"+GENLepChannel, fatjet_matched_gen_N.Pt(), this_weight, 5000, 0., 5000.);
+    JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__Eta_"+GENLepChannel, fatjet_matched_gen_N.Eta(), this_weight, 60, -3., 3.);
     JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__dRgen_"+GENLepChannel, fatjet_matched_gen_N.DeltaR(gen_N), this_weight, 60, 0., 6.);
     if(Found_lep_mathced_gen_secLep_ID) JSFillHist(GENLepChannel, "GenStudy__fatjet_matched_gen_N__dR_lep_mathced_gen_secLep_"+GENLepChannel, fatjet_matched_gen_N.DeltaR(lep_mathced_gen_secLep), this_weight, 60, 0., 6.);
+
+    //==== To check LSF Efficiency
+    if(!IsGenResolved){
+      JSFillHist(GENLepChannel, "GenStudy__GenBoosted_fatjet_matched_gen_N__NotEmpty_"+GENLepChannel, 0., this_weight, 1, 0., 1.);
+      JSFillHist(GENLepChannel, "GenStudy__GenBoosted_fatjet_matched_gen_N__LSF_"+GENLepChannel, fatjet_matched_gen_N.LSF(), this_weight, 100, 0., 1.);
+    }
 
     bool PassUMNTag = (fatjet_matched_gen_N.SDMass() > 40.) && (fatjet_matched_gen_N.LSF() > 0.7);
     if(PassUMNTag){
