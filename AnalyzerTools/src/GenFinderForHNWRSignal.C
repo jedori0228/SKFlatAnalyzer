@@ -50,11 +50,12 @@ void GenFinderForHNWRSignal::Run(vector<Gen> gens){
   //==== - PID
   for(unsigned int i=2; i<gens.size(); i++){
     Gen gen = gens.at(i);
-    if(abs( gen.PID() ) == 9900012 || abs( gen.PID() ) == 9900014 ){
+    if(abs( gen.PID() ) == 9900012 || abs( gen.PID() ) == 9900014 || abs( gen.PID() ) == 9900016 ){
       N_PID = gen.PID();
       N = gen;
       if(abs( gen.PID() ) == 9900012) SignalLeptonChannel = 0;
       else if(abs( gen.PID() ) == 9900014) SignalLeptonChannel = 1;
+      else if(abs( gen.PID() ) == 9900016 ) SignalLeptonChannel = 2;
       else SignalLeptonChannel = 999;
       break;
     }
