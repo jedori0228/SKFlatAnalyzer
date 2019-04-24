@@ -9,15 +9,16 @@ void HNWRAnalyzer::initializeAnalyzer(){
   RunFake = HasFlag("RunFake");
   RunCF = HasFlag("RunCF");
   RunSyst = HasFlag("RunSyst");
-  NoTrigger = HasFlag("NoTrigger");
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
+  FastSim = HasFlag("FastSim");
 
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] RunSyst = " << RunSyst << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer] FastSim = " << FastSim << endl;
 
   //===============================
   //==== Year-dependent variables
@@ -220,7 +221,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   bool PassSingleElectron = ev.PassTrigger(Triggers_Electron);
   bool PassMu50 = ev.PassTrigger(Triggers_Muon);
-  if(NoTrigger){
+  if(FastSim){
     PassSingleElectron = true;
     PassMu50 = true;
   }
