@@ -4,3 +4,5 @@ ID	SF	passTightID	2017_ElectronTight.root	EGamma_SF2D	TH2F
 ID	SF	passMediumID	2017_ElectronMedium.root	EGamma_SF2D	TH2F
 RECO	SF	ptgt20	egammaEffi.txt_EGM2D_runBCDEF_passingRECO.root	EGamma_SF2D	TH2F
 RECO	SF	ptlt20	egammaEffi.txt_EGM2D_runBCDEF_passingRECO_lowEt.root	EGamma_SF2D	TH2F
+Trigger Eff_DATA  Ele35_WPTight_Gsf_HEEP  egammaEffi.txt_EGM2D_Run2017.root  EGamma_EffData2D TH2F
+Trigger Eff_MC  Ele35_WPTight_Gsf_HEEP  egammaEffi.txt_EGM2D_Run2017.root  EGamma_EffMC2D TH2F
