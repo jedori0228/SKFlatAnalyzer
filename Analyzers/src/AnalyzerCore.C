@@ -2057,6 +2057,7 @@ void AnalyzerCore::FillLeptonPlots(std::vector<Lepton *> leps, TString this_regi
     if(lep->LeptonFlavour()==Lepton::ELECTRON){
       Electron *el = (Electron *)lep;
       JSFillHist(this_region, "Lepton_"+this_itoa+"_MVANoIso_"+this_region, el->MVANoIso(), weight, 200, -1., 1.);
+      JSFillHist(this_region, "Lepton_"+this_itoa+"_HoverE_"+this_region, el->HoverE(), weight, 150, 0., 1.5);
     }
     else if(lep->LeptonFlavour()==Lepton::MUON){
       Muon *mu = (Muon *)lep;
