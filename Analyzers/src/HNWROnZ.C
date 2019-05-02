@@ -151,7 +151,6 @@ void HNWROnZ::executeEvent(){
 
   param.Electron_Tight_ID = "HNWRTight";
   param.Electron_Loose_ID = "HNWRLoose";
-  param.Electron_Veto_ID = "HNWRVeto";
   param.Electron_ID_SF_Key = "HEEP";
   param.Electron_FR_ID = "HNWR";
   param.Electron_FR_Key = "AwayJetPt40";
@@ -163,7 +162,6 @@ void HNWROnZ::executeEvent(){
 
   param.Muon_Tight_ID = "HNWRTight";
   param.Muon_Loose_ID = "HNWRLoose";
-  param.Muon_Veto_ID = "HNWRVeto";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
   param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
   param.Muon_Trigger_SF_Key = "POGHighPtLooseTrkIso";
@@ -296,9 +294,6 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
   //==== Leptons
   //==============
 
-  std::vector<Electron> Veto_electrons = SelectElectrons(this_AllElectrons, param.Electron_Veto_ID, 10., 2.4);
-  std::vector<Muon> Veto_muons = SelectMuons(this_AllTunePMuons, param.Muon_Veto_ID, 10., 2.4);
-
   std::vector<Electron> Loose_electrons = SelectElectrons(this_AllElectrons, param.Electron_Loose_ID, param.Electron_MinPt, 2.4);
   std::vector<Muon> Loose_muons = SelectMuons(this_AllTunePMuons, param.Muon_Loose_ID, param.Muon_MinPt, 2.4);
 
@@ -318,7 +313,6 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
   std::sort(Tight_electrons.begin(), Tight_electrons.end(), PtComparing);
   std::sort(Tight_muons.begin(), Tight_muons.end(), PtComparing);
 
-  int n_Veto_leptons = Veto_electrons.size()+Veto_muons.size();
   int n_Loose_leptons = Loose_electrons.size()+Loose_muons.size();
   int n_Tight_leptons = Tight_electrons.size()+Tight_muons.size();
   //==== [CUT] : return if no tight lepton
@@ -326,13 +320,10 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
 
   FillHist("n_Tight_electrons_"+param.Name, Tight_electrons.size(), 1., 5, 0., 5.);
   FillHist("n_Loose_electrons_"+param.Name, Loose_electrons.size(), 1., 5, 0., 5.);
-  FillHist("n_Veto_electrons_"+param.Name, Veto_electrons.size(), 1., 5, 0., 5.);
   FillHist("n_Tight_muons_"+param.Name, Tight_muons.size(), 1., 5, 0., 5.);
   FillHist("n_Loose_muons_"+param.Name, Loose_muons.size(), 1., 5, 0., 5.);
-  FillHist("n_Veto_muons_"+param.Name, Veto_muons.size(), 1., 5, 0., 5.);
   FillHist("n_Tight_leptons_"+param.Name, n_Tight_leptons, 1., 5, 0., 5.);
   FillHist("n_Loose_leptons_"+param.Name, n_Loose_leptons, 1., 5, 0., 5.);
-  FillHist("n_Veto_leptons_"+param.Name, n_Veto_leptons, 1., 5, 0., 5.);
 
   //==== Conver them to Lepton objects
   std::vector<Lepton *> Tight_leps_el, Tight_leps_mu;
