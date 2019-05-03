@@ -168,7 +168,7 @@ void HNWRAnalyzer::executeEvent(){
   AllMuons = GetAllMuons();
   AllTunePMuons = UseTunePMuon( AllMuons );
   AllJets = GetAllJets();
-  AllFatJets = GetAllFatJets();
+  AllFatJets = puppiCorr->Correct( GetAllFatJets() ); // TODO correct SD Mass here, but not sure about the systematics
 
   param.dRSeparation = 0.4;
 
