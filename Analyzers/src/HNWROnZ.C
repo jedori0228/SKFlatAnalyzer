@@ -147,11 +147,12 @@ void HNWROnZ::executeEvent(){
 
   param.Name = "HNWR";
 
-  param.MCCorrrectionIgnoreNoHist = true;
+  param.MCCorrrectionIgnoreNoHist = false;
 
   param.Electron_Tight_ID = "HNWRTight";
   param.Electron_Loose_ID = "HNWRLoose";
   param.Electron_ID_SF_Key = "HEEP";
+  param.Electron_Trigger_SF_Key = "HEEP";
   param.Electron_FR_ID = "HNWR";
   param.Electron_FR_Key = "AwayJetPt40";
   param.Electron_CF_ID = "HNWRTight";
@@ -443,7 +444,7 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
   double trigger_sf_SingleElectron = 1.;
   double trigger_sf_SingleMuon = 1.;
   if(!IsDATA){
-    trigger_sf_SingleElectron = 1.; // TODO Measure it
+    trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons);
     trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons);
   }
 

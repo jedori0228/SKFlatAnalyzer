@@ -174,11 +174,6 @@ void HNWRAnalyzer::executeEvent(){
 
   executeEventFromParameter(param);
 
-  //==== HoverE Test
-  param.Name = "HNWRWith0p5HoverE";
-  param.Electron_Loose_ID = "TEST";
-  executeEventFromParameter(param);
-
 /*
   //==== For dR Separation test
 

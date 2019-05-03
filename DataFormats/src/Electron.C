@@ -148,7 +148,7 @@ bool Electron::PassID(TString ID){
   if(ID=="HNPairLooseNoIP") return Pass_HNPairLooseNoIP();
   if(ID=="HNPairVeto") return Pass_HNPairVeto();
   if(ID=="NOCUT") return true;
-  if(ID=="TEST") return ( Pass_HNWRLoose() && HoverE()<0.5 );
+  if(ID=="TEST") return Pass_TESTID();
 
   cout << "[Electron::PassID] No id : " << ID << endl;
   exit(EXIT_FAILURE);
@@ -293,6 +293,8 @@ bool Electron::Pass_HNWRTight(){
 }
 
 bool Electron::Pass_HNWRLoose(){
+
+  if(! (HoverE() < 0.5) ) return false;
 
   if( fabs(scEta()) <= 1.479 ){
 
