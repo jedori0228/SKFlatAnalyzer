@@ -97,7 +97,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
   SetupBTagger(vtaggers,v_wps, true, true);
 
   //==== Signal finder
-  genFinder = new GenFinderForHNWRSignal();
+  genFinderSig = new GenFinderForHNWRSignal();
+  genFinderDY = new GenFinderForDY();
 
 }
 

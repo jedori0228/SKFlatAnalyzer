@@ -3,6 +3,7 @@
 
 #include "AnalyzerCore.h"
 #include "GenFinderForHNWRSignal.h"
+#include "GenFinderForDY.h"
 
 class HNWRAnalyzer : public AnalyzerCore {
 
@@ -48,7 +49,9 @@ public:
   bool LeptonPassID(Lepton &lepton, TString ID);
   std::vector<Lepton *> MakeLeptonPointerVector(std::vector<Muon *>& muons, double TightIso=-999, bool UseMini=false);
   std::vector<Lepton *> MakeLeptonPointerVector(std::vector<Electron *>& electrons, double TightIso=-999, bool UseMini=false);
-  GenFinderForHNWRSignal *genFinder;
+
+  GenFinderForHNWRSignal *genFinderSig;
+  GenFinderForDY *genFinderDY;
 
 };
 
