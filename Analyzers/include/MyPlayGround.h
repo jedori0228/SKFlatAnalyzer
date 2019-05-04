@@ -2,6 +2,7 @@
 #define MyPlayGround_h
 
 #include "AnalyzerCore.h"
+#include "GenFinderForDY.h"
 
 class MyPlayGround : public AnalyzerCore {
 
@@ -14,6 +15,8 @@ public:
 
   MyPlayGround();
   ~MyPlayGround();
+
+  GenFinderForDY *genFinderDY;
 
 };
 

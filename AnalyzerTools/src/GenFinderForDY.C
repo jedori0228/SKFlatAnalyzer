@@ -12,6 +12,7 @@ GenFinderForDY::~GenFinderForDY(){
 Particle GenFinderForDY::Find(vector<Gen>& gens){
 
   FoundGenZ = false;
+  MethodUsed = -1;
 
   //==== Try to find Z boson directly by PID
 
@@ -28,6 +29,7 @@ Particle GenFinderForDY::Find(vector<Gen>& gens){
       if( gen.M()==gen.M() ){
         gen_Z = gen;
         ptl_Z = gen;
+        MethodUsed = 0;
         FoundGenZ = true;
         break;
       }
@@ -57,6 +59,7 @@ Particle GenFinderForDY::Find(vector<Gen>& gens){
     else{
       //==== safe guard; make sure both lepton has same flavour
       if(gen_leptons.at(0).PID()+gen_leptons.at(1).PID()==0){
+        MethodUsed = 1;
         FoundGenZ = true;
         LeptonPID = abs( gen_leptons.at(0).PID() );
         ptl_Z = gen_leptons.at(0)+gen_leptons.at(1);
@@ -100,6 +103,7 @@ Particle GenFinderForDY::Find(vector<Gen>& gens){
     else{
       //==== safe guard; make sure both lepton has same flavour
       if(gen_leptons.at(0).PID()+gen_leptons.at(1).PID()==0){
+        MethodUsed = 2;
         FoundGenZ = true;
         LeptonPID = abs( gen_leptons.at(0).PID() );
         ptl_Z = gen_leptons.at(0)+gen_leptons.at(1);

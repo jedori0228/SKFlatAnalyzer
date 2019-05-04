@@ -2,6 +2,8 @@
 
 void MyPlayGround::initializeAnalyzer(){
 
+  genFinderDY = new GenFinderForDY();
+
 }
 
 void MyPlayGround::executeEvent(){
@@ -31,28 +33,24 @@ std::vector<Lepton *> MyPlayGround::TESTFunction(std::vector<Muon>& muons){
 
 void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
 
-  vector<Muon> muons = GetAllMuons();
-  if(muons.size()==0) return;
+  vector<Gen> gens = GetGens();
+  Particle GenZ = genFinderDY->Find(gens);
+  FillHist("Unweighted_GenZ_Mass" , GenZ.M(), 1., 5000, 0., 5000.);
+  FillHist("Unweighted_GenZ_Pt" , GenZ.Pt(), 1., 3000, 0., 3000.);
 
-  cout << "===============================================================" << endl;
+  Event ev = GetEvent();
+  double weight = weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight();
+  FillHist("Weighted_GenZ_Mass" , GenZ.M(), weight, 5000, 0., 5000.);
+  FillHist("Weighted_GenZ_Pt" , GenZ.Pt(), weight, 3000, 0., 3000.);
 
-  Muon& muon = muons.at(0);
-  Lepton *lepton = &muon;
+  int MethodUsed = genFinderDY->MethodUsed;
+  TString str_MethodUsed = TString::Itoa(MethodUsed,10);
 
-  cout << "#### First element of muon vector ####" << endl;
-  cout << "address = " << &( muons.at(0) ) << endl;
-  cout << "#### Muon ####" << endl;
-  cout << "address  = " << &muon << endl;
-  cout << "Chi2 = " << muon.Chi2() << endl;
-  cout << "#### Lepton ####" << endl;
-  cout << "address = " << lepton << endl;
-  Muon *mu_from_lep = (Muon *)lepton;
-  cout << "Chi2 from lepton = " << mu_from_lep->Chi2() << endl;
-  vector<Lepton *> vectest_lepton = TESTFunction(muons);
-  cout << "#### Lepton from function ####" << endl;
-  cout << "address = " << vectest_lepton.at(0) << endl;
-  Muon *mu_from_lep_from_vec = (Muon *)(vectest_lepton.at(0));
-  cout << "Chi2 from lepton = " << mu_from_lep_from_vec->Chi2() << endl;
+  FillHist("Method_"+str_MethodUsed+"_Unweighted_GenZ_Mass" , GenZ.M(), 1., 5000, 0., 5000.);
+  FillHist("Method_"+str_MethodUsed+"_Unweighted_GenZ_Pt" , GenZ.Pt(), 1., 3000, 0., 3000.);
+  FillHist("Method_"+str_MethodUsed+"_Weighted_GenZ_Mass" , GenZ.M(), weight, 5000, 0., 5000.);
+  FillHist("Method_"+str_MethodUsed+"_Weighted_GenZ_Pt" , GenZ.Pt(), weight, 3000, 0., 3000.);
+
 }
 
 MyPlayGround::MyPlayGround(){
