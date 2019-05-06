@@ -106,7 +106,7 @@ bool Jet::PassID(TString ID){
 
 bool Jet::Pass_HN(){
 
-  if(! Pass_tightJetID() ) return false;
+  if(! Pass_tightLepVetoJetID() ) return false;
 
   return true;
 
