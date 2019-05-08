@@ -476,8 +476,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           NCand_1 = *LeadLep+jets.at(0)+jets.at(1);
           NCand_2 = *SubLeadLep+jets.at(0)+jets.at(1);
 
-          bool DiLepMassGT200 = ((*LeadLep+*SubLeadLep).M() > 200.);
-          bool DiLepMassLT150 = ((*LeadLep+*SubLeadLep).M() < 150.);
+          double dilep_mass = (*LeadLep+*SubLeadLep).M();
+
+          bool DiLepMassGT200 = (dilep_mass > 200.);
+          bool DiLepMassLT150 = (dilep_mass > 60.) && (dilep_mass < 150.);
           bool WRMassGT800 = ( WRCand.M() > 800. );
 
           if(DiLepMassGT200){
@@ -641,7 +643,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           //cout << "--> duplicate" << endl;
           continue;
         }
-        if( (*(LeadLep)+*(Loose_SF_leps.at(i))).M() < 150. ){
+        double dilep_mass  = (*(LeadLep)+*(Loose_SF_leps.at(i))).M();
+        if( (dilep_mass > 60.) && (dilep_mass < 150.) ){
           HasLowMll = true;
           LowMllLooseLepton = Loose_SF_leps.at(i);
           leps_for_plot.push_back( Loose_SF_leps.at(i) );
