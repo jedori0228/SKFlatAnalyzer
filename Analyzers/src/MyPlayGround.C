@@ -59,7 +59,7 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
     "HLT_Photon175_v",
     "HLT_DoublePhoton60_v",
   };
-  vector<TString> triggers_ToAdd = {
+  vector<TString> triggers_DoubleLep = {
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_v",
     "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_v",
     "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_v",
@@ -68,16 +68,23 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
     "HLT_TkMu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ_v",
     "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ_v",
   };
+  vector<TString> triggers_SingleLep = {
+    "HLT_IsoMu24_v", "HLT_IsoTkMu24_v",
+  };
 
   Event ev = GetEvent();
   bool Pass_Default = ev.PassTrigger(triggers_Default);
-  bool Pass_ToAdd = ev.PassTrigger(triggers_ToAdd);
+  bool Pass_DoubleLep = ev.PassTrigger(triggers_DoubleLep);
+  bool Pass_SingleLep = ev.PassTrigger(triggers_SingleLep);
 
   if(Pass_Default){
     FillHist("LRSMHighPt", 0., 1., 1, 0., 1.);
   }
-  if(Pass_Default||Pass_ToAdd){
+  if(Pass_Default||Pass_DoubleLep){
     FillHist("LRSMHighPt_PlusDouble", 0., 1., 1, 0., 1.);
+  }
+  if(Pass_Default||Pass_SingleLep){
+    FillHist("LRSMHighPt_PlusSingle", 0., 1., 1, 0., 1.);
   }
 
 
