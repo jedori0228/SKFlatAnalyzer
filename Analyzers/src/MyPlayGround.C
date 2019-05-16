@@ -87,6 +87,29 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
     FillHist("LRSMHighPt_PlusSingle", 0., 1., 1, 0., 1.);
   }
 
+  //==== Try Lepton Pt Skimming
+  bool HasGoodLepton = false;
+  double AnalysisMinLepPt = 40.;
+  vector<Electron> els = GetAllElectrons();
+  vector<Muon> mus = GetAllMuons();
+  for(unsigned int i=0; i<els.size(); i++){
+    if(els.at(i).Pt() >= AnalysisMinLepPt){
+      HasGoodLepton = true;
+      break;
+    }
+  }
+  for(unsigned int i=0; i<mus.size(); i++){
+    if(mus.at(i).Pt() >= AnalysisMinLepPt){
+      HasGoodLepton = true;
+      break;
+    }
+  }
+  if(HasGoodLepton){
+    if(Pass_Default){
+      FillHist("LRSMHighPt_MinPt40", 0., 1., 1, 0., 1.);
+    }
+  }
+
 
 }
 
