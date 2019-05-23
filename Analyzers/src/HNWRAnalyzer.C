@@ -109,11 +109,24 @@ void HNWRAnalyzer::executeEvent(){
   //==========================
 
   gens = GetGens();
-  //PrintGen(gens); return;
 
   //==== Prefire weight
 
   weight_Prefire = GetPrefireWeight(0);
+/*
+  //==== XXX
+  Particle genZ = genFinderDY->Find(gens);
+  Event tmpev = GetEvent();
+  FillHist("GenZ_Pt", genZ.Pt(), weight_norm_1invpb*tmpev.GetTriggerLumi("Full")*tmpev.MCweight()*weight_Prefire, 1000, 0., 1000.);
+  FillHist("GenZ_Mass", genZ.M(), weight_norm_1invpb*tmpev.GetTriggerLumi("Full")*tmpev.MCweight()*weight_Prefire, 1000, 0., 1000.);
+  if(genZ.Pt()<50 || genZ.Pt()>100){
+    cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+    cout << "MethodUsed = " << genFinderDY->MethodUsed << endl;
+    cout << "OUT OF PTRANGE : genZ.Pt() = " << genZ.Pt() << endl;
+    PrintGen(gens);
+  }
+  return;
+*/
 
   //==== Nvtx
 

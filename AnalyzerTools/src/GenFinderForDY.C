@@ -11,6 +11,47 @@ GenFinderForDY::~GenFinderForDY(){
 
 Particle GenFinderForDY::Find(vector<Gen>& gens){
 
+/*
+  Particle ptl_Z;
+
+  for(unsigned int i=2; i<gens.size(); i++){
+
+    Gen gen = gens.at(i);
+
+    //cout << "index = " << i << endl;
+
+    bool IsWhatWeWant = false;
+    if( gen.Status() == 1 ){
+
+      int mother_index = gen.MotherIndex();
+      if(mother_index<0 || mother_index>=gens.size()) continue;
+      Gen mother = gens.at(mother_index);
+
+      while(mother.PID()!=2212){
+        //cout << "  mother_index = " << mother_index << endl;
+        if(mother.Status() >= 21 && mother.Status() <= 24){
+          if( abs(mother.PID()) == 23 || IsLepton(mother.PID()) ){
+            IsWhatWeWant = true;
+            break;
+          }
+        }
+        mother_index = mother.MotherIndex();
+        if(mother_index<0 || mother_index>=gens.size()) break;
+        mother = gens.at(mother_index);
+      }
+
+    } // END If status 1
+
+    if(IsWhatWeWant) ptl_Z += gen;
+
+  }
+
+  return ptl_Z;
+*/
+
+
+
+
   FoundGenZ = false;
   MethodUsed = -1;
 
@@ -18,7 +59,7 @@ Particle GenFinderForDY::Find(vector<Gen>& gens){
 
   Gen gen_Z;
   Particle ptl_Z;
-  for(unsigned int i=2; i<gens.size(); i++){
+  for(unsigned int i=0; i<gens.size(); i++){
     Gen gen = gens.at(i);
     if( abs(gen.PID())==23 ){
       //==== nan check
@@ -36,8 +77,9 @@ Particle GenFinderForDY::Find(vector<Gen>& gens){
     }
   }
 
-  vector<Gen> gen_leptons;
 
+  vector<Gen> gen_leptons;
+/*
   //=== If Z found
   if(!gen_Z.IsEmpty()){
 
@@ -70,7 +112,7 @@ Particle GenFinderForDY::Find(vector<Gen>& gens){
     }
 
   }
-
+*/
   //==== Still no?
 
   //==== Case 1 )
@@ -86,9 +128,11 @@ Particle GenFinderForDY::Find(vector<Gen>& gens){
   if(!FoundGenZ){
 
     gen_leptons.clear();
-    for(unsigned int i=2; i<gens.size(); i++){
+    for(unsigned int i=0; i<gens.size(); i++){
       if(gen_leptons.size()==2) break;
       Gen gen = gens.at(i);
+      int MotherIndex = gen.MotherIndex();
+      if(MotherIndex<0 || MotherIndex>=gens.size()) continue;
       Gen mother = gens.at( gen.MotherIndex() );
       if( IsLepton( gen.PID() ) ){
         gen_leptons.push_back( gen );
