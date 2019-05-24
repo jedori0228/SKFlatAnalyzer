@@ -36,10 +36,12 @@ public:
 
   //==== DYPtReweight
   bool ApplyDYPtReweight;
-  TH1D *hist_DYPtReweight_Electron;
-  TH1D *hist_DYPtReweight_Muon;
+  TH1D *hist_DYPtReweight_Electron_Resolved;
+  TH1D *hist_DYPtReweight_Electron_Boosted;
+  TH1D *hist_DYPtReweight_Muon_Resolved;
+  TH1D *hist_DYPtReweight_Muon_Boosted;
 
-  double GetDYPtReweight(double zpt, int flav);
+  double GetDYPtReweight(double zpt, int flav, int region);
 
   double PUReweight;
   int N_VTX;
@@ -52,6 +54,9 @@ public:
 
   GenFinderForHNWRSignal *genFinderSig;
   GenFinderForDY *genFinderDY;
+
+  TH1D *hist_PUReweight;
+  double weight_PU;
 
 };
 
