@@ -7,6 +7,7 @@ import datetime
 from CheckJobStatus import *
 from TimeTools import *
 import random
+import subprocess
 
 ## Arguments
 
@@ -332,7 +333,7 @@ while [ "$SumNoAuth" -ne 0 ]; do
 
   echo "#### running ####"
   echo "root -l -b -q {1}/run_${{SECTION}}.C"
-  root -l -b -q {1}/run_${{SECTION}}.C 2> err.log
+  root -l -b -q {1}/run_${{SECTION}}.C 2> err.log || echo "EXIT_FAILURE" >> err.log
   NoAuthError_Open=`grep "Error in <TNetXNGFile::Open>" err.log -R | wc -l`
   NoAuthError_Close=`grep "Error in <TNetXNGFile::Close>" err.log -R | wc -l`
 
@@ -387,6 +388,9 @@ queue {0}
 '''.format(str(NJobs), commandsfilename)
       submit_command.close()
     elif IsTAMSA:
+      requirements=''
+      if IsSkimTree:
+        requirements='Requirements = Machine=="{}"'.format(subprocess.check_output('condor_status -avail -constraint "TotalCpus<50" -af Machine -sort Cpus|tail -n1',shell=True).strip())
       print>>submit_command,'''executable = {1}.sh
 universe   = vanilla
 arguments  = $(Process)
@@ -398,8 +402,9 @@ output = job_$(Process).log
 error = job_$(Process).err
 accounting_group=group_cms
 transfer_output_remaps = "hists.root = output/hists_$(Process).root"
+{2}
 queue {0}
-'''.format(str(NJobs), commandsfilename)
+'''.format(str(NJobs), commandsfilename,requirements)
       submit_command.close()
 
   CheckTotalNFile=0
@@ -484,6 +489,7 @@ void {2}(){{
       skimoutdir += timestamp+"/"
 
       os.system('mkdir -p '+skimoutdir)
+      os.system('chmod -R uog+rwX '+skimoutdir)
       out.write('  m.SetOutfilePath("'+skimoutdir+skimoutfilename+'");\n')
 
     else:
