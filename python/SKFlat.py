@@ -489,7 +489,6 @@ void {2}(){{
       skimoutdir += timestamp+"/"
 
       os.system('mkdir -p '+skimoutdir)
-      os.system('chmod -R uog+rwX '+skimoutdir)
       out.write('  m.SetOutfilePath("'+skimoutdir+skimoutfilename+'");\n')
 
     else:
