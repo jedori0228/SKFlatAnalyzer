@@ -43,9 +43,6 @@ public:
 
   double GetDYPtReweight(double zpt, int flav, int region);
 
-  double PUReweight;
-  int N_VTX;
-
   //==== My tool
   std::vector<Jet> JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron *> els, std::vector<Muon *> mus, double dR=0.4);
   bool LeptonPassID(Lepton &lepton, TString ID);
@@ -55,6 +52,8 @@ public:
   GenFinderForHNWRSignal *genFinderSig;
   GenFinderForDY *genFinderDY;
 
+  //==== pileup
+  int N_VTX;
   TH1D *hist_PUReweight;
   double weight_PU;
 
