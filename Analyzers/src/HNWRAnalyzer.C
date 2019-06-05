@@ -122,20 +122,6 @@ void HNWRAnalyzer::executeEvent(){
   //==== Prefire weight
 
   weight_Prefire = GetPrefireWeight(0);
-/*
-  //==== XXX
-  Particle genZ = genFinderDY->Find(gens);
-  Event tmpev = GetEvent();
-  FillHist("GenZ_Pt", genZ.Pt(), weight_norm_1invpb*tmpev.GetTriggerLumi("Full")*tmpev.MCweight()*weight_Prefire, 1000, 0., 1000.);
-  FillHist("GenZ_Mass", genZ.M(), weight_norm_1invpb*tmpev.GetTriggerLumi("Full")*tmpev.MCweight()*weight_Prefire, 1000, 0., 1000.);
-  if(genZ.Pt()<50 || genZ.Pt()>100){
-    cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-    cout << "MethodUsed = " << genFinderDY->MethodUsed << endl;
-    cout << "OUT OF PTRANGE : genZ.Pt() = " << genZ.Pt() << endl;
-    PrintGen(gens);
-  }
-  return;
-*/
 
   //==== Nvtx
 
@@ -227,11 +213,18 @@ void HNWRAnalyzer::executeEvent(){
 
 void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
+  Event ev = GetEvent();
+  Particle METv = ev.GetMETVector();
+  double weight = 1.;
+  if(!IsDATA){
+    weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire*weight_PU;
+  }
+
   //=============
   //==== No Cut
   //=============
 
-  FillHist("NoCut_"+param.Name, 0., 1., 1, 0., 1.);
+  JSFillHist("CutFlow", "NoCut_"+param.Name, 0., weight, 1, 0., 1.);
 
   //========================
   //==== Event selecitions
@@ -239,8 +232,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   if(!PassMETFilter()) return;
 
-  Event ev = GetEvent();
-  Particle METv = ev.GetMETVector();
+  JSFillHist("CutFlow", "METFilter_"+param.Name, 0., weight, 1, 0., 1.);
 
   bool PassSingleElectron = ev.PassTrigger(Triggers_Electron);
   bool PassMu50 = ev.PassTrigger(Triggers_Muon);
@@ -373,13 +365,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== [CUT] : return if no tight lepton
   if(n_Tight_leptons==0) return;
 
-  FillHist("n_Tight_electrons_"+param.Name, Tight_electrons.size(), 1., 5, 0., 5.);
-  FillHist("n_Loose_electrons_"+param.Name, Loose_electrons.size(), 1., 5, 0., 5.);
-  FillHist("n_Tight_muons_"+param.Name, Tight_muons.size(), 1., 5, 0., 5.);
-  FillHist("n_Loose_muons_"+param.Name, Loose_muons.size(), 1., 5, 0., 5.);
-  FillHist("n_Tight_leptons_"+param.Name, n_Tight_leptons, 1., 5, 0., 5.);
-  FillHist("n_Loose_leptons_"+param.Name, n_Loose_leptons, 1., 5, 0., 5.);
-
   //==== [CUT] return if lead pt <= 60 GeV
   if(Tight_leps.at(0)->Pt()<=60.) return;
 
@@ -410,13 +395,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     HT += this_AllJets.at(i).Pt();
   }
 
-  //===================
-  //==== Event weight
-  //===================
+  //===========================
+  //==== Lepton scale factors
+  //===========================
 
-  double weight = 1.;
   if(!IsDATA){
-    weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire*weight_PU;
 
     mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
@@ -461,6 +444,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   if(n_Tight_leptons==2){
 
+    JSFillHist("CutFlow", "NTightLeptonIsTwo_"+param.Name, 0., weight, 1, 0., 1.);
+
     TString Suffix = "";
     bool tmp_IsEE(false), tmp_IsMM(false), tmp_IsEM(false);
     bool this_triggerpass(false);
@@ -468,23 +453,30 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       tmp_IsEE = true;
       Suffix = "SingleElectron";
       this_triggerpass = PassSingleElectron;
+      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, 0., weight, 1, 0., 1.);
     }
     else if( (Tight_electrons.size()==0) && (Tight_muons.size()==2) ){
       tmp_IsMM = true;
       Suffix = "SingleMuon";
       this_triggerpass = PassMu50;
+      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, 0., weight, 1, 0., 1.);
     }
     else if( (Tight_electrons.size()==1) && (Tight_muons.size()==1) ){
       tmp_IsEM = true;
       Suffix = "EMu";
       this_triggerpass = PassMu50;
+      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, 0., weight, 1, 0., 1.);
     }
 
     if(this_triggerpass){
 
+      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_PassTrigger_"+param.Name, 0., weight, 1, 0., 1.);
+
       //==== lljj
 
       if( jets.size()>=2 ){
+
+        JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_TwoAK4Jets_"+param.Name, 0., weight, 1, 0., 1.);
 
         Lepton *LeadLep = Tight_leps.at(0);
         Lepton *SubLeadLep = Tight_leps.at(1);
@@ -493,6 +485,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > param.dRSeparation);
 
         if( dRTwoLepton && dRTwoJets ){
+
+          JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_dRSeparation_"+param.Name, 0., weight, 1, 0., 1.);
 
           IsResolvedEvent = true;
 
@@ -509,7 +503,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
           if(DiLepMassGT200){
 
+            JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mllGT200_"+param.Name, 0., weight, 1, 0., 1.);
+
             if(WRMassGT800){
+
+              JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_"+param.Name, 0., weight, 1, 0., 1.);
 
               //==== Region Dictionary
               //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR [IsResolved_SR_EE]
