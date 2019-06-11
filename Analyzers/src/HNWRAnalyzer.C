@@ -85,6 +85,10 @@ void HNWRAnalyzer::initializeAnalyzer(){
     hist_DYPtReweight_Electron_Boosted = (TH1D *)file_DYPtReweight->Get("Electron_Boosted");
     hist_DYPtReweight_Muon_Resolved = (TH1D *)file_DYPtReweight->Get("Muon_Resolved");
     hist_DYPtReweight_Muon_Boosted = (TH1D *)file_DYPtReweight->Get("Muon_Boosted");
+
+    TFile *file_DYPtReweight_2D = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/DYPtReweight/Zpt_weights_"+TString::Itoa(DataYear,10)+".root");
+    hist_DYPtReweight_2D = (TH2D *)file_DYPtReweight_2D->Get("zptmass_weights");
+
   }
 
   //==== B-tagging
@@ -899,6 +903,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   double ZPtReweight_EE_Resolved(1.), ZPtReweight_MM_Resolved(1.);
   double ZPtReweight_EE_Boosted(1.), ZPtReweight_MM_Boosted(1.);
   if(ApplyDYPtReweight){
+/*
     if(leps_for_plot.size()>=2){
       double this_zpt = ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt();
       ZPtReweight_EE_Resolved = GetDYPtReweight(this_zpt, 0, 0);
@@ -906,6 +911,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       ZPtReweight_MM_Resolved = GetDYPtReweight(this_zpt, 1, 0);
       ZPtReweight_MM_Boosted = GetDYPtReweight(this_zpt, 1, 1);
     }
+*/
+
+    Particle genZ = genFinderDY->Find(gens);
+    double this_zptreweight = GetDYPtReweight(genZ.M(), genZ.Pt());
+    ZPtReweight_EE_Resolved = this_zptreweight;
+    ZPtReweight_EE_Boosted = this_zptreweight;
+    ZPtReweight_MM_Resolved = this_zptreweight;
+    ZPtReweight_MM_Boosted = this_zptreweight;
+
   }
   if(
     //==== Resolved EE
@@ -1080,6 +1094,16 @@ double HNWRAnalyzer::GetDYPtReweight(double zpt, int flav, int region){
     cerr << "[HNWRAnalyzer::GetDYPtReweight] wrong flavour : " << flav << endl;
     exit(EXIT_FAILURE);
   }
+
+}
+
+double HNWRAnalyzer::GetDYPtReweight(double zmass, double zpt){
+
+  int bin_mass = hist_DYPtReweight_2D->GetXaxis()->FindBin(zmass);
+  int bin_pt   = hist_DYPtReweight_2D->GetYaxis()->FindBin(zpt);
+
+  double value = hist_DYPtReweight_2D->GetBinContent( bin_mass, bin_pt );
+  return value;
 
 }
 
