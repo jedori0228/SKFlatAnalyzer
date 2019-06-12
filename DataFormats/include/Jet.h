@@ -35,9 +35,9 @@ public:
   void SetTightLepVetoJetID(double b);
   inline bool Pass_tightJetID() const { return j_tightJetID; }
   inline bool Pass_tightLepVetoJetID() const { return j_tightLepVetoJetID; }
-  bool Pass_HN();
+  bool Pass_HN() const;
 
-  bool PassID(TString ID);
+  bool PassID(TString ID) const;
 
   enum Tagger{
     CSVv2,

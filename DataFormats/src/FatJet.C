@@ -81,10 +81,10 @@ void FatJet::SetLSF(double lsf, int lsf_PID){
   j_lsf = lsf;
   j_lsf_pid = lsf_PID;
 }
-double FatJet::LSF(){
+double FatJet::LSF() const{
   return j_lsf;
 }
-double FatJet::LSF_PID(){
+double FatJet::LSF_PID() const{
   return j_lsf_pid;
 }
 
@@ -105,7 +105,7 @@ void FatJet::SetTightLepVetoJetID(double b){
   j_tightLepVetoJetID = b;
 }
 
-bool FatJet::PassID(TString ID){
+bool FatJet::PassID(TString ID) const {
 
   if(ID=="HN") return Pass_HN();
   if(ID=="HNLSF") return Pass_HN() && (LSF() > 0.7);
@@ -119,7 +119,7 @@ bool FatJet::PassID(TString ID){
 
 }
 
-bool FatJet::Pass_HN(){
+bool FatJet::Pass_HN() const {
 
   if(! Pass_tightJetID() ) return false;
   if(! (SDMass()>40.) ) return false;

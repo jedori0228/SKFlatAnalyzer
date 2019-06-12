@@ -86,7 +86,7 @@ void Muon::SetTuneP4(double pt, double pt_err, double eta, double phi, double q)
   j_TunePPtError = pt_err;
 }
 
-bool Muon::PassID(TString ID){
+bool Muon::PassID(TString ID) const {
 
   if(ID=="HNWRTight") return Pass_HNWRTight();
   if(ID=="HNWRLoose") return Pass_HNWRLoose();
@@ -113,12 +113,12 @@ bool Muon::PassID(TString ID){
   return false;
 
 }
-bool Muon::Pass_POGTightWithTightIso(){
+bool Muon::Pass_POGTightWithTightIso() const {
   if(!( isPOGTight() )) return false;
   if(!( RelIso()<0.15 ))  return false;
   return true;
 }
-bool Muon::Pass_POGHighPtWithLooseTrkIso(){
+bool Muon::Pass_POGHighPtWithLooseTrkIso() const {
   if(!( isPOGHighPt() )) return false;
   if(!( TrkIso()/TuneP4().Pt()<0.1 )) return false;
   return true;
@@ -126,18 +126,18 @@ bool Muon::Pass_POGHighPtWithLooseTrkIso(){
 
 //==== HN Pair
 
-bool Muon::Pass_HNPairTight(){
+bool Muon::Pass_HNPairTight() const {
   if(! isPOGMedium() ) return false;
   if(! (MiniRelIso()<0.2) ) return false;
   if(! (fabs(dXY())<0.05 && fabs(dZ())<0.1 && fabs(IP3D()/IP3Derr())<4.) ) return false;
   return true;
 }
-bool Muon::Pass_HNPairLoose(){
+bool Muon::Pass_HNPairLoose() const {
   if(! isPOGMedium() ) return false;
   if(! (MiniRelIso()<0.6) ) return false;
   return true;
 }
-bool Muon::Pass_HNPairVeto(){
+bool Muon::Pass_HNPairVeto() const {
   if(! isPOGLoose() ) return false;
   if(! (MiniRelIso()<0.6) ) return false;
   return true;
@@ -145,27 +145,27 @@ bool Muon::Pass_HNPairVeto(){
 
 //==== HN WR
 
-bool Muon::Pass_HNWRTight(){
+bool Muon::Pass_HNWRTight() const {
 
   if(! isPOGHighPt() ) return false;
   if(! ( (TrkIso()/TuneP4().Pt())<0.1 ) ) return false;
 
   return true;
 }
-bool Muon::Pass_HNWRLoose(){
+bool Muon::Pass_HNWRLoose() const {
 
   if(! isPOGLoose() ) return false;
 
   return true;
 }
-bool Muon::Pass_HNWRVeto(){
+bool Muon::Pass_HNWRVeto() const {
 
   if(! isPOGLoose() ) return false;
 
   return true;
 }
 
-bool Muon::Pass_HNWRNoIso(){
+bool Muon::Pass_HNWRNoIso() const {
 
   if(! isPOGLoose() ) return false;
 
@@ -175,6 +175,6 @@ bool Muon::Pass_HNWRNoIso(){
 
 //==== TEST ID
 
-bool Muon::Pass_TESTID(){
+bool Muon::Pass_TESTID() const {
   return true;
 }
