@@ -8,7 +8,10 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   RunFake = HasFlag("RunFake");
   RunCF = HasFlag("RunCF");
+
   RunSyst = HasFlag("RunSyst");
+  if(IsDATA) RunSyst = false;
+
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
 
@@ -381,13 +384,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   std::sort(fatjets.begin(), fatjets.end(), PtComparing);
   std::sort(fatjets_LSF.begin(), fatjets_LSF.end(), PtComparing);
 
-  std::vector<Jet>      alljets         = SelectJets(this_AllJets, param.Jet_ID, 40., 2.4);
-  std::sort(alljets.begin(), alljets.end(), PtComparing);
-  std::vector<Jet>      jets            = JetsVetoLeptonInside(alljets, Tight_electrons, Tight_muons, param.dRSeparation);
+  std::vector<Jet>      jets         = SelectJets(this_AllJets, param.Jet_ID, 40., 2.4);
+  std::sort(jets.begin(), jets.end(), PtComparing);
 
   int NBJets=0;
-  for(unsigned int i=0; i<alljets.size(); i++){
-    if(IsBTagged(alljets.at(i), Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
+  for(unsigned int i=0; i<jets.size(); i++){
+    if(IsBTagged(jets.at(i), Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
   }
 
   //==============
@@ -485,10 +487,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         Lepton *LeadLep = Tight_leps.at(0);
         Lepton *SubLeadLep = Tight_leps.at(1);
 
+        bool dRLeadJetLepton    = ( jets.at(0).DeltaR( *LeadLep ) > param.dRSeparation ) && ( jets.at(0).DeltaR( *SubLeadLep ) > param.dRSeparation );
+        bool dRSubLeadJetLepton = ( jets.at(1).DeltaR( *LeadLep ) > param.dRSeparation ) && ( jets.at(1).DeltaR( *SubLeadLep ) > param.dRSeparation );
         bool dRTwoLepton = (LeadLep->DeltaR( *SubLeadLep ) > param.dRSeparation);
-        bool dRTwoJets = (jets.at(0).DeltaR ( jets.at(1) ) > param.dRSeparation);
+        bool dRTwoJets = (jets.at(0).DeltaR( jets.at(1) ) > param.dRSeparation);
 
-        if( dRTwoLepton && dRTwoJets ){
+        if( dRLeadJetLepton && dRSubLeadJetLepton && dRTwoLepton && dRTwoJets ){
 
           JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_dRSeparation_"+param.Name, 0., weight, 1, 0., 1.);
 
