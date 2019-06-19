@@ -3,7 +3,6 @@
 
 #include "AnalyzerCore.h"
 #include "GenFinderForHNWRSignal.h"
-#include "GenFinderForDY.h"
 
 class HNWRAnalyzer : public AnalyzerCore {
 
@@ -52,7 +51,6 @@ public:
   std::vector<Lepton *> MakeLeptonPointerVector(std::vector<Electron *>& electrons, double TightIso=-999, bool UseMini=false);
 
   GenFinderForHNWRSignal *genFinderSig;
-  GenFinderForDY *genFinderDY;
 
   //==== pileup
   int N_VTX;

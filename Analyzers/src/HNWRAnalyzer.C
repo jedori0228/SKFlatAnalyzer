@@ -107,7 +107,6 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   //==== Signal finder
   genFinderSig = new GenFinderForHNWRSignal();
-  genFinderDY = new GenFinderForDY();
 
   //==== PUReweight
   if(!IsDATA){
@@ -917,8 +916,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
 */
 
-    Particle genZ = genFinderDY->Find(gens);
-    double this_zptreweight = GetDYPtReweight(genZ.M(), genZ.Pt());
+    double this_zptreweight = mcCorr->GetOfficialDYReweight(gens);
+
     ZPtReweight_EE_Resolved = this_zptreweight;
     ZPtReweight_EE_Boosted = this_zptreweight;
     ZPtReweight_MM_Resolved = this_zptreweight;

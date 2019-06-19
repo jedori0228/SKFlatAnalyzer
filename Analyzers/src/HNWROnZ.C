@@ -100,7 +100,6 @@ void HNWROnZ::initializeAnalyzer(){
   SetupBTagger(vtaggers,v_wps, true, true);
 
   if(FindGenZ){
-    genDY = new GenFinderForDY();
 
     TDirectory* origDir = gDirectory;
 
@@ -479,8 +478,9 @@ void HNWROnZ::executeEventFromParameter(AnalyzerParameter param){
 
   if(FindGenZ){
 
-    Particle genZ = genDY->Find(gens);
-    int leppid = genDY->LeptonPID;
+    double ZPtReweight = mcCorr->GetOfficialDYReweight(gens);
+    Particle genZ = mcCorr->genFinderDY->GenZ;
+    int leppid = mcCorr->genFinderDY->LeptonPID;
     if(IsEE && leppid!=11) FillHist("WTF_EE_but_GenFindPIDIs..", leppid, 1., 20, 0., 20.);
     if(IsMM && leppid!=13) FillHist("WTF_MM_but_GenFindPIDIs..", leppid, 1., 20, 0., 20.);
 
