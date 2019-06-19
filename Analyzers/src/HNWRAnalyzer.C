@@ -135,7 +135,7 @@ void HNWRAnalyzer::executeEvent(){
   N_VTX = nPV;
   if(!IsDATA){
     N_VTX = nPileUp;
-    int bin_pu = hist_PUReweight->FindBin(nPV);
+    int bin_pu = hist_PUReweight->FindBin(nPileUp);
     weight_PU = hist_PUReweight->GetBinContent(bin_pu);
   }
 
