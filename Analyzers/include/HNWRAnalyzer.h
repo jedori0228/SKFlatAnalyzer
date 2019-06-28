@@ -19,6 +19,7 @@ public:
   bool RunSyst;
   bool PromptLeptonOnly;
   bool NoTrigger;
+  bool RunXsecSyst;
 
   vector<Gen> gens;
 
