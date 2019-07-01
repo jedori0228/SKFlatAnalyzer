@@ -32,8 +32,10 @@ std::vector<Lepton *> MyPlayGround::TESTFunction(std::vector<Muon>& muons){
 }
 
 void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
-  vector<Jet> jets = GetJets("HN", 20., 2.4);
-  FillHist("NJet", jets.size(), 1., 10, 0., 10.); return;
+
+  vector<Gen> gens = GetGens();
+  PrintGen(gens);
+  return;
 
 /*
   vector<Gen> gens = GetGens();
