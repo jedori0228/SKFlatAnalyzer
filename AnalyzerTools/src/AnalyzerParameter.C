@@ -103,6 +103,12 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::MuonIDSFDown){
     return "MuonIDSFDown";
   }
+  else if(syst_==Syst::MuonTriggerSFUp){
+    return "MuonTriggerSFUp";
+  }
+  else if(syst_==Syst::MuonTriggerSFDown){
+    return "MuonTriggerSFDown";
+  }
   else if(syst_==Syst::ElectronResUp){
     return "ElectronResUp";
   }
@@ -120,6 +126,12 @@ TString AnalyzerParameter::GetSystType(){
   }
   else if(syst_==Syst::ElectronIDSFDown){
     return "ElectronIDSFDown";
+  }
+  else if(syst_==Syst::ElectronTriggerSFUp){
+    return "ElectronTriggerSFUp";
+  }
+  else if(syst_==Syst::ElectronTriggerSFDown){
+    return "ElectronTriggerSFDown";
   }
   else{
     cout << "[AnalyzerParameter::GetSystType] Wrong Syst" << endl;
