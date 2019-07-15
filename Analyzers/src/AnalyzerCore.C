@@ -855,6 +855,7 @@ void AnalyzerCore::initializeAnalyzerTools(){
   if(!IsDATA){
     mcCorr->SetMCSample(MCSample);
     mcCorr->SetDataYear(DataYear);
+    mcCorr->SetIsFastSim(IsFastSim);
     mcCorr->ReadHistograms();
   }
 
