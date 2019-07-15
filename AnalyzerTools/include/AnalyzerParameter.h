@@ -38,9 +38,11 @@ public:
     JetEnUp, JetEnDown,
     MuonEnUp, MuonEnDown,
     MuonIDSFUp, MuonIDSFDown,
+    MuonTriggerSFUp, MuonTriggerSFDown,
     ElectronResUp, ElectronResDown,
     ElectronEnUp, ElectronEnDown,
     ElectronIDSFUp, ElectronIDSFDown,
+    ElectronTriggerSFUp, ElectronTriggerSFDown,
     NSyst
   };
   Syst syst_;

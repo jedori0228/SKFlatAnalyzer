@@ -296,6 +296,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   int SystDir_MuonIDSF(0);
   int SystDir_ElectronIDSF(0);
 
+  int SystDir_MuonTriggerSF(0);
+  int SystDir_ElectronTriggerSF(0);
+
   if(param.syst_ == AnalyzerParameter::Central){
 
   }
@@ -329,6 +332,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else if(param.syst_ == AnalyzerParameter::MuonIDSFDown){
     SystDir_MuonIDSF = -1;
   }
+  else if(param.syst_ == AnalyzerParameter::MuonTriggerSFUp){
+    SystDir_MuonTriggerSF = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonTriggerSFDown){
+    SystDir_MuonTriggerSF = -1;
+  }
   else if(param.syst_ == AnalyzerParameter::ElectronResUp){
     this_AllElectrons = SmearElectrons( this_AllElectrons, +1 );
   }
@@ -346,6 +355,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   }
   else if(param.syst_ == AnalyzerParameter::ElectronIDSFDown){
     SystDir_ElectronIDSF = -1;
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronTriggerSFUp){
+    SystDir_ElectronTriggerSF = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronTriggerSFDown){
+    SystDir_ElectronTriggerSF = -1;
   }
   else{
     cerr << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst : param.syst_ = " << param.syst_ << endl;
