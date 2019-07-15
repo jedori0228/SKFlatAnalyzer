@@ -454,23 +454,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Lepton scale factors
   //===========================
 
-  if(!IsDATA){
-
-    mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
-
-    for(unsigned int i=0; i<Tight_electrons.size(); i++){
-      double this_recosf = mcCorr->ElectronReco_SF(Tight_electrons.at(i)->scEta(),Tight_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
-      double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, Tight_electrons.at(i)->scEta(), Tight_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
-      weight *= this_recosf*this_idsf;
-    }
-    for(unsigned int i=0; i<Tight_muons.size(); i++){
-      double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-      double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-      weight *= this_idsf*this_isosf;
-    }
-
-    //==== Trigger SF later
-  }
+  std::vector<Electron *> ForSF_electrons;
+  std::vector<Muon *> ForSF_muons;
 
   //=====================
   //==== Categorization
@@ -557,6 +542,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           bool DiLepMassGT200 = (dilep_mass > 200.);
           bool DiLepMassLT150 = (dilep_mass > 60.) && (dilep_mass < 150.);
           bool WRMassGT800 = ( WRCand.M() > 800. );
+
+          //==== Now IsResolvedEvent iset
+          //==== We can assign ForSF_electrons and ForSF_muons now
+          ForSF_electrons = Tight_electrons;
+          ForSF_muons = Tight_muons;
 
           if(DiLepMassGT200){
 
@@ -696,11 +686,17 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       tmp_IsLeadE = true;
       Suffix = "SingleElectron";
       this_triggerpass = PassSingleElectron;
+
+      ForSF_electrons.push_back( Tight_electrons.at(0) );
+
     }
     else if(LeadLep->LeptonFlavour()==Lepton::MUON){
       tmp_IsLeadM = true;
       Suffix = "SingleMuon";
       this_triggerpass = PassMu50;
+
+      ForSF_muons.push_back( Tight_muons.at(0) );
+
     }
     else{
       cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong flavour : " << LeadLep->LeptonFlavour() << endl;
@@ -918,11 +914,31 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   if( map_bool_To_Region.size() == 0 ) return;
 
+  //==== Lepton SF
+
   double trigger_sf_SingleElectron = 1.;
   double trigger_sf_SingleMuon = 1.;
+
   if(!IsDATA){
+
+    mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
+
+    for(unsigned int i=0; i<ForSF_electrons.size(); i++){
+      double this_recosf = mcCorr->ElectronReco_SF(ForSF_electrons.at(i)->scEta(),ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+      double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, ForSF_electrons.at(i)->scEta(), ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+      weight *= this_recosf*this_idsf;
+    }
+    for(unsigned int i=0; i<ForSF_muons.size(); i++){
+      double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+      double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+      weight *= this_idsf*this_isosf;
+    }
+
+    //==== Trigger SF
+
     trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons);
     trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons);
+
   }
 
   if(
