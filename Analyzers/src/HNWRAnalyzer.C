@@ -540,6 +540,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           double dilep_mass = (*LeadLep+*SubLeadLep).M();
 
           bool DiLepMassGT200 = (dilep_mass > 200.);
+          bool DiLepMassGT500 = (dilep_mass > 500.);
           bool DiLepMassLT150 = (dilep_mass > 60.) && (dilep_mass < 150.);
           bool WRMassGT800 = ( WRCand.M() > 800. );
 
@@ -561,10 +562,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR [IsResolved_SR_MM]
               //==== - HNWR_EMu_Resolved_SR : em Resolved sideband [IsResolved_SR_EM]
 
-              map_bool_To_Region[Suffix+"_Resolved_SR"] = true;
-              if(tmp_IsEE) IsResolved_SR_EE = true;
-              else if(tmp_IsMM) IsResolved_SR_MM = true;
-              else if(tmp_IsEM) IsResolved_SR_EM = true;
+              if(DiLepMassGT500){
+
+                map_bool_To_Region[Suffix+"_Resolved_SR"] = true;
+                if(tmp_IsEE) IsResolved_SR_EE = true;
+                else if(tmp_IsMM) IsResolved_SR_MM = true;
+                else if(tmp_IsEM) IsResolved_SR_EM = true;
+
+              }
+
             }
             //==== Validate EMu method here
             else{
