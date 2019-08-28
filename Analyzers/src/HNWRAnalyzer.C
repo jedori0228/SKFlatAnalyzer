@@ -44,7 +44,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
       "HLT_Mu50_v",
       "HLT_TkMu50_v",
     };
-    TriggerNameForSF_Electron = "Ele27_WPTight_Gsf";
+    TriggerNameForSF_Electron = "WREGammaTrigger";
     TriggerNameForSF_Muon = "Mu50";
     TriggerSafePt_Electron = 30.;
     TriggerSafePt_Muon = 52.;
@@ -59,7 +59,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
     Triggers_Muon = {
       "HLT_Mu50_v",
     };
-    TriggerNameForSF_Electron = "Ele35_WPTight_Gsf";
+    TriggerNameForSF_Electron = "WREGammaTrigger";
     TriggerNameForSF_Muon = "Mu50";
     TriggerSafePt_Electron = 38.;
     TriggerSafePt_Muon = 52.;
@@ -76,7 +76,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
       "HLT_OldMu100_v",
       "HLT_TkMu100_v",
     };
-    TriggerNameForSF_Electron = "Ele32_WPTight_Gsf";
+    TriggerNameForSF_Electron = "WREGammaTrigger";
     TriggerNameForSF_Muon = "Mu50";
     TriggerSafePt_Electron = 35.;
     TriggerSafePt_Muon = 52.;
