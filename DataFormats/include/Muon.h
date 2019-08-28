@@ -106,6 +106,9 @@ public:
   bool Pass_HNWRVeto() const;
   bool Pass_HNWRNoIso() const;
   bool Pass_TESTID() const;
+  
+  void SetTrackerLayers(int n);
+  inline int TrackerLayers() const { return j_trackerLayers; }
 
 private:
 
@@ -116,6 +119,7 @@ private:
   double j_MiniAODPt, j_MiniAODTunePPt, j_MomentumScaleUp, j_MomentumScaleDown;
   Particle j_TuneP4;
   double j_TunePPtError;
+  int j_trackerLayers;
 
   ClassDef(Muon,1);
 };
