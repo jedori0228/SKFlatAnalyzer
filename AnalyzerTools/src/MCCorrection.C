@@ -560,8 +560,11 @@ double MCCorrection::ElectronTrigger_Eff(TString ID, TString trig, int DataOrMC,
   if(sceta<-2.5) sceta = -2.5;
   if(sceta>=2.5) sceta = 2.49;
 
-  TString histkey = "Trigger_Eff_DATA_"+trig+"_"+ID;
-  if(DataOrMC==1) histkey = "Trigger_Eff_MC_"+trig+"_"+ID;
+  TString etaregion = "Barrel";
+  if(fabs(sceta) > 1.566) etaregion = "EndCap";
+
+  TString histkey = "Trigger_Eff_DATA_"+trig+"_"+ID+"_"+etaregion;
+  if(DataOrMC==1) histkey = "Trigger_Eff_MC_"+trig+"_"+ID+"_"+etaregion;
   //cout << "[MCCorrection::ElectronTrigger_Eff] histkey = " << histkey << endl;
   TH2F *this_hist = map_hist_Electron[histkey];
   if(!this_hist){
@@ -591,7 +594,7 @@ double MCCorrection::ElectronTrigger_SF(TString ID, TString trig, const std::vec
 
   double value = 1.;
 
-  if(trig=="Ele27_WPTight_Gsf" || trig=="Ele35_WPTight_Gsf" || trig=="Ele32_WPTight_Gsf"){
+  if(trig=="WREGammaTrigger"){
 
     double eff_DATA = 1.;
     double eff_MC = 1.;
