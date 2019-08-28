@@ -59,6 +59,8 @@ public:
   TH1D *hist_PUReweight;
   double weight_PU;
 
+  void FillCutFlow(bool IsCentral, TString suffix, TString histname, double weight);
+
 };
 
 

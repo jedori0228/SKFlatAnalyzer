@@ -241,6 +241,8 @@ void HNWRAnalyzer::executeEvent(){
 
 void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
+  bool IsCentral = !( param.Name.Contains("Syst_") );
+
   Event ev = GetEvent();
   Particle METv = ev.GetMETVector();
   double weight = 1.;
@@ -252,7 +254,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== No Cut
   //=============
 
-  JSFillHist("CutFlow", "NoCut_"+param.Name, 0., weight, 1, 0., 1.);
+  FillCutFlow(IsCentral, "CutFlow", "NoCut_"+param.Name, weight);
 
   if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
     double normweight = 1./sumW/PDFWeights_Scale->at(0);
@@ -273,7 +275,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   if(!PassMETFilter()) return;
 
-  JSFillHist("CutFlow", "METFilter_"+param.Name, 0., weight, 1, 0., 1.);
+  FillCutFlow(IsCentral, "CutFlow", "METFilter_"+param.Name, weight);
 
   bool PassSingleElectron = ev.PassTrigger(Triggers_Electron);
   bool PassMu50 = ev.PassTrigger(Triggers_Muon);
@@ -484,7 +486,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   if(n_Tight_leptons==2){
 
-    JSFillHist("CutFlow", "NTightLeptonIsTwo_"+param.Name, 0., weight, 1, 0., 1.);
+    FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+param.Name, weight);
 
     TString Suffix = "";
     bool tmp_IsEE(false), tmp_IsMM(false), tmp_IsEM(false);
@@ -493,30 +495,28 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       tmp_IsEE = true;
       Suffix = "SingleElectron";
       this_triggerpass = PassSingleElectron;
-      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, 0., weight, 1, 0., 1.);
     }
     else if( (Tight_electrons.size()==0) && (Tight_muons.size()==2) ){
       tmp_IsMM = true;
       Suffix = "SingleMuon";
       this_triggerpass = PassMu50;
-      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, 0., weight, 1, 0., 1.);
     }
     else if( (Tight_electrons.size()==1) && (Tight_muons.size()==1) ){
       tmp_IsEM = true;
       Suffix = "EMu";
       this_triggerpass = PassMu50;
-      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, 0., weight, 1, 0., 1.);
     }
+    FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, weight);
 
     if(this_triggerpass){
 
-      JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_PassTrigger_"+param.Name, 0., weight, 1, 0., 1.);
+      FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_PassTrigger_"+param.Name, weight);
 
       //==== lljj
 
       if( jets.size()>=2 ){
 
-        JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_TwoAK4Jets_"+param.Name, 0., weight, 1, 0., 1.);
+        FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_TwoAK4Jets_"+param.Name, weight);
 
         Lepton *LeadLep = Tight_leps.at(0);
         Lepton *SubLeadLep = Tight_leps.at(1);
@@ -528,7 +528,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         if( dRLeadJetLepton && dRSubLeadJetLepton && dRTwoLepton && dRTwoJets ){
 
-          JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_dRSeparation_"+param.Name, 0., weight, 1, 0., 1.);
+          FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_dRSeparation_"+param.Name, weight);
 
           IsResolvedEvent = true;
 
@@ -551,11 +551,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
           if(DiLepMassGT200){
 
-            JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mllGT200_"+param.Name, 0., weight, 1, 0., 1.);
+            FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mllGT200_"+param.Name, weight);
 
             if(WRMassGT800){
 
-              JSFillHist("CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_"+param.Name, 0., weight, 1, 0., 1.);
+              FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_"+param.Name, weight);
 
               //==== Region Dictionary
               //==== - HNWR_SingleElectron_Resolved_SR : ee Resolved SR [IsResolved_SR_EE]
@@ -563,6 +563,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               //==== - HNWR_EMu_Resolved_SR : em Resolved sideband [IsResolved_SR_EM]
 
               if(DiLepMassGT500){
+
+                FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_mll500_"+param.Name, weight);
 
                 map_bool_To_Region[Suffix+"_Resolved_SR"] = true;
                 if(tmp_IsEE) IsResolved_SR_EE = true;
@@ -684,6 +686,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool IsBoosted_LowWRCR_EMJet(false), IsBoosted_LowWRCR_MEJet(false);
   if(!IsResolvedEvent){
 
+    FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+param.Name, weight);
+
     Lepton *LeadLep = Tight_leps.at(0);
     bool tmp_IsLeadE(false), tmp_IsLeadM(false);
     TString Suffix = "";
@@ -709,7 +713,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       exit(EXIT_FAILURE);
     }
 
+    FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_"+param.Name, weight);
+
     if(this_triggerpass){
+
+      FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_PassTrigger_"+param.Name, weight);
 
       leps_for_plot.push_back( Tight_leps.at(0) );
 
@@ -767,6 +775,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       //==== If not, look for merged jet
       else{
 
+        FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoLowmll_"+param.Name, weight);
+
         bool HasAwayMergedFatJet = false;
         for(unsigned int i=0; i<fatjets_LSF.size(); i++){
           FatJet this_fatjet = fatjets_LSF.at(i);
@@ -780,6 +790,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         }
 
         if(HasAwayMergedFatJet){
+
+          FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasMergedJet_"+param.Name, weight);
 
           bool HasSFLooseLepton = false;
           Lepton *SFLooseLepton;
@@ -842,34 +854,48 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
           if(NoExtraTightLepton){
 
-            if(HasSFLooseLepton && !HasOFLooseLepton){
+            FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoExtraTight_"+param.Name, weight);
 
-              leps_for_plot.push_back( SFLooseLepton );
+            if(HasSFLooseLepton){
 
-              if( (*LeadLep+*SFLooseLepton).M() > 200 ){
+              FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasSFLooseLepton_"+param.Name, weight);
 
-                if(WRMassGT800){
+              if(!HasOFLooseLepton){
 
-                  //==== Region Dictionary
-                  //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR [IsBoosted_SR_EE]
-                  //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR [IsBoosted_SR_MM]
+								FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
 
-                  map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
-                  if(tmp_IsLeadE) IsBoosted_SR_EE = true;
-                  else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
+								leps_for_plot.push_back( SFLooseLepton );
 
-                }
-                else{
+								if( (*LeadLep+*SFLooseLepton).M() > 200 ){
 
-                  //==== Region Dictionary
-                  //==== - HNWR_SingleElectron_Boosted_LowWRCR : ee Boosted, but low m(WR) [IsBoosted_LowWRCR_EE]
-                  //==== - HNWR_SingleMuon_Boosted_LowWRCR : mm Boosted, but low m(WR) [IsBoosted_LowWRCR_MM]
+                  FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mllGT200_"+param.Name, weight);
 
-                  map_bool_To_Region[Suffix+"_Boosted_LowWRCR"] = true;
-                  if(tmp_IsLeadE) IsBoosted_LowWRCR_EE = true;
-                  else if(tmp_IsLeadM) IsBoosted_LowWRCR_MM = true;
+									if(WRMassGT800){
 
-                }
+                    FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mWRGT800_"+param.Name, weight);
+
+										//==== Region Dictionary
+										//==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR [IsBoosted_SR_EE]
+										//==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR [IsBoosted_SR_MM]
+
+										map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
+										if(tmp_IsLeadE) IsBoosted_SR_EE = true;
+										else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
+
+									}
+									else{
+
+										//==== Region Dictionary
+										//==== - HNWR_SingleElectron_Boosted_LowWRCR : ee Boosted, but low m(WR) [IsBoosted_LowWRCR_EE]
+										//==== - HNWR_SingleMuon_Boosted_LowWRCR : mm Boosted, but low m(WR) [IsBoosted_LowWRCR_MM]
+
+										map_bool_To_Region[Suffix+"_Boosted_LowWRCR"] = true;
+										if(tmp_IsLeadE) IsBoosted_LowWRCR_EE = true;
+										else if(tmp_IsLeadM) IsBoosted_LowWRCR_MM = true;
+
+									}
+
+								}
 
               }
 
@@ -1253,3 +1279,18 @@ bool HNWRAnalyzer::LeptonPassID(Lepton &lepton, TString ID){
   }
 
 }
+
+void HNWRAnalyzer::FillCutFlow(bool IsCentral, TString suffix, TString histname, double weight){
+
+  if(IsCentral){
+
+    JSFillHist(suffix, histname, 0., weight, 1, 0., 1.);
+
+  }
+
+}
+
+
+
+
+
