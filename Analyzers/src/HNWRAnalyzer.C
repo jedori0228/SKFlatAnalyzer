@@ -187,6 +187,7 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Muon_Tight_ID = "HNWRTight";
   param.Muon_Loose_ID = "HNWRLoose";
+  param.Muon_RECO_SF_Key = "HighPtMuonRecoSF";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
   param.Muon_ISO_SF_Key = "NUM_LooseRelTkIso_DEN_HighPtIDandIPCut";
   param.Muon_Trigger_SF_Key = "POGHighPtLooseTrkIso";
@@ -961,9 +962,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       weight *= this_recosf*this_idsf;
     }
     for(unsigned int i=0; i<ForSF_muons.size(); i++){
+
+      double MiniAODP = sqrt( ForSF_muons.at(i)->MiniAODPt() * ForSF_muons.at(i)->MiniAODPt() + ForSF_muons.at(i)->Pz() * ForSF_muons.at(i)->Pz() );
+
+      double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, ForSF_muons.at(i)->Eta(), MiniAODP, SystDir_MuonIDSF);
       double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
       double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-      weight *= this_idsf*this_isosf;
+
+      weight *= this_recosf*this_idsf*this_isosf;
     }
 
     //==== Trigger SF
