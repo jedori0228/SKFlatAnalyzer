@@ -53,6 +53,7 @@ public:
   std::vector<Lepton *> MakeLeptonPointerVector(std::vector<Electron *>& electrons, double TightIso=-999, bool UseMini=false);
 
   GenFinderForHNWRSignal *genFinderSig;
+  int SignalLeptonChannel;
 
   //==== pileup
   int N_VTX;

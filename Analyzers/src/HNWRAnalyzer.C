@@ -111,6 +111,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   //==== Signal finder
   genFinderSig = new GenFinderForHNWRSignal();
+  SignalLeptonChannel = -1;
 
   //==== PUReweight
   if(!IsDATA){
@@ -135,13 +136,21 @@ void HNWRAnalyzer::executeEvent(){
       int pid = abs( gens.at(i).PID() );
       if( pid==9900012 || pid==9900014 ){
         genNpid = pid;
+        FillHist("GEN_N_Eta", gens.at(i).Eta(), 1., 60, -3., 3.);
+        FillHist("GEN_N_Pt", gens.at(i).Pt(), 1., 800, 0., 8000.);
         break;
       }
     }
     //==== 0 = electron
     //==== 1 = muon
-    if(genNpid==9900012) FillHist("SignalFlavour", 0., 1., 3, -1., 2.);
-    else if(genNpid==9900014) FillHist("SignalFlavour", 1., 1., 3, -1., 2.);
+    if(genNpid==9900012){
+      SignalLeptonChannel = 0;
+      FillHist("SignalFlavour", 0., 1., 3, -1., 2.);
+    }
+    else if(genNpid==9900014){
+      SignalLeptonChannel = 1;
+      FillHist("SignalFlavour", 1., 1., 3, -1., 2.);
+    }
     else{
       FillHist("SignalFlavour", -1., 1., 3, -1., 2.);
     }
@@ -496,11 +505,21 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       tmp_IsEE = true;
       Suffix = "SingleElectron";
       this_triggerpass = PassSingleElectron;
+
+      if(Signal){
+        if(SignalLeptonChannel!=0) return;
+      }
+
     }
     else if( (Tight_electrons.size()==0) && (Tight_muons.size()==2) ){
       tmp_IsMM = true;
       Suffix = "SingleMuon";
       this_triggerpass = PassMu50;
+
+      if(Signal){
+        if(SignalLeptonChannel!=1) return;
+      }
+
     }
     else if( (Tight_electrons.size()==1) && (Tight_muons.size()==1) ){
       tmp_IsEM = true;
@@ -700,6 +719,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       ForSF_electrons.push_back( Tight_electrons.at(0) );
 
+      if(Signal){
+        if(SignalLeptonChannel!=0) return;
+      }
+
     }
     else if(LeadLep->LeptonFlavour()==Lepton::MUON){
       tmp_IsLeadM = true;
@@ -707,6 +730,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       this_triggerpass = PassMu50;
 
       ForSF_muons.push_back( Tight_muons.at(0) );
+
+      if(Signal){
+        if(SignalLeptonChannel!=1) return;
+      }
 
     }
     else{
