@@ -890,40 +890,40 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               if(!HasOFLooseLepton){
 
-								FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
+                FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
 
-								leps_for_plot.push_back( SFLooseLepton );
+                leps_for_plot.push_back( SFLooseLepton );
 
-								if( (*LeadLep+*SFLooseLepton).M() > 200 ){
+                if( (*LeadLep+*SFLooseLepton).M() > 200 ){
 
                   FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mllGT200_"+param.Name, weight);
 
-									if(WRMassGT800){
+                  if(WRMassGT800){
 
                     FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mWRGT800_"+param.Name, weight);
 
-										//==== Region Dictionary
-										//==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR [IsBoosted_SR_EE]
-										//==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR [IsBoosted_SR_MM]
+                    //==== Region Dictionary
+                    //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR [IsBoosted_SR_EE]
+                    //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR [IsBoosted_SR_MM]
 
-										map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
-										if(tmp_IsLeadE) IsBoosted_SR_EE = true;
-										else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
+                    map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
+                    if(tmp_IsLeadE) IsBoosted_SR_EE = true;
+                    else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
 
-									}
-									else{
+                  }
+                  else{
 
-										//==== Region Dictionary
-										//==== - HNWR_SingleElectron_Boosted_LowWRCR : ee Boosted, but low m(WR) [IsBoosted_LowWRCR_EE]
-										//==== - HNWR_SingleMuon_Boosted_LowWRCR : mm Boosted, but low m(WR) [IsBoosted_LowWRCR_MM]
+                    //==== Region Dictionary
+                    //==== - HNWR_SingleElectron_Boosted_LowWRCR : ee Boosted, but low m(WR) [IsBoosted_LowWRCR_EE]
+                    //==== - HNWR_SingleMuon_Boosted_LowWRCR : mm Boosted, but low m(WR) [IsBoosted_LowWRCR_MM]
 
-										map_bool_To_Region[Suffix+"_Boosted_LowWRCR"] = true;
-										if(tmp_IsLeadE) IsBoosted_LowWRCR_EE = true;
-										else if(tmp_IsLeadM) IsBoosted_LowWRCR_MM = true;
+                    map_bool_To_Region[Suffix+"_Boosted_LowWRCR"] = true;
+                    if(tmp_IsLeadE) IsBoosted_LowWRCR_EE = true;
+                    else if(tmp_IsLeadM) IsBoosted_LowWRCR_MM = true;
 
-									}
+                  }
 
-								}
+                }
 
               }
 
