@@ -37,14 +37,7 @@ public:
 
   //==== DYPtReweight
   bool ApplyDYPtReweight;
-  TH2D *hist_DYPtReweight_2D;
-  TH1D *hist_DYPtReweight_Electron_Resolved;
-  TH1D *hist_DYPtReweight_Electron_Boosted;
-  TH1D *hist_DYPtReweight_Muon_Resolved;
-  TH1D *hist_DYPtReweight_Muon_Boosted;
-
-  double GetDYPtReweight(double zpt, int flav, int region);
-  double GetDYPtReweight(double zmass, double zpt);
+  double ZPtReweight;
 
   //==== My tool
   std::vector<Jet> JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron *> els, std::vector<Muon *> mus, double dR=0.4);

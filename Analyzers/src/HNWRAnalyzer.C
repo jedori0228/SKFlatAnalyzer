@@ -83,21 +83,6 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   }
 
-  //==== DY Pt Reweighting
-
-  if(ApplyDYPtReweight){
-    TString datapath = getenv("DATA_DIR");
-    TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/DYPtReweight/DYPtReweight.root");
-    hist_DYPtReweight_Electron_Resolved = (TH1D *)file_DYPtReweight->Get("Electron_Resolved");
-    hist_DYPtReweight_Electron_Boosted = (TH1D *)file_DYPtReweight->Get("Electron_Boosted");
-    hist_DYPtReweight_Muon_Resolved = (TH1D *)file_DYPtReweight->Get("Muon_Resolved");
-    hist_DYPtReweight_Muon_Boosted = (TH1D *)file_DYPtReweight->Get("Muon_Boosted");
-
-    TFile *file_DYPtReweight_2D = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/DYPtReweight/Zpt_weights_"+TString::Itoa(DataYear,10)+".root");
-    hist_DYPtReweight_2D = (TH2D *)file_DYPtReweight_2D->Get("zptmass_weights");
-
-  }
-
   //==== B-tagging
 
   std::vector<Jet::Tagger> vtaggers;
@@ -105,6 +90,9 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   std::vector<Jet::WP> v_wps;
   v_wps.push_back(Jet::Medium);
+
+  //==== Z-pt rewieght
+  ZPtReweight = 1.;
 
   //=== list of taggers, WP, setup systematics, use period SFs
   SetupBTagger(vtaggers,v_wps, true, true);
@@ -129,6 +117,10 @@ void HNWRAnalyzer::executeEvent(){
   //==========================
 
   gens = GetGens();
+
+  if(ApplyDYPtReweight){
+    ZPtReweight = mcCorr->GetOfficialDYReweight(gens);
+  }
 
   if(Signal){
     int genNpid = -1;
@@ -258,6 +250,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   double weight = 1.;
   if(!IsDATA){
     weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire*weight_PU;
+    if(ApplyDYPtReweight){
+      weight *= ZPtReweight;
+    }
   }
 
   //=============
@@ -1059,56 +1054,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   if( map_bool_To_Region.size() == 0 ) return;
 
-  //==== Z-pt reweighting
-  double ZPtReweight_EE_Resolved(1.), ZPtReweight_MM_Resolved(1.);
-  double ZPtReweight_EE_Boosted(1.), ZPtReweight_MM_Boosted(1.);
-  if(ApplyDYPtReweight){
-/*
-    if(leps_for_plot.size()>=2){
-      double this_zpt = ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt();
-      ZPtReweight_EE_Resolved = GetDYPtReweight(this_zpt, 0, 0);
-      ZPtReweight_EE_Boosted = GetDYPtReweight(this_zpt, 0, 1);
-      ZPtReweight_MM_Resolved = GetDYPtReweight(this_zpt, 1, 0);
-      ZPtReweight_MM_Boosted = GetDYPtReweight(this_zpt, 1, 1);
-    }
-*/
-
-    double this_zptreweight = mcCorr->GetOfficialDYReweight(gens);
-
-    ZPtReweight_EE_Resolved = this_zptreweight;
-    ZPtReweight_EE_Boosted = this_zptreweight;
-    ZPtReweight_MM_Resolved = this_zptreweight;
-    ZPtReweight_MM_Boosted = this_zptreweight;
-
-  }
-  if(
-    //==== Resolved EE
-    IsResolved_SR_EE || IsResolved_LowWRCR_EE || IsResolved_DYCR_EE
-  ){
-    weight *= ZPtReweight_EE_Resolved;
-  }
-  else if(
-    //==== Boosted EE
-    IsBoosted_SR_EE  || IsBoosted_LowWRCR_EE  || IsBoosted_DYCR_EE
-  ){
-    weight *= ZPtReweight_EE_Boosted;
-  }
-  else if(
-    //==== Resolved MM
-    IsResolved_SR_MM || IsResolved_LowWRCR_MM || IsResolved_DYCR_MM
-    ){
-    weight *= ZPtReweight_MM_Resolved;
-  }
-  else if(
-    //==== Boosted MM
-    IsBoosted_SR_MM  || IsBoosted_LowWRCR_MM  || IsBoosted_DYCR_MM
-  ){
-    weight *= ZPtReweight_MM_Boosted;
-  }
-  else{
-    //==== should be EM events
-  }
-
   //================================================
   //==== Double counting check
   //==== Tight electron and Tight muon near
@@ -1238,57 +1183,6 @@ HNWRAnalyzer::HNWRAnalyzer(){
 }
 
 HNWRAnalyzer::~HNWRAnalyzer(){
-
-}
-
-double HNWRAnalyzer::GetDYPtReweight(double zpt, int flav, int region){
-
-  //==== region = 0 : Resolved
-  //==== region = 1 : Boosted
-
-  if(zpt>=500.) zpt = 499.;
-  if(flav==0){
-    if(region==0){
-      int this_bin = hist_DYPtReweight_Electron_Resolved->FindBin(zpt);
-      return hist_DYPtReweight_Electron_Resolved->GetBinContent(this_bin);
-    }
-    else if(region==1){
-      int this_bin = hist_DYPtReweight_Electron_Boosted->FindBin(zpt);
-      return hist_DYPtReweight_Electron_Boosted->GetBinContent(this_bin);
-    }
-    else{
-      cerr << "[HNWRAnalyzer::GetDYPtReweight] wrong region : " << region << endl;
-      exit(EXIT_FAILURE);
-    }
-  }
-  else if(flav==1){
-    if(region==0){
-      int this_bin = hist_DYPtReweight_Muon_Resolved->FindBin(zpt);
-      return hist_DYPtReweight_Muon_Resolved->GetBinContent(this_bin);
-    }
-    else if(region==1){
-      int this_bin = hist_DYPtReweight_Muon_Boosted->FindBin(zpt);
-      return hist_DYPtReweight_Muon_Boosted->GetBinContent(this_bin);
-    }
-    else{
-      cerr << "[HNWRAnalyzer::GetDYPtReweight] wrong region : " << region << endl;
-      exit(EXIT_FAILURE);
-    }
-  }
-  else{
-    cerr << "[HNWRAnalyzer::GetDYPtReweight] wrong flavour : " << flav << endl;
-    exit(EXIT_FAILURE);
-  }
-
-}
-
-double HNWRAnalyzer::GetDYPtReweight(double zmass, double zpt){
-
-  int bin_mass = hist_DYPtReweight_2D->GetXaxis()->FindBin(zmass);
-  int bin_pt   = hist_DYPtReweight_2D->GetYaxis()->FindBin(zpt);
-
-  double value = hist_DYPtReweight_2D->GetBinContent( bin_mass, bin_pt );
-  return value;
 
 }
 
