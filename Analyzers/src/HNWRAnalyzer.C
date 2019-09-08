@@ -466,8 +466,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== Lepton scale factors
   //===========================
 
-  std::vector<Electron *> ForSF_electrons;
-  std::vector<Muon *> ForSF_muons;
+  double this_trigger_sf = 1.;
 
   //=====================
   //==== Categorization
@@ -564,10 +563,51 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           bool DiLepMassLT150 = (dilep_mass > 60.) && (dilep_mass < 150.);
           bool WRMassGT800 = ( WRCand.M() > 800. );
 
-          //==== Now IsResolvedEvent iset
-          //==== We can assign ForSF_electrons and ForSF_muons now
-          ForSF_electrons = Tight_electrons;
-          ForSF_muons = Tight_muons;
+          //==== Now IsResolvedEvent is set
+          //==== No overlap with Boosted, so we can apply SFs
+
+          //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+          //@@@@ Apply scale factors
+
+          double trigger_sf_SingleElectron = 1.;
+          double trigger_sf_SingleMuon = 1.;
+
+          if(!IsDATA){
+
+            mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
+
+            for(unsigned int i=0; i<Tight_electrons.size(); i++){
+              double this_recosf = mcCorr->ElectronReco_SF(Tight_electrons.at(i)->scEta(),Tight_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+              double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, Tight_electrons.at(i)->scEta(), Tight_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+              weight *= this_recosf*this_idsf;
+            }
+            for(unsigned int i=0; i<Tight_muons.size(); i++){
+
+              double MiniAODP = sqrt( Tight_muons.at(i)->MiniAODPt() * Tight_muons.at(i)->MiniAODPt() + Tight_muons.at(i)->Pz() * Tight_muons.at(i)->Pz() );
+
+              double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, Tight_muons.at(i)->Eta(), MiniAODP, SystDir_MuonIDSF);
+              double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+              double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+
+              weight *= this_recosf*this_idsf*this_isosf;
+            }
+
+            //==== Trigger SF
+
+            trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
+            trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons, SystDir_MuonTriggerSF);
+
+          }
+          if(Suffix=="SingleElectron"){
+            this_trigger_sf = trigger_sf_SingleElectron;
+            weight *= trigger_sf_SingleElectron;
+          }
+          else{
+            trigger_sf_SingleElectron = trigger_sf_SingleMuon;
+            weight *= trigger_sf_SingleMuon;
+          }
+          //@@@@
+          //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
           if(DiLepMassGT200){
 
@@ -712,6 +752,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     bool tmp_IsLeadE(false), tmp_IsLeadM(false);
     TString Suffix = "";
     bool this_triggerpass(false);
+    std::vector<Electron *> ForSF_electrons;
+    std::vector<Muon *> ForSF_muons;
     if(LeadLep->LeptonFlavour()==Lepton::ELECTRON){
       tmp_IsLeadE = true;
       Suffix = "SingleElectron";
@@ -742,6 +784,49 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
 
     FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_"+param.Name, weight);
+
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    //@@@@ Apply scale factors
+
+    double trigger_sf_SingleElectron = 1.;
+    double trigger_sf_SingleMuon = 1.;
+
+    if(!IsDATA){
+
+      mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
+
+      for(unsigned int i=0; i<ForSF_electrons.size(); i++){
+        double this_recosf = mcCorr->ElectronReco_SF(ForSF_electrons.at(i)->scEta(),ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+        double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, ForSF_electrons.at(i)->scEta(), ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+        weight *= this_recosf*this_idsf;
+      }
+      for(unsigned int i=0; i<ForSF_muons.size(); i++){
+
+        double MiniAODP = sqrt( ForSF_muons.at(i)->MiniAODPt() * ForSF_muons.at(i)->MiniAODPt() + ForSF_muons.at(i)->Pz() * ForSF_muons.at(i)->Pz() );
+
+        double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, ForSF_muons.at(i)->Eta(), MiniAODP, SystDir_MuonIDSF);
+        double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+        double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+
+        weight *= this_recosf*this_idsf*this_isosf;
+      }
+
+      //==== Trigger SF
+
+      trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
+      trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons, SystDir_MuonTriggerSF);
+
+    }
+    if(Suffix=="SingleElectron"){
+      trigger_sf_SingleMuon = trigger_sf_SingleElectron;
+      weight *= trigger_sf_SingleElectron;
+    }
+    else{
+      trigger_sf_SingleElectron = trigger_sf_SingleMuon;
+      weight *= trigger_sf_SingleMuon;
+    }
+    //@@@@
+    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     if(this_triggerpass){
 
@@ -973,68 +1058,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   } // END If not resolved
 
   if( map_bool_To_Region.size() == 0 ) return;
-
-  //==== Lepton SF
-
-  double trigger_sf_SingleElectron = 1.;
-  double trigger_sf_SingleMuon = 1.;
-
-  if(!IsDATA){
-
-    mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
-
-    for(unsigned int i=0; i<ForSF_electrons.size(); i++){
-      double this_recosf = mcCorr->ElectronReco_SF(ForSF_electrons.at(i)->scEta(),ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
-      double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, ForSF_electrons.at(i)->scEta(), ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
-      weight *= this_recosf*this_idsf;
-    }
-    for(unsigned int i=0; i<ForSF_muons.size(); i++){
-
-      double MiniAODP = sqrt( ForSF_muons.at(i)->MiniAODPt() * ForSF_muons.at(i)->MiniAODPt() + ForSF_muons.at(i)->Pz() * ForSF_muons.at(i)->Pz() );
-
-      double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, ForSF_muons.at(i)->Eta(), MiniAODP, SystDir_MuonIDSF);
-      double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-      double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-
-      weight *= this_recosf*this_idsf*this_isosf;
-    }
-
-    //==== Trigger SF
-
-    trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
-    trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons, SystDir_MuonTriggerSF);
-
-  }
-
-  double this_trigger_sf = 1.;
-  if(
-    //==== Resolved EE
-    IsResolved_SR_EE || IsResolved_LowWRCR_EE || IsResolved_DYCR_EE ||
-    //==== Boosted EE
-    IsBoosted_SR_EE  || IsBoosted_LowWRCR_EE  || IsBoosted_DYCR_EE ||
-    //==== Boosted E + mujet
-    IsBoosted_CR_EMJet || IsBoosted_LowWRCR_EMJet
-  ){
-    this_trigger_sf = trigger_sf_SingleElectron;
-    weight *= trigger_sf_SingleElectron;
-  }
-  else if(
-    //==== Resolved MM
-    IsResolved_SR_MM || IsResolved_LowWRCR_MM || IsResolved_DYCR_MM ||
-    //==== Boosted MM
-    IsBoosted_SR_MM  || IsBoosted_LowWRCR_MM  || IsBoosted_DYCR_MM ||
-    //==== Resolved EM
-    IsResolved_SR_EM || IsResolved_LowWRCR_EM || IsResolved_DYCR_EM ||
-    //==== Boosted M + ejet
-    IsBoosted_CR_MEJet || IsBoosted_LowWRCR_MEJet
-  ){
-    this_trigger_sf = trigger_sf_SingleMuon;
-    weight *= trigger_sf_SingleMuon;
-  }
-  else{
-    cerr << "[HNWRAnalyzer::executeEventFromParameter] Unkown event.." << endl;
-    exit(EXIT_FAILURE);
-  }
 
   //==== Z-pt reweighting
   double ZPtReweight_EE_Resolved(1.), ZPtReweight_MM_Resolved(1.);
