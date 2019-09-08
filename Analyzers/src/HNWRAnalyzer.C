@@ -1006,6 +1006,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   }
 
+  double this_trigger_sf = 1.;
   if(
     //==== Resolved EE
     IsResolved_SR_EE || IsResolved_LowWRCR_EE || IsResolved_DYCR_EE ||
@@ -1014,6 +1015,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     //==== Boosted E + mujet
     IsBoosted_CR_EMJet || IsBoosted_LowWRCR_EMJet
   ){
+    this_trigger_sf = trigger_sf_SingleElectron;
     weight *= trigger_sf_SingleElectron;
   }
   else if(
@@ -1026,6 +1028,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     //==== Boosted M + ejet
     IsBoosted_CR_MEJet || IsBoosted_LowWRCR_MEJet
   ){
+    this_trigger_sf = trigger_sf_SingleMuon;
     weight *= trigger_sf_SingleMuon;
   }
   else{
@@ -1192,6 +1195,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       JSFillHist(this_region, "NCand_2_Mass_"+this_region, NCand_2.M(), weight, 800, 0., 8000.);
       JSFillHist(this_region, "NCand_2_Pt_"+this_region, NCand_2.Pt(), weight, 300, 0., 3000.);
 
+      if(Signal){
+        JSFillHist(this_region, "TriggerEff_"+this_region, 0., this_trigger_sf, 1, 0., 1.);
+      }
 
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
