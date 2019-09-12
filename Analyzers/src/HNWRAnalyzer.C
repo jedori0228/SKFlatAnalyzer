@@ -1009,32 +1009,47 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
             }
 
-            if(!HasSFLooseLepton && HasOFLooseLepton){
+            if(!HasSFLooseLepton){
 
-              leps_for_plot.push_back( OFLooseLepton );
+              FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_NoHasSFLooseLepton_"+param.Name, weight);
 
-              if( (*LeadLep+*OFLooseLepton).M() > 200 ){
+              if(HasOFLooseLepton){
 
-                if(WRMassGT800){
+                FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_HasOFLooseLepton_"+param.Name, weight);
 
-                  //==== Region Dictionary
-                  //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant) [IsBoosted_CR_EMJet]
-                  //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK8jet (ttbar dominant) [IsBoosted_CR_MEJet]
+                leps_for_plot.push_back( OFLooseLepton );
 
-                  map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
-                  if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
-                  else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
+                if( (*LeadLep+*OFLooseLepton).M() > 200 ){
 
-                }
-                else{
+                  FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mllGT200_"+param.Name, weight);
 
-                  //==== Region Dictionary
-                  //==== - HNWR_SingleElectron_EMu_Boosted_LowWRCR : isolated e + mu-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_EMJet]
-                  //==== - HNWR_SingleMuon_EMu_Boosted_LowWRCR : isolated m + e-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_MEJet]
+                  if(WRMassGT800){
 
-                  map_bool_To_Region[Suffix+"_EMu_Boosted_LowWRCR"] = true;
-                  if(tmp_IsLeadE) IsBoosted_LowWRCR_EMJet = true;
-                  else if(tmp_IsLeadM) IsBoosted_LowWRCR_MEJet = true;
+                    FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mWRGT800_"+param.Name, weight);
+
+                    //==== Region Dictionary
+                    //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant) [IsBoosted_CR_EMJet]
+                    //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK8jet (ttbar dominant) [IsBoosted_CR_MEJet]
+
+                    map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
+                    if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
+                    else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
+
+                    if(tmp_IsLeadM) cout << "@@@@ FSBBoostedElJet\t" << run << "\t" << event << "\t" << lumi << endl;
+                    if(tmp_IsLeadE) cout << "@@@@ FSBBoostedMuJet\t" << run << "\t" << event << "\t" << lumi << endl;
+
+                  }
+                  else{
+
+                    //==== Region Dictionary
+                    //==== - HNWR_SingleElectron_EMu_Boosted_LowWRCR : isolated e + mu-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_EMJet]
+                    //==== - HNWR_SingleMuon_EMu_Boosted_LowWRCR : isolated m + e-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_MEJet]
+
+                    map_bool_To_Region[Suffix+"_EMu_Boosted_LowWRCR"] = true;
+                    if(tmp_IsLeadE) IsBoosted_LowWRCR_EMJet = true;
+                    else if(tmp_IsLeadM) IsBoosted_LowWRCR_MEJet = true;
+
+                  }
 
                 }
 
