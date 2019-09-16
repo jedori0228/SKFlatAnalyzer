@@ -156,7 +156,9 @@ void HNWRAnalyzer::executeEvent(){
 
   N_VTX = nPV;
   if(!IsDATA){
-    N_VTX = nPileUp;
+    //==== nPileUp starts from 0
+    N_VTX = nPileUp+1;
+    //==== but histogram is as a function of nPileUp not nVTX
     int bin_pu = hist_PUReweight->FindBin(nPileUp);
     weight_PU = hist_PUReweight->GetBinContent(bin_pu);
   }
