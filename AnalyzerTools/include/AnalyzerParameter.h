@@ -43,6 +43,7 @@ public:
     ElectronEnUp, ElectronEnDown,
     ElectronIDSFUp, ElectronIDSFDown,
     ElectronTriggerSFUp, ElectronTriggerSFDown,
+    LSFSFUp, LSFSFDown,
     NSyst
   };
   Syst syst_;

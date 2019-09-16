@@ -306,6 +306,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   int SystDir_MuonTriggerSF(0);
   int SystDir_ElectronTriggerSF(0);
 
+  int SystDir_LSFSF(0);
+
   if(param.syst_ == AnalyzerParameter::Central){
 
   }
@@ -368,6 +370,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   }
   else if(param.syst_ == AnalyzerParameter::ElectronTriggerSFDown){
     SystDir_ElectronTriggerSF = -1;
+  }
+  else if(param.syst_ == AnalyzerParameter::LSFSFUp){
+    SystDir_LSFSF = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::LSFSFDown){
+    SystDir_LSFSF = -1;
   }
   else{
     cerr << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst : param.syst_ = " << param.syst_ << endl;
@@ -658,6 +666,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             if(tmp_IsEE) IsResolved_DYCR_EE = true;
             else if(tmp_IsMM) IsResolved_DYCR_MM = true;
             else if(tmp_IsEM) IsResolved_DYCR_EM = true;
+
           }
 
           for(unsigned int i=0; i<Loose_leps.size(); i++){
@@ -898,6 +907,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         }
 
         if(HasAwayMergedFatJet){
+
+          //==== LSF SF
+          weight *= LSFSF(SystDir_LSFSF);
 
           FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasMergedJet_"+param.Name, weight);
 
@@ -1261,6 +1273,13 @@ void HNWRAnalyzer::FillCutFlow(bool IsCentral, TString suffix, TString histname,
 
 }
 
+double HNWRAnalyzer::LSFSF(int dir){
+
+  if(dir==0) return 0.87;
+  else if(dir>0) return 0.87+0.08;
+  else return 0.87-0.07;
+
+}
 
 
 

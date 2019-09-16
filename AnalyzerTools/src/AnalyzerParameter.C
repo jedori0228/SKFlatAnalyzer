@@ -135,6 +135,12 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::ElectronTriggerSFDown){
     return "ElectronTriggerSFDown";
   }
+  else if(syst_==Syst::LSFSFUp){
+    return "LSFSFUp";
+  }
+  else if(syst_==Syst::LSFSFDown){
+    return "LSFSFDown";
+  }
   else{
     cout << "[AnalyzerParameter::GetSystType] Wrong Syst" << endl;
     exit(EXIT_FAILURE);
