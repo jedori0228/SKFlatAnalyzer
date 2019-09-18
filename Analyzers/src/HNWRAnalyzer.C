@@ -17,13 +17,13 @@ void HNWRAnalyzer::initializeAnalyzer(){
   RunXsecSyst = HasFlag("RunXsecSyst");
   Signal = HasFlag("Signal");
 
-  cout << "[HNWRAnalyzer::initializeAnalyzer] RunFake = " << RunFake << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] RunCF = " << RunCF << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] RunSyst = " << RunSyst << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] PromptLeptonOnly = " << PromptLeptonOnly << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] RunXsecSyst = " << RunXsecSyst << endl;
-  cout << "[HNWRAnalyzer::initializeAnalyzer] Signal = " << Signal << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] RunFake = " << RunFake << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] RunCF = " << RunCF << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] RunSyst = " << RunSyst << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] PromptLeptonOnly = " << PromptLeptonOnly << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] RunXsecSyst = " << RunXsecSyst << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] Signal = " << Signal << endl;
 
   //===============================
   //==== Year-dependent variables
@@ -104,8 +104,20 @@ void HNWRAnalyzer::initializeAnalyzer(){
   //==== PUReweight
   if(!IsDATA){
     TString datapath = getenv("DATA_DIR");
-    TFile *file_PUReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/PileUp/PUReweight_"+TString::Itoa(DataYear,10)+".root");
-    hist_PUReweight = (TH1D *)file_PUReweight->Get("PUReweight_"+TString::Itoa(DataYear,10));
+
+    TString PUfname = datapath+"/"+TString::Itoa(DataYear,10)+"/PileUp/PUReweight_"+TString::Itoa(DataYear,10)+".root";
+    TString PUhname = "PUReweight_"+TString::Itoa(DataYear,10);
+    //==== Only for 2016 FastSim, use different one..
+    if(DataYear==2016 && IsFastSim){
+      PUfname = datapath+"/"+TString::Itoa(DataYear,10)+"/PileUp/PUReweight_Fast_"+TString::Itoa(DataYear,10)+".root";
+    }
+
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] PUfname = " << PUfname << endl;
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] PUhname = " << PUhname << endl;
+
+    TFile *file_PUReweight = new TFile(PUfname);
+    hist_PUReweight = (TH1D *)file_PUReweight->Get(PUhname);
+
   }
 
 }
@@ -1048,9 +1060,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                     map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
                     if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
                     else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
-
-                    if(tmp_IsLeadM) cout << "@@@@ FSBBoostedElJet\t" << run << "\t" << event << "\t" << lumi << endl;
-                    if(tmp_IsLeadE) cout << "@@@@ FSBBoostedMuJet\t" << run << "\t" << event << "\t" << lumi << endl;
 
                   }
                   else{
