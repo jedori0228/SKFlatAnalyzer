@@ -117,6 +117,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
     TFile *file_PUReweight = new TFile(PUfname);
     hist_PUReweight = (TH1D *)file_PUReweight->Get(PUhname);
+    hist_PUReweight_Up = (TH1D *)file_PUReweight->Get(PUhname+"_Up");
+    hist_PUReweight_Down = (TH1D *)file_PUReweight->Get(PUhname+"_Down");
 
   }
 
@@ -173,6 +175,10 @@ void HNWRAnalyzer::executeEvent(){
     //==== but histogram is as a function of nPileUp not nVTX
     int bin_pu = hist_PUReweight->FindBin(nPileUp);
     weight_PU = hist_PUReweight->GetBinContent(bin_pu);
+
+    weight_PU_Up = hist_PUReweight_Up->GetBinContent(bin_pu);
+    weight_PU_Down = hist_PUReweight_Down->GetBinContent(bin_pu);
+
   }
 
   //========================
@@ -263,10 +269,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   Particle METv = ev.GetMETVector();
   double weight = 1.;
   if(!IsDATA){
-    weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire*weight_PU;
+
+    weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire;
     if(ApplyDYPtReweight){
       weight *= ZPtReweight;
     }
+
   }
 
   //=============
@@ -321,6 +329,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   int SystDir_ElectronTriggerSF(0);
 
   int SystDir_LSFSF(0);
+  int SystDir_PU(0);
 
   if(param.syst_ == AnalyzerParameter::Central){
 
@@ -391,9 +400,27 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else if(param.syst_ == AnalyzerParameter::LSFSFDown){
     SystDir_LSFSF = -1;
   }
+  else if(param.syst_ == AnalyzerParameter::PUUp){
+    SystDir_PU = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::PUDown){
+    SystDir_PU = -1;
+  }
   else{
     cerr << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst : param.syst_ = " << param.syst_ << endl;
     exit(EXIT_FAILURE);
+  }
+
+  //==== PU reweight
+
+  if(!IsDATA){
+
+    double this_pureweight = 1.;
+    if(SystDir_PU==0) this_pureweight = weight_PU;
+    else if(SystDir_PU>0) this_pureweight = weight_PU_Up;
+    else this_pureweight = weight_PU_Down;
+
+    weight *= this_pureweight;
   }
 
   //==============

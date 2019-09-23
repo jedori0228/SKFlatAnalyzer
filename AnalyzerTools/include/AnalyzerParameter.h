@@ -44,6 +44,7 @@ public:
     ElectronIDSFUp, ElectronIDSFDown,
     ElectronTriggerSFUp, ElectronTriggerSFDown,
     LSFSFUp, LSFSFDown,
+    PUUp, PUDown,
     NSyst
   };
   Syst syst_;

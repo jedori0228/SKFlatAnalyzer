@@ -51,7 +51,9 @@ public:
   //==== pileup
   int N_VTX;
   TH1D *hist_PUReweight;
-  double weight_PU;
+  TH1D *hist_PUReweight_Up;
+  TH1D *hist_PUReweight_Down;
+  double weight_PU, weight_PU_Up, weight_PU_Down;
 
   void FillCutFlow(bool IsCentral, TString suffix, TString histname, double weight);
 
