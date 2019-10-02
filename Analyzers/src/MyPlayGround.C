@@ -34,8 +34,66 @@ std::vector<Lepton *> MyPlayGround::TESTFunction(std::vector<Muon>& muons){
 void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
 
   vector<Gen> gens = GetGens();
-  PrintGen(gens);
+
+
+  if(HasFlag("Signal")){
+
+    int genNpid = -1;
+    int SignalLeptonChannel = -1;
+    for(unsigned int i=2; i<gens.size(); i++){
+      int pid = abs( gens.at(i).PID() );
+      if( pid==9900012 || pid==9900014 ){
+        genNpid = pid;
+        FillHist("GEN_N_Eta", gens.at(i).Eta(), 1., 60, -3., 3.);
+        FillHist("GEN_N_Pt", gens.at(i).Pt(), 1., 800, 0., 8000.);
+        break;
+      }
+    }
+    //==== 0 = electron
+    //==== 1 = muon
+    if(genNpid==9900012){
+      SignalLeptonChannel = 0;
+    }
+    else if(genNpid==9900014){
+      SignalLeptonChannel = 1;
+    }
+    else{
+    }
+
+    if(SignalLeptonChannel!=0) return;
+    FillHist("GenEEEvent", 1., 0., 1, 0., 1.);
+
+  }
+  else{
+
+    FillHist("GenEEEvent", 1., 0., 1, 0., 1.);
+
+  }
+
+  vector<TString> IDs = {
+"NOCUT",
+"passVetoID",
+"passLooseID",
+"passMediumID",
+"passTightID",
+"passHEEPID",
+  };
+
+  for(unsigned int it_ID=0; it_ID<IDs.size(); it_ID++){
+
+    TString ID = IDs.at(it_ID);
+    vector<Electron> testels = GetElectrons(ID,53.,2.4);
+    if(testels.size()==2){
+      FillHist(ID+"_TwoElectrons", 1., 0., 1, 0., 1.);
+
+
+
+    }
+
+  }
+
   return;
+
 
 /*
   vector<Gen> gens = GetGens();
