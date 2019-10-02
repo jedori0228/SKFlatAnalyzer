@@ -30,6 +30,7 @@ Electron::Electron(){
   j_IDBit = 0;
   j_Rho = -999.;
   j_isGsfCtfScPixChargeConsistent = false;
+  j_isEcalDriven = false;
   this->SetLeptonFlavour(ELECTRON);
 }
 
@@ -80,7 +81,8 @@ void Electron::SetCutBasedIDVariables(
     double e1x5OverE5x5,
     double trackIso,
     double dr03EcalRecHitSumEt,
-    double dr03HcalDepth1TowerSumEt
+    double dr03HcalDepth1TowerSumEt,
+    int ecalDriven
   ){
   j_Full5x5_sigmaIetaIeta = Full5x5_sigmaIetaIeta;
   j_dEtaSeed = dEtaSeed;
@@ -92,6 +94,10 @@ void Electron::SetCutBasedIDVariables(
   j_trkiso = trackIso;
   j_dr03EcalRecHitSumEt = dr03EcalRecHitSumEt;
   j_dr03HcalDepth1TowerSumEt = dr03HcalDepth1TowerSumEt;
+
+  if(ecalDriven==0) j_isEcalDriven = false;
+  else j_isEcalDriven = true;
+
 }
 
 void Electron::SetIDBit(unsigned int idbit){
