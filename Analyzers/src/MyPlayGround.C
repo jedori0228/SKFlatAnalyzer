@@ -77,6 +77,7 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
 "passMediumID",
 "passTightID",
 "passHEEPID",
+"TEST",
   };
 
   for(unsigned int it_ID=0; it_ID<IDs.size(); it_ID++){
@@ -84,9 +85,31 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
     TString ID = IDs.at(it_ID);
     vector<Electron> testels = GetElectrons(ID,53.,2.4);
     if(testels.size()==2){
-      FillHist(ID+"_TwoElectrons", 1., 0., 1, 0., 1.);
+      FillHist(ID+"_TwoElectrons", 0., 1., 1, 0., 1.);
 
+      FillHist(ID+"_TwoElectrons_Pt", testels.at(0).Pt(), 1., 5000, 0., 5000.);
+      FillHist(ID+"_TwoElectrons_Pt", testels.at(1).Pt(), 1., 5000, 0., 5000.);
 
+      if(ID=="NOCUT"){
+        FillHist("isEcalDriven", testels.at(0).isEcalDriven(), 1., 2, 0., 2.);
+        FillHist("isEcalDriven", testels.at(1).isEcalDriven(), 1., 2, 0., 2.);
+      }
+
+    }
+
+  }
+
+  vector<Electron> ALLElectrons = GetElectrons("NOCUT",53.,2.4);
+  for(unsigned int icut=0; icut<11; icut++){
+
+    vector<Electron> testels;
+    for(unsigned int i=0; i<ALLElectrons.size(); i++){
+      if( ALLElectrons.at(i).Pass_TESTID(icut) ){
+        testels.push_back( ALLElectrons.at(i) );
+      }
+    }
+    if(testels.size()==2){
+      FillHist("Nminus1_"+TString::Itoa(icut,10)+"_TwoElectrons", 0., 1., 1, 0., 1.);
 
     }
 

@@ -378,6 +378,88 @@ bool Electron::Pass_HNWRNoIso() const {
 //==== TEST ID
 
 bool Electron::Pass_TESTID() const{
+
+  if( fabs(scEta()) <= 1.4442 ){
+
+    if(! (this->Pt()>=35.) ) return false;
+    if(! (isEcalDriven()) ) return false;
+    if(! (fabs(dEtaSeed()) < 0.004) ) return false;
+    if(! (fabs(dPhiIn()) < 0.06) ) return false;
+    if(! (HoverE() < 1./scE()+0.05) ) return false;
+    if(! (e2x5OverE5x5()>0.94 || e1x5OverE5x5()>0.83) ) return false;
+    if(! (dr03EcalRecHitSumEt()+dr03HcalDepth1TowerSumEt()<2.+0.03*Pt()+0.28*Rho()) ) return false;
+    if(! (TrkIso()<5.) ) return false;
+    if(! (NMissingHits()<=1) ) return false;
+    if(! (fabs(dXY())<0.02) ) return false;
+
+  }
+  else if( fabs(scEta()) <= 1.566 ){
+    return false;
+  }
+  else if( fabs(scEta()) <= 2.5 ){
+
+    if(! (this->Pt()>=35.) ) return false;
+    if(! (isEcalDriven()) ) return false;
+    if(! (fabs(dEtaSeed()) < 0.006) ) return false;
+    if(! (fabs(dPhiIn()) < 0.06) ) return false;
+    if(! (HoverE() < 5./scE()+0.05) ) return false;
+    if(! (Full5x5_sigmaIetaIeta()<0.03) ) return false;
+
+    double this_EmHadD1IsoRhoCut = Pt()<50 ? 2.5 +0.28*Rho() : 2.5+0.03*(Pt()-50) +0.28*Rho();
+    if(! (dr03EcalRecHitSumEt()+dr03HcalDepth1TowerSumEt()<this_EmHadD1IsoRhoCut) ) return false;
+
+    if(! (TrkIso()<5.) ) return false;
+    if(! (NMissingHits()<=1) ) return false;
+    if(! (fabs(dXY())<0.05) ) return false;
+
+  }
+  else{
+    return false;
+  }
+
+  return true;
+}
+
+bool Electron::Pass_TESTID(int icut) const{
+
+  if( fabs(scEta()) <= 1.4442 ){
+
+    if(icut!=0) if(! (this->Pt()>=35.) ) return false;
+    if(icut!=1) if(! (isEcalDriven()) ) return false;
+    if(icut!=2) if(! (fabs(dEtaSeed()) < 0.004) ) return false;
+    if(icut!=3) if(! (fabs(dPhiIn()) < 0.06) ) return false;
+    if(icut!=4) if(! (HoverE() < 1./scE()+0.05) ) return false;
+    if(icut!=6) if(! (e2x5OverE5x5()>0.94 || e1x5OverE5x5()>0.83) ) return false;
+    if(icut!=7) if(! (dr03EcalRecHitSumEt()+dr03HcalDepth1TowerSumEt()<2.+0.03*Pt()+0.28*Rho()) ) return false;
+    if(icut!=8) if(! (TrkIso()<5.) ) return false;
+    if(icut!=9) if(! (NMissingHits()<=1) ) return false;
+    if(icut!=10) if(! (fabs(dXY())<0.02) ) return false;
+
+  }
+  else if( fabs(scEta()) <= 1.566 ){
+    return false;
+  }
+  else if( fabs(scEta()) <= 2.5 ){
+
+    if(icut!=0) if(! (this->Pt()>=35.) ) return false;
+    if(icut!=1) if(! (isEcalDriven()) ) return false;
+    if(icut!=2) if(! (fabs(dEtaSeed()) < 0.006) ) return false;
+    if(icut!=3) if(! (fabs(dPhiIn()) < 0.06) ) return false;
+    if(icut!=4) if(! (HoverE() < 5./scE()+0.05) ) return false;
+    if(icut!=5) if(! (Full5x5_sigmaIetaIeta()<0.03) ) return false;
+
+    double this_EmHadD1IsoRhoCut = Pt()<50 ? 2.5 +0.28*Rho() : 2.5+0.03*(Pt()-50) +0.28*Rho();
+    if(icut!=7) if(! (dr03EcalRecHitSumEt()+dr03HcalDepth1TowerSumEt()<this_EmHadD1IsoRhoCut) ) return false;
+
+    if(icut!=8) if(! (TrkIso()<5.) ) return false;
+    if(icut!=9) if(! (NMissingHits()<=1) ) return false;
+    if(icut!=10) if(! (fabs(dXY())<0.05) ) return false;
+
+  }
+  else{
+    return false;
+  }
+
   return true;
 }
 

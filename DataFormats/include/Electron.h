@@ -124,6 +124,7 @@ public:
   //==== ID
   bool PassID(TString ID) const;
   bool Pass_TESTID() const;
+  bool Pass_TESTID(int icut) const;
 
   bool Pass_CutBasedLooseNoIso() const;
   bool Pass_CutBasedVetoNoIso() const;
