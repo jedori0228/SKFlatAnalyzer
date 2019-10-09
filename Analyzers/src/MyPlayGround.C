@@ -83,7 +83,7 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
   for(unsigned int it_ID=0; it_ID<IDs.size(); it_ID++){
 
     TString ID = IDs.at(it_ID);
-    vector<Electron> testels = GetElectrons(ID,53.,2.4);
+    vector<Electron> testels = GetElectrons(ID,35.,2.4);
     if(testels.size()==2){
       FillHist(ID+"_TwoElectrons", 0., 1., 1, 0., 1.);
 
@@ -99,7 +99,7 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
 
   }
 
-  vector<Electron> ALLElectrons = GetElectrons("NOCUT",53.,2.4);
+  vector<Electron> ALLElectrons = GetElectrons("NOCUT",35.,2.4);
   for(unsigned int icut=0; icut<11; icut++){
 
     vector<Electron> testels;
