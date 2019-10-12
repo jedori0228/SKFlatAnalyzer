@@ -949,8 +949,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         if(HasAwayMergedFatJet){
 
-          //==== LSF SF
-          weight *= LSFSF(SystDir_LSFSF);
+          if(!IsDATA){
+            //==== LSF SF
+            weight *= LSFSF(SystDir_LSFSF);
+          }
 
           FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasMergedJet_"+param.Name, weight);
 
