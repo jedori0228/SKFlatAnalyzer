@@ -1237,6 +1237,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
+      if(jets.size()>=2){
+        JSFillHist(this_region, "dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
+      }
+
     } // END if(pass Region)
 
   } // END Loop mapRegionBool
