@@ -485,9 +485,23 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //===========
 
   std::vector<FatJet>   fatjets         = SelectFatJets(this_AllFatJets, param.FatJet_ID, 200, 2.4);
-  std::vector<FatJet>   fatjets_LSF    = SelectFatJets(this_AllFatJets, "HNLSF", 200, 2.4);
   std::sort(fatjets.begin(), fatjets.end(), PtComparing);
-  std::sort(fatjets_LSF.begin(), fatjets_LSF.end(), PtComparing);
+
+  std::vector<FatJet>   fatjets_LSF_All    = SelectFatJets(this_AllFatJets, "HNLSF", 200, 2.4);
+  std::sort(fatjets_LSF_All.begin(), fatjets_LSF_All.end(), PtComparing);
+  //==== Only select fatjet away from the leading lepton
+  //==== Sometimes, a fatjet is created in the leading lepton side
+  std::vector<FatJet>   fatjets_LSF;
+  if(n_Tight_leptons>0){
+    for(unsigned int i=0; i<fatjets_LSF_All.size(); i++){
+      if( fabs( fatjets_LSF_All.at(i).DeltaPhi(*Tight_leps.at(0)) ) > 2.0 ){
+        fatjets_LSF.push_back( fatjets_LSF_All.at(i) );
+      }
+    }
+  }
+  else{
+    fatjets_LSF = fatjets_LSF_All;
+  }
 
   std::vector<Jet>      jets         = SelectJets(this_AllJets, param.Jet_ID, 40., 2.4);
   std::sort(jets.begin(), jets.end(), PtComparing);
@@ -577,7 +591,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       //==== lljj
 
-      if( jets.size()>=2 ){
+      if( jets.size()>=2 && fatjets_LSF.size()==0){
 
         FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_TwoAK4Jets_"+param.Name, weight);
 
@@ -674,6 +688,38 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                 if(tmp_IsEE) IsResolved_SR_EE = true;
                 else if(tmp_IsMM) IsResolved_SR_MM = true;
                 else if(tmp_IsEM) IsResolved_SR_EM = true;
+
+/*
+                if( (IsResolved_SR_EE||IsResolved_SR_MM) && fatjets_LSF.size()>0 ){
+                  FillHist("ResolvedEvent_GEN_dRj1j2", (genFinderSig->jet1).DeltaR(genFinderSig->jet2), 1., 60, 0., 6.);
+                  cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+                  cout << "Resolved Event" << endl;
+                  cout << "----------------------------------------" << endl;
+                  cout << "tmp_IsEE = " << tmp_IsEE << endl;
+                  cout << "tmp_IsMM = " << tmp_IsMM << endl;
+                  cout << "----------------------------------------" << endl;
+                  cout << "[RECO]" << endl;
+                  cout << "LeadLep : "; LeadLep->Print();
+                  cout << "SubLeadLep : "; SubLeadLep->Print();
+                  cout << "j1 : "; jets.at(0).Print();
+                  cout << "j2 : "; jets.at(1).Print();
+                  if(fatjets_LSF.size()>0){
+                    cout << "LSF FatJet size = " << fatjets_LSF.size() << endl;
+                    cout << "J1 : "; fatjets_LSF.at(0).Print();
+                  }
+                  cout << "-->" << endl;
+                  cout << "(l2+j1+j2) : "; thisNCand.Print();
+                  cout << "dR(j1,j2) = " << jets.at(0).DeltaR(jets.at(1)) << endl;
+                  cout << "dR(l2,j1) = " << SubLeadLep->DeltaR(jets.at(0)) << endl;
+                  cout << "dR(l2,j2) = " << SubLeadLep->DeltaR(jets.at(1)) << endl;
+                  cout << "----------------------------------------" << endl;
+                  cout << "[GEN]" << endl;
+                  cout << "Primary : "; (genFinderSig->priLep).Particle::Print();
+                  cout << "Secondary : ";  (genFinderSig->secLep).Particle::Print();
+                  cout << "jet1 : "; (genFinderSig->jet1).Particle::Print();
+                  cout << "jet2 : "; (genFinderSig->jet2).Particle::Print();
+                }
+*/
 
               }
 
@@ -1236,10 +1282,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
-
-      if(jets.size()>=2){
-        JSFillHist(this_region, "dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
-      }
 
     } // END if(pass Region)
 
