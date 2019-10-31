@@ -14,6 +14,14 @@ void GenFinderForHNWRSignal::Clear(){
   GenAllFound = true;
   IsOffShellPrimaryWR = false;
 
+
+  WR.SetIsEmpty(true);
+  N.SetIsEmpty(true);
+  priLep.SetIsEmpty(true);
+  secLep.SetIsEmpty(true);
+  jet1.SetIsEmpty(true);
+  jet2.SetIsEmpty(true);
+
 }
 
 GenFinderForHNWRSignal::~GenFinderForHNWRSignal(){
