@@ -108,7 +108,7 @@ void FatJet::SetTightLepVetoJetID(double b){
 bool FatJet::PassID(TString ID) const {
 
   if(ID=="HN") return Pass_HN();
-  if(ID=="HNLSF") return Pass_HN() && (LSF() > 0.7);
+  if(ID=="HNLSF") return Pass_HN() && (LSF() > 0.75);
   if(ID=="tight") return Pass_tightJetID();
   if(ID=="tightLepVeto") return Pass_tightLepVetoJetID();
 

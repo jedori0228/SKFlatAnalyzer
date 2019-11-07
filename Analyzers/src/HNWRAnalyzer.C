@@ -675,6 +675,43 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                 else if(tmp_IsMM) IsResolved_SR_MM = true;
                 else if(tmp_IsEM) IsResolved_SR_EM = true;
 
+/*
+                if( (IsResolved_SR_EE||IsResolved_SR_MM) ){
+                  cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
+                  cout << "Resolved Event" << endl;
+                  cout << "----------------------------------------" << endl;
+                  cout << "tmp_IsEE = " << tmp_IsEE << endl;
+                  cout << "tmp_IsMM = " << tmp_IsMM << endl;
+                  cout << "----------------------------------------" << endl;
+                  cout << "[RECO]" << endl;
+                  cout << "LeadLep : "; LeadLep->Print();
+                  cout << "SubLeadLep : "; SubLeadLep->Print();
+                  cout << "j1 : "; jets.at(0).Print();
+                  cout << "j2 : "; jets.at(1).Print();
+                  if(fatjets_LSF.size()>0){
+                    cout << "LSF FatJet size = " << fatjets_LSF.size() << endl;
+                    cout << "J1 : "; fatjets_LSF.at(0).Print();
+                  }
+                  cout << "-->" << endl;
+                  cout << "(l1+l2+j1+j2) : "; (WRCand).Print();
+                  cout << "(l2+j1+j2) : "; (NCand).Print();
+                  cout << "dR(j1,j2) = " << jets.at(0).DeltaR(jets.at(1)) << endl;
+                  cout << "dR(l2,j1) = " << SubLeadLep->DeltaR(jets.at(0)) << endl;
+                  cout << "dR(l2,j2) = " << SubLeadLep->DeltaR(jets.at(1)) << endl;
+                  cout << "----------------------------------------" << endl;
+                  cout << "[GEN]" << endl;
+                  cout << "WR : "; (genFinderSig->WR).Particle::Print();
+                  cout << "Primary : "; (genFinderSig->priLep).Particle::Print();
+                  cout << "N : "; (genFinderSig->N).Particle::Print();
+                  cout << "Secondary : ";  (genFinderSig->secLep).Particle::Print();
+                  cout << "jet1 : "; (genFinderSig->jet1).Particle::Print();
+                  cout << "jet2 : "; (genFinderSig->jet2).Particle::Print();
+                  cout << "-->" << endl;
+                  cout << "WR matching : dR = " << WRCand.DeltaR( genFinderSig->WR ) << "; pt_gen = " << (genFinderSig->WR).Pt() << ", pt_reco = " << WRCand.Pt() << endl;
+                  cout << "Primary lepton matching : dR = " << LeadLep->DeltaR( genFinderSig->priLep ) << "; pt_gen = " << (genFinderSig->priLep).Pt() << ", pt_reco = " <<LeadLep->Pt() << endl;
+                  cout << "Secondary lepton matching : dR = " << SubLeadLep->DeltaR( genFinderSig->secLep ) << "; pt_gen = " << (genFinderSig->secLep).Pt() << ", pt_reco = " <<SubLeadLep->Pt() << endl;
+                }
+*/
               }
 
             }
