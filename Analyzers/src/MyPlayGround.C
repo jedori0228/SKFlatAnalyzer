@@ -93,9 +93,15 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
       if(ID=="NOCUT"){
         FillHist("isEcalDriven", testels.at(0).isEcalDriven(), 1., 2, 0., 2.);
         FillHist("isEcalDriven", testels.at(1).isEcalDriven(), 1., 2, 0., 2.);
+
+        FillHist("NMissingHits", testels.at(0).NMissingHits(), 1., 50, 0., 50.);
+        FillHist("NMissingHits", testels.at(1).NMissingHits(), 1., 50, 0., 50.);
+
       }
 
     }
+
+     
 
   }
 
@@ -110,9 +116,15 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
     }
     if(testels.size()==2){
       FillHist("Nminus1_"+TString::Itoa(icut,10)+"_TwoElectrons", 0., 1., 1, 0., 1.);
-
     }
 
+  }
+
+  for(int i=0; i<muon_pixelHits->size(); i++){
+    if(muon_pt->at(i)>20 && fabs( muon_eta->at(i) ) < 1.5){
+      FillHist("muon_pixelHits", muon_pixelHits->at(i), 1., 20, 0., 20.);
+      FillHist("muon_trackerLayers", muon_trackerLayers->at(i), 1., 20, 0., 20.);
+    }
   }
 
   return;
