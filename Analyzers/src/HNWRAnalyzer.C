@@ -319,7 +319,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(RunNewPDF){
       for(int i=0; i<pdfReweight->NErrorSet; i++){
-        JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., GetPDFReweight()*PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+        JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., GetPDFReweight(i)*ev.MCweight()*normweight, 1, 0., 1.);
       }
     }
     else{
