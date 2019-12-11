@@ -274,10 +274,11 @@ for InputSample in InputSamples:
   SubmitOutput.close()
   FileRangesForEachSample.append(FileRanges)
 
-  ## Get xsec and SumW
+  ## Get xsec/nmc/SumW
 
   this_dasname = ""
   this_xsec = 1.
+  this_nmc = 1.
   this_sumw = 1.
   if not IsDATA:
     lines_SamplePath = open(SAMPLE_DATA_DIR+'/CommonSampleInfo/'+InputSample+'.txt').readlines()
@@ -288,6 +289,7 @@ for InputSample in InputSamples:
       if InputSample==words[0]:
         this_dasname = words[1]
         this_xsec = words[2]
+        this_nmc = words[3]
         this_sumw = words[4]
         break
 
@@ -456,6 +458,7 @@ void {2}(){{
       out.write('  m.MCSample = "'+InputSample+'";\n');
       out.write('  m.IsDATA = false;\n')
       out.write('  m.xsec = '+str(this_xsec)+';\n')
+      out.write('  m.nmc = '+str(this_nmc)+';\n')
       out.write('  m.sumW = '+str(this_sumw)+';\n')
 
       if args.FastSim:
