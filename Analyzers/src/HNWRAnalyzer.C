@@ -302,6 +302,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       weight *= ZPtReweight;
     }
 
+    if(RunNewPDF){
+      weight *= GetPDFReweight();
+    }
+
   }
 
   //=============
@@ -319,11 +323,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(RunNewPDF){
 
-      double extraNorm = 1.;
-      if( Userflags.at( Userflags.size()-1 ).Contains("NNPDF31_nnlo_as_0118_mc") ) extraNorm = sumW/nmc;
-
       for(int i=0; i<pdfReweight->NErrorSet; i++){
-        JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., GetPDFReweight(i)*ev.MCweight()*normweight*extraNorm, 1, 0., 1.);
+        JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., GetPDFReweight(i)*ev.MCweight()*normweight, 1, 0., 1.);
       }
 
     }
