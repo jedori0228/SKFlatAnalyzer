@@ -39,6 +39,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
     Triggers_Electron = {
       "HLT_Ele27_WPTight_Gsf_v",
       "HLT_Photon175_v",
+      "HLT_Ele115_CaloIdVT_GsfTrkIdT_v",
     };
     Triggers_Muon = {
       "HLT_Mu50_v",
@@ -55,6 +56,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
     Triggers_Electron = {
       "HLT_Ele35_WPTight_Gsf_v",
       "HLT_Photon200_v",
+      "HLT_Ele115_CaloIdVT_GsfTrkIdT_v",
     };
     Triggers_Muon = {
       "HLT_Mu50_v",
@@ -70,6 +72,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
     Triggers_Electron = {
       "HLT_Ele32_WPTight_Gsf_v",
       "HLT_Photon200_v",
+      "HLT_Ele115_CaloIdVT_GsfTrkIdT_v",
     };
     Triggers_Muon = {
       "HLT_Mu50_v",
@@ -95,7 +98,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
   ZPtReweight = 1.;
 
   //=== list of taggers, WP, setup systematics, use period SFs
-  SetupBTagger(vtaggers,v_wps, true, true);
+  SetupBTagger(vtaggers,v_wps, true, false);
 
   //==== Signal finder
   genFinderSig = new GenFinderForHNWRSignal();
