@@ -24,6 +24,7 @@ parser.add_argument('--skim', dest='Skim', default="")
 parser.add_argument('--no_exec', action='store_true')
 parser.add_argument('--FastSim', action='store_true')
 parser.add_argument('--userflags', dest='Userflags', default="")
+parser.add_argument('--nmax', dest='NMax', default=0, type=int)
 parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
 args = parser.parse_args()
 
@@ -238,7 +239,7 @@ for InputSample in InputSamples:
 
   NTotalFiles = len(lines_files)
 
-  if NJobs>NTotalFiles:
+  if NJobs>NTotalFiles or NJobs==0:
     NJobs = NTotalFiles
 
   SubmitOutput = open(base_rundir+'/SubmitOutput.log','w')
@@ -391,9 +392,9 @@ queue {0}
 '''.format(str(NJobs), commandsfilename)
       submit_command.close()
     elif IsTAMSA:
-      requirements=''
-      if IsSkimTree:
-        requirements='Requirements = Machine=="{}"'.format(subprocess.check_output('condor_status -avail -constraint "TotalCpus<50" -af Machine -sort Cpus|tail -n1',shell=True).strip())
+      concurrency_limits=''
+      if args.NMax:
+        concurrency_limits='concurrency_limits = n'+str(args.NMax)+'.'+os.getenv("USER")
       print>>submit_command,'''executable = {1}.sh
 universe   = vanilla
 arguments  = $(Process)
@@ -403,11 +404,10 @@ should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 output = job_$(Process).log
 error = job_$(Process).err
-accounting_group=group_cms
 transfer_output_remaps = "hists.root = output/hists_$(Process).root"
 {2}
 queue {0}
-'''.format(str(NJobs), commandsfilename,requirements)
+'''.format(str(NJobs), commandsfilename,concurrency_limits)
       submit_command.close()
 
   CheckTotalNFile=0
@@ -437,7 +437,7 @@ queue {0}
     IncludeLine += 'R__LOAD_LIBRARY({0}libDataFormats.so)\n'.format(libdir)
     IncludeLine += 'R__LOAD_LIBRARY({0}libAnalyzerTools.so)\n'.format(libdir)
     IncludeLine += 'R__LOAD_LIBRARY({0}libAnalyzers.so)\n'.format(libdir)
-    IncludeLine += 'R__LOAD_LIBRARY(/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/lhapdf/6.2.1-fmblme/lib/libLHAPDF.so)\n'
+    IncludeLine += 'R__LOAD_LIBRARY(/cvmfs/cms.cern.ch/slc7_amd64_gcc700/external/lhapdf/6.2.1-gnimlf3/lib/libLHAPDF.so)\n'
 
     out = open(runCfileFullPath, 'w')
     print>>out,'''{3}
