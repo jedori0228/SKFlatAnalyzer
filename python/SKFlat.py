@@ -5,6 +5,7 @@ import subprocess
 import argparse
 import datetime
 from CheckJobStatus import *
+from GetXSECTable import *
 from TimeTools import *
 import random
 import subprocess
@@ -189,6 +190,7 @@ os.system('cp '+SKFlat_LIB_PATH+'/* '+MasterJobDir+'/lib')
 SampleFinishedForEachSample = []
 PostJobFinishedForEachSample = []
 BaseDirForEachSample = []
+XsecForEachSample = []
 for InputSample in InputSamples:
 
   NJobs = args.NJobs
@@ -279,8 +281,8 @@ for InputSample in InputSamples:
   ## Get xsec and SumW
 
   this_dasname = ""
-  this_xsec = 1.
-  this_sumw = 1.
+  this_xsec = -1
+  this_sumw = -1
   if not IsDATA:
     lines_SamplePath = open(SAMPLE_DATA_DIR+'/CommonSampleInfo/'+InputSample+'.txt').readlines()
     for line in lines_SamplePath:
@@ -292,6 +294,8 @@ for InputSample in InputSamples:
         this_xsec = words[2]
         this_sumw = words[4]
         break
+
+  XsecForEachSample.append(this_xsec)
 
   ## Write run script
 
@@ -776,6 +780,7 @@ try:
         ThisTime = datetime.datetime.now()
         string_ThisTime =  ThisTime.strftime('%Y-%m-%d %H:%M:%S')
 
+        statuslog.write('XSEC = '+XsecForEachSample[it_sample]+'\n')
         statuslog.write('EventDone = '+str(EventDone)+'\n')
         statuslog.write('EventTotal = '+str(EventTotal)+'\n')
         statuslog.write('EventLeft = '+str(EventTotal-EventDone)+'\n')
@@ -893,8 +898,9 @@ Year = {7}
 Skim = {5}
 # of Jobs = {4}
 InputSample = {1}
+{8}
 Output sent to : {2}
-'''.format(args.Analyzer,InputSamples,FinalOutputPath,HOSTNAME,NJobs,args.Skim,str_RandomNumber,args.Year)
+'''.format(args.Analyzer,InputSamples,FinalOutputPath,HOSTNAME,NJobs,args.Skim,str_RandomNumber,args.Year,GetXSECTable(InputSamples,XsecForEachSample))
 JobFinishEmail += '''##################
 Job started at {0}
 Job finished at {1}
