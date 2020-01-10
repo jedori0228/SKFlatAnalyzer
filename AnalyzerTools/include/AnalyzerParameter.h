@@ -45,6 +45,7 @@ public:
     ElectronTriggerSFUp, ElectronTriggerSFDown,
     LSFSFUp, LSFSFDown,
     PUUp, PUDown,
+    ZPtRwUp, ZPtRwDown,
     NSyst
   };
   Syst syst_;

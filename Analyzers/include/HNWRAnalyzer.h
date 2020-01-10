@@ -37,7 +37,7 @@ public:
 
   //==== DYPtReweight
   bool ApplyDYPtReweight;
-  double ZPtReweight;
+  double ZPtReweight, ZPtReweight_Up, ZPtReweight_Down;
 
   //==== My tool
   std::vector<Jet> JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron *> els, std::vector<Muon *> mus, double dR=0.4);

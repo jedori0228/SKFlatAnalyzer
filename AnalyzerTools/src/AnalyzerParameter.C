@@ -147,6 +147,12 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::PUDown){
     return "PUDown";
   }
+  else if(syst_==Syst::ZPtRwUp){
+    return "ZPtRwUp";
+  }
+  else if(syst_==Syst::ZPtRwDown){
+    return "ZPtRwDown";
+  }
   else{
     cout << "[AnalyzerParameter::GetSystType] Wrong Syst" << endl;
     exit(EXIT_FAILURE);

@@ -96,6 +96,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   //==== Z-pt rewieght
   ZPtReweight = 1.;
+  ZPtReweight_Up = 1.;
+  ZPtReweight_Down = 1.;
 
   //=== list of taggers, WP, setup systematics, use period SFs
   SetupBTagger(vtaggers,v_wps, true, false);
@@ -137,6 +139,8 @@ void HNWRAnalyzer::executeEvent(){
 
   if(ApplyDYPtReweight){
     ZPtReweight = mcCorr->GetOfficialDYReweight(gens);
+    ZPtReweight_Up = mcCorr->GetOfficialDYReweight(gens,+1);
+    ZPtReweight_Down = mcCorr->GetOfficialDYReweight(gens,-1);
   }
 
   if(Signal){
@@ -257,6 +261,11 @@ void HNWRAnalyzer::executeEvent(){
 
     for(int it_syst=1; it_syst<AnalyzerParameter::NSyst; it_syst++){
       param.syst_ = AnalyzerParameter::Syst(it_syst);
+
+      //==== ZPtRwUp and ZPtRwDown are only ran when ApplyDYPtReweight
+      //==== If not, skip
+      if( (param.syst_==AnalyzerParameter::ZPtRwUp || param.syst_==AnalyzerParameter::ZPtRwDown) && !ApplyDYPtReweight ) continue;
+
       param.Name = "Syst_"+param.GetSystType()+"_HNWR";
       executeEventFromParameter(param);
     }
@@ -275,7 +284,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire;
     if(ApplyDYPtReweight){
-      weight *= ZPtReweight;
+
+      double this_ZPtReweight = 1.;
+      if(param.syst_ == AnalyzerParameter::ZPtRwUp) this_ZPtReweight = ZPtReweight_Up;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwDown) this_ZPtReweight = ZPtReweight_Down;
+      else this_ZPtReweight = ZPtReweight;
+
+      weight *= this_ZPtReweight;
     }
 
   }
@@ -408,6 +423,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   }
   else if(param.syst_ == AnalyzerParameter::PUDown){
     SystDir_PU = -1;
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwUp){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwDown){
+
   }
   else{
     cerr << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst : param.syst_ = " << param.syst_ << endl;
