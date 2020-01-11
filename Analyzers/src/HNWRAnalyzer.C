@@ -202,6 +202,7 @@ void HNWRAnalyzer::executeEvent(){
   param.MCCorrrectionIgnoreNoHist = false;
 
   param.Electron_Tight_ID = "HNWRTight";
+  if(DataYear>=2017 && IsFastSim) param.Electron_Tight_ID = "HNWRTightFastSim";
   param.Electron_Loose_ID = "HNWRLoose";
   param.Electron_ID_SF_Key = "HEEP";
   param.Electron_Trigger_SF_Key = "HEEP";

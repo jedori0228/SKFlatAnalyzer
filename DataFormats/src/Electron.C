@@ -149,6 +149,7 @@ bool Electron::PassID(TString ID) const{
 
   if(ID=="HNWRTight") return Pass_HNWRTight();
   if(ID=="HNWRLoose") return Pass_HNWRLoose();
+  if(ID=="HNWRTightFastSim") return passHEEPIDFast();
   if(ID=="HNWRVeto") return Pass_HNWRVeto();
   if(ID=="HNWRNoIso") return Pass_HNWRNoIso();
   if(ID=="HNWRLT") return ( Pass_HNWRTight() || Pass_HNWRLoose() );
@@ -178,6 +179,20 @@ bool Electron::PassID(TString ID) const{
 
   return false;
 }
+
+bool Electron::passHEEPIDFast() const{
+
+  int HEEPIDCutBit = IDCutBit().at(11);
+
+  //==== https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2#Applying_Individual_Cuts_of_a_Se
+  //==== We want to remove the last cut
+
+  int HEEPBitWithoutEcalDriven = 2048-1;
+
+  return (HEEPIDCutBit & HEEPBitWithoutEcalDriven) == (HEEPBitWithoutEcalDriven) ;
+
+}
+
 
 bool Electron::Pass_SUSYMVAWP(TString wp) const{
 
