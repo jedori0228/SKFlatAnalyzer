@@ -21,6 +21,7 @@ public:
   bool NoTrigger;
   bool RunXsecSyst;
   bool Signal;
+  bool RunNewPDF;
 
   vector<Gen> gens;
 

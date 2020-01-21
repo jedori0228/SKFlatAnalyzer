@@ -16,6 +16,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
   RunXsecSyst = HasFlag("RunXsecSyst");
   Signal = HasFlag("Signal");
+  RunNewPDF = HasFlag("RunNewPDF");
 
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunCF = " << RunCF << endl;
@@ -24,6 +25,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
   cout << "[HNWRAnalyzer::initializeAnalyzer()] ApplyDYPtReweight = " << ApplyDYPtReweight << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunXsecSyst = " << RunXsecSyst << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer()] Signal = " << Signal << endl;
+  cout << "[HNWRAnalyzer::initializeAnalyzer()] RunNewPDF = " << RunNewPDF << endl;
 
   //===============================
   //==== Year-dependent variables
@@ -124,6 +126,31 @@ void HNWRAnalyzer::initializeAnalyzer(){
     hist_PUReweight = (TH1D *)file_PUReweight->Get(PUhname);
     hist_PUReweight_Up = (TH1D *)file_PUReweight->Get(PUhname+"_Up");
     hist_PUReweight_Down = (TH1D *)file_PUReweight->Get(PUhname+"_Down");
+
+  }
+
+  if(RunNewPDF && RunXsecSyst){
+
+    LHAPDFHandler LHAPDFHandler_Prod;
+    LHAPDFHandler_Prod.CentralPDFName = "NNPDF31_nnlo_hessian_pdfas";
+    LHAPDFHandler_Prod.init();
+
+    LHAPDFHandler LHAPDFHandler_New;
+
+    TString newPDFNamd = Userflags.at( Userflags.size()-1 );
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] New PDF Name = " << newPDFNamd << endl;
+
+    LHAPDFHandler_New.CentralPDFName = newPDFNamd;
+    LHAPDFHandler_New.ErrorSetMember_Start = 0;
+    LHAPDFHandler_New.ErrorSetMember_End = 100;
+    LHAPDFHandler_New.AlphaSMember_Down = 0;
+    LHAPDFHandler_New.AlphaSMember_Up = 1;
+    LHAPDFHandler_New.init();
+
+    pdfReweight->SetProdPDF( LHAPDFHandler_Prod.PDFCentral );
+    pdfReweight->SetNewPDF( LHAPDFHandler_New.PDFCentral );
+    pdfReweight->SetNewPDFErrorSet( LHAPDFHandler_New.PDFErrorSet );
+    pdfReweight->SetNewPDFAlphaS( LHAPDFHandler_New.PDFAlphaSDown, LHAPDFHandler_New.PDFAlphaSUp );
 
   }
 
@@ -294,6 +321,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       weight *= this_ZPtReweight;
     }
 
+    if(RunNewPDF){
+      weight *= GetPDFReweight();
+    }
+
   }
 
   //=============
@@ -307,12 +338,25 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
       JSFillHist("XsecSyst_Den", "PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
-    for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
-      JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+
+
+    if(RunNewPDF){
+
+      for(int i=0; i<pdfReweight->NErrorSet; i++){
+        JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., GetPDFReweight(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      }
+
     }
+    else{
+      for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
+        JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      }
+    }
+
     for(unsigned int i=0; i<PDFWeights_AlphaS->size(); i++){
       JSFillHist("XsecSyst_Den", "PDFWeights_AlphaS_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_AlphaS->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
+
   }
 
   //========================
