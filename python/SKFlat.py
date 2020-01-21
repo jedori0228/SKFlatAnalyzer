@@ -154,6 +154,10 @@ else:
     StringForHash += args.InputSample
 FileRangesForEachSample = []
 
+## add flags to hash
+for flag in Userflags:
+  StringForHash += flag
+
 ## Get Random Number for webdir
 
 random.seed(hash(StringForHash+timestamp+args.Year))
