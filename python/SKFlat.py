@@ -839,7 +839,7 @@ try:
 
               HaddRightNow = False
               if IsTAMSA:
-                NHaddRunning = int(subprocess.check_output('ps -ef | grep jskim | grep -v condor_shadow | grep "sh -c hadd" | grep -v "grep" | wc -l',shell=True).strip('\n'))
+                NHaddRunning = int(subprocess.check_output('ps -ef | grep '+USER+' | grep -v condor_shadow | grep "sh -c hadd" | grep -v "grep" | wc -l',shell=True).strip('\n'))
                 if NHaddRunning<=1:
                   HaddRightNow = True
               else:
