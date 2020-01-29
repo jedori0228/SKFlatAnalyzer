@@ -27,6 +27,7 @@ parser.add_argument('--FastSim', action='store_true')
 parser.add_argument('--userflags', dest='Userflags', default="")
 parser.add_argument('--nmax', dest='NMax', default=0, type=int)
 parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
+parser.add_argument('--batchname',dest='BatchName', default="")
 args = parser.parse_args()
 
 ## make userflags as a list
@@ -446,6 +447,7 @@ queue {0}
     IncludeLine += 'R__LOAD_LIBRARY(libHist.so)\n'
     IncludeLine += 'R__LOAD_LIBRARY({0}libDataFormats.so)\n'.format(libdir)
     IncludeLine += 'R__LOAD_LIBRARY({0}libAnalyzerTools.so)\n'.format(libdir)
+    IncludeLine += 'R__LOAD_LIBRARY({0}libGEScaleSyst.so)\n'.format(libdir)
     IncludeLine += 'R__LOAD_LIBRARY({0}libAnalyzers.so)\n'.format(libdir)
     IncludeLine += 'R__LOAD_LIBRARY(/cvmfs/cms.cern.ch/slc7_amd64_gcc700/external/lhapdf/6.2.1-gnimlf3/lib/libLHAPDF.so)\n'
 
@@ -552,7 +554,10 @@ root -l -b -q run.C 1>stdout.log 2>stderr.log
     cwd = os.getcwd()
     os.chdir(base_rundir)
     if not args.no_exec:
-      os.system('condor_submit submit.jds')
+      condorOptions = ''
+      if args.BatchName!="":
+        condorOptions = ' -batch-name '+args.BatchName
+      os.system('condor_submit submit.jds '+condorOptions)
     os.chdir(cwd)
 
   else:
@@ -859,7 +864,7 @@ try:
 
               HaddRightNow = False
               if IsTAMSA:
-                NHaddRunning = int(subprocess.check_output('ps -ef | grep jskim | grep -v condor_shadow | grep "sh -c hadd" | grep -v "grep" | wc -l',shell=True).strip('\n'))
+                NHaddRunning = int(subprocess.check_output('ps -ef | grep '+USER+' | grep -v condor_shadow | grep "sh -c hadd" | grep -v "grep" | wc -l',shell=True).strip('\n'))
                 if NHaddRunning<=1:
                   HaddRightNow = True
               else:

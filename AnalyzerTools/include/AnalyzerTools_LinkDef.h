@@ -16,6 +16,5 @@
 #pragma link C++ class BTagSFUtil+;
 #pragma link C++ class GenFinderForDY+;
 #pragma link C++ class GenFinderForHNWRSignal+;
-#pragma link C++ class GEScaleSyst+;
 
 #endif
