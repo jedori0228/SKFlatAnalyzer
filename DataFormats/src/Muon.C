@@ -98,6 +98,7 @@ void Muon::SetMVA(double MVA){
 
 bool Muon::PassID(TString ID) const {
 
+  if(ID=="NOCUT") return true;
   if(ID=="HNWRTight") return Pass_HNWRTight();
   if(ID=="HNWRLoose") return Pass_HNWRLoose();
   if(ID=="HNWRVeto") return Pass_HNWRVeto();

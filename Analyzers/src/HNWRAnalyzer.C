@@ -131,6 +131,21 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
 void HNWRAnalyzer::executeEvent(){
 
+  //==== NEW SKIM TEST
+  //==== Skim 2) at least one lepton (e or mu) with pt > "LeptonPtCut"
+
+  vector<Muon> SKIMmuons = GetMuons("NOCUT", 40, 2.4);
+  vector<Electron> SKIMelectrons = GetElectrons("NOCUT", 40, 2.4);
+  if( SKIMmuons.size()+SKIMelectrons.size() == 0 ) return;
+
+  //==== Skim 3) AK4 jet 
+
+  vector<Jet> SKIMjets = GetJets("tightLepVeto", 30, 2.4);
+  vector<FatJet> SKIMfatjets = GetFatJets("tight", 170, 2.4);
+  if( SKIMjets.size()+SKIMfatjets.size() == 0 ) return;
+  //=====================================================
+
+
   //==========================
   //==== Gen for genmatching
   //==========================
