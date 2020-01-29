@@ -136,13 +136,15 @@ void HNWRAnalyzer::executeEvent(){
 
   vector<Muon> SKIMmuons = GetMuons("NOCUT", 40, 2.4);
   vector<Electron> SKIMelectrons = GetElectrons("NOCUT", 40, 2.4);
-  if( SKIMmuons.size()+SKIMelectrons.size() == 0 ) return;
+  //if( SKIMmuons.size()+SKIMelectrons.size() == 0 ) return;
+  HasSKIMLepton = SKIMmuons.size()+SKIMelectrons.size() > 0;
 
   //==== Skim 3) AK4 jet 
 
   vector<Jet> SKIMjets = GetJets("tightLepVeto", 30, 2.4);
   vector<FatJet> SKIMfatjets = GetFatJets("tight", 170, 2.4);
-  if( SKIMjets.size()+SKIMfatjets.size() == 0 ) return;
+  //if( SKIMjets.size()+SKIMfatjets.size() == 0 ) return;
+  HasSKIMJets = SKIMjets.size()+SKIMfatjets.size() > 0;
   //=====================================================
 
 
@@ -1175,6 +1177,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                     //==== - HNWR_SingleMuon_EMu_Boosted_LowWRCR : isolated m + e-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_MEJet]
 
                     map_bool_To_Region[Suffix+"_EMu_Boosted_LowWRCR"] = true;
+
+                    if(!HasSKIMLepton) cout << "HasSKIMLepton failed : " << run << "\t" << lumi << "\t" << event << endl;
+                    if(!HasSKIMJets) cout << "HasSKIMJets failed : " << run << "\t" << lumi << "\t" << event << endl;
+
                     if(tmp_IsLeadE) IsBoosted_LowWRCR_EMJet = true;
                     else if(tmp_IsLeadM) IsBoosted_LowWRCR_MEJet = true;
 

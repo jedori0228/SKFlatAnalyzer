@@ -60,6 +60,7 @@ public:
   //==== LSF SF
   double LSFSF(int dir);
 
+  bool HasSKIMLepton, HasSKIMJets;
 
 };
 
