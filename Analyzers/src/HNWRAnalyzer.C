@@ -86,21 +86,15 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   }
 
-  //==== B-tagging
-
-  std::vector<Jet::Tagger> vtaggers;
-  vtaggers.push_back(Jet::DeepCSV);
-
-  std::vector<Jet::WP> v_wps;
-  v_wps.push_back(Jet::Medium);
-
   //==== Z-pt rewieght
   ZPtReweight = 1.;
   ZPtReweight_Up = 1.;
   ZPtReweight_Down = 1.;
 
-  //=== list of taggers, WP, setup systematics, use period SFs
-  SetupBTagger(vtaggers,v_wps, true, false);
+  //==== b tagging
+  std::vector<JetTagging::Parameters> jtps;
+  jtps.push_back( JetTagging::Parameters(JetTagging::DeepCSV, JetTagging::Medium, JetTagging::incl, JetTagging::comb) );
+  mcCorr->SetJetTaggingParameters(jtps);
 
   //==== Signal finder
   genFinderSig = new GenFinderForHNWRSignal();
@@ -519,7 +513,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   int NBJets=0;
   for(unsigned int i=0; i<jets.size(); i++){
-    if(IsBTagged(jets.at(i), Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
+    if( mcCorr->IsBTagged_2a(JetTagging::Parameters(JetTagging::DeepCSV,
+                                                    JetTagging::Medium,
+                                                    JetTagging::incl, JetTagging::comb), jets.at(i)) ) NBJets++;
   }
 
   //==============
