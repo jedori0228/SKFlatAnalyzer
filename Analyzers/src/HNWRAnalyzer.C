@@ -335,6 +335,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   vector<Jet> this_AllJets = AllJets;
   vector<FatJet> this_AllFatJets = AllFatJets;
 
+  int SystDir_MuonReco(0);
+
   int SystDir_MuonIDSF(0);
   int SystDir_ElectronIDSF(0);
 
@@ -362,6 +364,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else if(param.syst_ == AnalyzerParameter::JetEnDown){
     this_AllJets = ScaleJets( this_AllJets, -1 );
     this_AllFatJets = ScaleFatJets( this_AllFatJets, -1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonRecoUp){
+    SystDir_MuonReco = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonRecoDown){
+    SystDir_MuonReco = -1;
   }
   else if(param.syst_ == AnalyzerParameter::MuonEnUp){
     this_AllMuons = ScaleMuons( this_AllMuons, +1 );
@@ -650,7 +658,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               double MiniAODP = sqrt( Tight_muons.at(i)->MiniAODPt() * Tight_muons.at(i)->MiniAODPt() + Tight_muons.at(i)->Pz() * Tight_muons.at(i)->Pz() );
 
-              double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, Tight_muons.at(i)->Eta(), MiniAODP, SystDir_MuonIDSF);
+              double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, Tight_muons.at(i)->Eta(), MiniAODP, SystDir_MuonReco);
               double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
               double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
 
