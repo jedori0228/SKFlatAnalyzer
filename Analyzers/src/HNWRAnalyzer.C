@@ -88,21 +88,15 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   }
 
-  //==== B-tagging
-
-  std::vector<Jet::Tagger> vtaggers;
-  vtaggers.push_back(Jet::DeepCSV);
-
-  std::vector<Jet::WP> v_wps;
-  v_wps.push_back(Jet::Medium);
-
   //==== Z-pt rewieght
   ZPtReweight = 1.;
   ZPtReweight_Up = 1.;
   ZPtReweight_Down = 1.;
 
-  //=== list of taggers, WP, setup systematics, use period SFs
-  SetupBTagger(vtaggers,v_wps, true, false);
+  //==== b tagging
+  std::vector<JetTagging::Parameters> jtps;
+  jtps.push_back( JetTagging::Parameters(JetTagging::DeepCSV, JetTagging::Medium, JetTagging::incl, JetTagging::comb) );
+  mcCorr->SetJetTaggingParameters(jtps);
 
   //==== Signal finder
   genFinderSig = new GenFinderForHNWRSignal();
@@ -385,6 +379,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   vector<Jet> this_AllJets = AllJets;
   vector<FatJet> this_AllFatJets = AllFatJets;
 
+  int SystDir_MuonReco(0);
+
   int SystDir_MuonIDSF(0);
   int SystDir_ElectronIDSF(0);
 
@@ -412,6 +408,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else if(param.syst_ == AnalyzerParameter::JetEnDown){
     this_AllJets = ScaleJets( this_AllJets, -1 );
     this_AllFatJets = ScaleFatJets( this_AllFatJets, -1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonRecoUp){
+    SystDir_MuonReco = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonRecoDown){
+    SystDir_MuonReco = -1;
   }
   else if(param.syst_ == AnalyzerParameter::MuonEnUp){
     this_AllMuons = ScaleMuons( this_AllMuons, +1 );
@@ -563,7 +565,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   int NBJets=0;
   for(unsigned int i=0; i<jets.size(); i++){
-    if(IsBTagged(jets.at(i), Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
+    if( mcCorr->IsBTagged_2a(JetTagging::Parameters(JetTagging::DeepCSV,
+                                                    JetTagging::Medium,
+                                                    JetTagging::incl, JetTagging::comb), jets.at(i)) ) NBJets++;
   }
 
   //==============
@@ -698,7 +702,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               double MiniAODP = sqrt( Tight_muons.at(i)->MiniAODPt() * Tight_muons.at(i)->MiniAODPt() + Tight_muons.at(i)->Pz() * Tight_muons.at(i)->Pz() );
 
-              double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, Tight_muons.at(i)->Eta(), MiniAODP, SystDir_MuonIDSF);
+              double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, Tight_muons.at(i)->Eta(), MiniAODP, SystDir_MuonReco);
               double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
               double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
 
