@@ -93,11 +93,11 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::JetEnDown){
     return "JetEnDown";
   }
-  else if(syst_==Syst::MuonRecoUp){
-    return "MuonRecoUp";
+  else if(syst_==Syst::MuonRecoSFUp){
+    return "MuonRecoSFUp";
   }
-  else if(syst_==Syst::MuonRecoDown){
-    return "MuonRecoDown";
+  else if(syst_==Syst::MuonRecoSFDown){
+    return "MuonRecoSFDown";
   }
   else if(syst_==Syst::MuonEnUp){
     return "MuonEnUp";
@@ -111,11 +111,23 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::MuonIDSFDown){
     return "MuonIDSFDown";
   }
+  else if(syst_==Syst::MuonISOSFUp){
+    return "MuonISOSFUp";
+  }
+  else if(syst_==Syst::MuonISOSFDown){
+    return "MuonISOSFDown";
+  }
   else if(syst_==Syst::MuonTriggerSFUp){
     return "MuonTriggerSFUp";
   }
   else if(syst_==Syst::MuonTriggerSFDown){
     return "MuonTriggerSFDown";
+  }
+  else if(syst_==Syst::ElectronRecoSFUp){
+    return "ElectronRecoSFUp";
+  }
+  else if(syst_==Syst::ElectronRecoSFDown){
+    return "ElectronRecoSFDown";
   }
   else if(syst_==Syst::ElectronResUp){
     return "ElectronResUp";
@@ -158,6 +170,12 @@ TString AnalyzerParameter::GetSystType(){
   }
   else if(syst_==Syst::ZPtRwDown){
     return "ZPtRwDown";
+  }
+  else if(syst_==Syst::PrefireUp){
+    return "PrefireUp";
+  }
+  else if(syst_==Syst::PrefireDown){
+    return "PrefireDown";
   }
   else{
     cout << "[AnalyzerParameter::GetSystType] Wrong Syst" << endl;

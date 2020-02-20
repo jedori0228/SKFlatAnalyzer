@@ -165,7 +165,9 @@ void HNWRAnalyzer::executeEvent(){
 
   //==== Prefire weight
 
-  weight_Prefire = GetPrefireWeight(0);
+  weight_Prefire      = GetPrefireWeight( 0);
+  weight_Prefire_Up   = GetPrefireWeight(+1);
+  weight_Prefire_Down = GetPrefireWeight(-1);
 
   //==== Nvtx
 
@@ -236,22 +238,6 @@ void HNWRAnalyzer::executeEvent(){
 
   executeEventFromParameter(param);
 
-/*
-  //==== For dR Separation test
-
-  param.Name = "HNWRdR0p5";
-  param.dRSeparation = 0.5;
-  executeEventFromParameter(param);
-
-  param.Name = "HNWRdR0p6";
-  param.dRSeparation = 0.6;
-  executeEventFromParameter(param);
-
-  param.Name = "HNWRdR0p7";
-  param.dRSeparation = 0.7;
-  executeEventFromParameter(param);
-*/
-
   if(RunSyst){
 
     for(int it_syst=1; it_syst<AnalyzerParameter::NSyst; it_syst++){
@@ -262,6 +248,7 @@ void HNWRAnalyzer::executeEvent(){
       if( (param.syst_==AnalyzerParameter::ZPtRwUp || param.syst_==AnalyzerParameter::ZPtRwDown) && !ApplyDYPtReweight ) continue;
 
       param.Name = "Syst_"+param.GetSystType()+"_HNWR";
+
       executeEventFromParameter(param);
     }
   }
@@ -277,15 +264,20 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   double weight = 1.;
   if(!IsDATA){
 
-    weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight()*weight_Prefire;
+    weight *= weight_norm_1invpb*ev.GetTriggerLumi("Full")*ev.MCweight();
+
+    //==== Apply Prefire
+    if(param.syst_ == AnalyzerParameter::PrefireUp) weight *= weight_Prefire_Up;
+    else if(param.syst_ == AnalyzerParameter::PrefireDown)  weight *= weight_Prefire_Down;
+    else  weight *= weight_Prefire;
+
+    //==== Apply ZPtReweight
     if(ApplyDYPtReweight){
 
-      double this_ZPtReweight = 1.;
-      if(param.syst_ == AnalyzerParameter::ZPtRwUp) this_ZPtReweight = ZPtReweight_Up;
-      else if(param.syst_ == AnalyzerParameter::ZPtRwDown) this_ZPtReweight = ZPtReweight_Down;
-      else this_ZPtReweight = ZPtReweight;
+      if(param.syst_ == AnalyzerParameter::ZPtRwUp) weight *= ZPtReweight_Up;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwDown) weight *= ZPtReweight_Down;
+      else weight *= ZPtReweight;
 
-      weight *= this_ZPtReweight;
     }
 
   }
@@ -335,10 +327,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   vector<Jet> this_AllJets = AllJets;
   vector<FatJet> this_AllFatJets = AllFatJets;
 
-  int SystDir_MuonReco(0);
+  int SystDir_MuonRecoSF(0);
+  int SystDir_ElectronRecoSF(0);
 
   int SystDir_MuonIDSF(0);
   int SystDir_ElectronIDSF(0);
+
+  int SystDir_MuonISOSF(0);
 
   int SystDir_MuonTriggerSF(0);
   int SystDir_ElectronTriggerSF(0);
@@ -365,11 +360,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     this_AllJets = ScaleJets( this_AllJets, -1 );
     this_AllFatJets = ScaleFatJets( this_AllFatJets, -1 );
   }
-  else if(param.syst_ == AnalyzerParameter::MuonRecoUp){
-    SystDir_MuonReco = +1;
+  else if(param.syst_ == AnalyzerParameter::MuonRecoSFUp){
+    SystDir_MuonRecoSF = +1;
   }
-  else if(param.syst_ == AnalyzerParameter::MuonRecoDown){
-    SystDir_MuonReco = -1;
+  else if(param.syst_ == AnalyzerParameter::MuonRecoSFDown){
+    SystDir_MuonRecoSF = -1;
   }
   else if(param.syst_ == AnalyzerParameter::MuonEnUp){
     this_AllMuons = ScaleMuons( this_AllMuons, +1 );
@@ -385,11 +380,23 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else if(param.syst_ == AnalyzerParameter::MuonIDSFDown){
     SystDir_MuonIDSF = -1;
   }
+  else if(param.syst_ == AnalyzerParameter::MuonISOSFUp){
+    SystDir_MuonISOSF = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::MuonISOSFDown){
+    SystDir_MuonISOSF = -1;
+  }
   else if(param.syst_ == AnalyzerParameter::MuonTriggerSFUp){
     SystDir_MuonTriggerSF = +1;
   }
   else if(param.syst_ == AnalyzerParameter::MuonTriggerSFDown){
     SystDir_MuonTriggerSF = -1;
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronRecoSFUp){
+    SystDir_ElectronRecoSF = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::ElectronRecoSFDown){
+    SystDir_ElectronRecoSF = -1;
   }
   else if(param.syst_ == AnalyzerParameter::ElectronResUp){
     this_AllElectrons = SmearElectrons( this_AllElectrons, +1 );
@@ -431,6 +438,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   }
   else if(param.syst_ == AnalyzerParameter::ZPtRwDown){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::PrefireUp){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::PrefireDown){
 
   }
   else{
@@ -650,7 +663,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
             for(unsigned int i=0; i<Tight_electrons.size(); i++){
-              double this_recosf = mcCorr->ElectronReco_SF(Tight_electrons.at(i)->scEta(),Tight_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+              double this_recosf = mcCorr->ElectronReco_SF(Tight_electrons.at(i)->scEta(),Tight_electrons.at(i)->Pt(), SystDir_ElectronRecoSF);
               double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, Tight_electrons.at(i)->scEta(), Tight_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
               weight *= this_recosf*this_idsf;
             }
@@ -658,9 +671,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               double MiniAODP = sqrt( Tight_muons.at(i)->MiniAODPt() * Tight_muons.at(i)->MiniAODPt() + Tight_muons.at(i)->Pz() * Tight_muons.at(i)->Pz() );
 
-              double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, Tight_muons.at(i)->Eta(), MiniAODP, SystDir_MuonReco);
+              double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, Tight_muons.at(i)->Eta(), MiniAODP, SystDir_MuonRecoSF);
               double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-              double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+              double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, Tight_muons.at(i)->Eta(), Tight_muons.at(i)->MiniAODPt(), SystDir_MuonISOSF);
 
               weight *= this_recosf*this_idsf*this_isosf;
             }

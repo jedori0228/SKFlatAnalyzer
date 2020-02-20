@@ -36,10 +36,12 @@ public:
     Central,
     JetResUp, JetResDown,
     JetEnUp, JetEnDown,
-    MuonRecoUp, MuonRecoDown,
+    MuonRecoSFUp, MuonRecoSFDown,
     MuonEnUp, MuonEnDown,
     MuonIDSFUp, MuonIDSFDown,
+    MuonISOSFUp, MuonISOSFDown,
     MuonTriggerSFUp, MuonTriggerSFDown,
+    ElectronRecoSFUp, ElectronRecoSFDown,
     ElectronResUp, ElectronResDown,
     ElectronEnUp, ElectronEnDown,
     ElectronIDSFUp, ElectronIDSFDown,
@@ -47,6 +49,7 @@ public:
     LSFSFUp, LSFSFDown,
     PUUp, PUDown,
     ZPtRwUp, ZPtRwDown,
+    PrefireUp, PrefireDown,
     NSyst
   };
   Syst syst_;

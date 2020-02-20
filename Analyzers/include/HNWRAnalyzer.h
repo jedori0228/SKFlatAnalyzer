@@ -29,7 +29,7 @@ public:
   vector<Jet> AllJets;
   vector<FatJet> AllFatJets;
 
-  double weight_Prefire;
+  double weight_Prefire, weight_Prefire_Up, weight_Prefire_Down;
 
   vector<TString> Triggers_Electron, Triggers_Muon;
   TString TriggerNameForSF_Electron, TriggerNameForSF_Muon;
