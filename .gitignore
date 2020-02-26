@@ -5,3 +5,6 @@
 *_Dict.cxx
 lib/*.tar.gz
 */obj
+data/Run2Legacy_v1
+data/Run2Legacy_v2
+data/Run2Legacy_v3
