@@ -1,4 +1,4 @@
-all: DataFormats AnalyzerTools GEScaleSyst Analyzers Archive
+all: DataFormats AnalyzerTools GEScaleSyst jecsys Analyzers Archive
 
 DataFormats::
 	(cd DataFormats; make)
@@ -12,6 +12,10 @@ GEScaleSyst::
 	(cd external/GEScaleSyst; make)
 	(mvexist.sh external/GEScaleSyst/GEScaleSyst_Dict_rdict.pcm lib/)
 
+jecsys::
+	(cd external/jecsys/CondFormats/JetMETObjects; make)
+	(mvexist.sh external/jecsys/CondFormats/JetMETObjects/src/jecsys_Dict_rdict.pcm lib/)
+
 Analyzers::
 	(cd Analyzers; make)
 	(mvexist.sh Analyzers/src/Analyzers_Dict_rdict.pcm lib/)
@@ -20,18 +24,21 @@ Archive::
 	(tar -zcf lib/DataFormats.tar.gz DataFormats)
 	(tar -zcf lib/AnalyzerTools.tar.gz AnalyzerTools)
 	(tar -zcf lib/GEScaleSyst.tar.gz external/GEScaleSyst/GEScaleSyst.*)
+	#(tar -zcf lib/jecsys.tar.gz external/jecsys/CondFormats/JetMETObjects) # file size too large (~11M)
 	(tar -zcf lib/Analyzers.tar.gz Analyzers)
 
 clean::
 	(cd DataFormats; make clean)
 	(cd AnalyzerTools; make clean)
 	(cd external/GEScaleSyst; make clean)
+	(cd external/jecsys/CondFormats/JetMETObjects; make clean)
 	(cd Analyzers; make clean)
 
 distclean::
 	(cd DataFormats; make distclean)
 	(cd AnalyzerTools; make distclean)
 	(cd external/GEScaleSyst; make distclean)
+	(cd external/jecsys/CondFormats/JetMETObjects; make distclean)
 	(cd Analyzers; make distclean)
 
 LibTarFile = tar/lib.tar.gz

@@ -91,6 +91,37 @@ void ExampleRun::initializeAnalyzer(){
   RunXSecSyst = HasFlag("RunXSecSyst");
   cout << "[ExampleRun::initializeAnalyzer] RunXSecSyst = " << RunXSecSyst << endl;
 
+  //==== jecsys
+
+  TString datapath = getenv("DATA_DIR");
+  TString jecSRCtxtfile = datapath+"/"+TString::Itoa(DataYear,10)+"/jecsys/";
+  if(DataYear==2016){
+    jecSRCtxtfile += "Regrouped_Summer16_07Aug2017_V11_MC_UncertaintySources_AK4PFchs.txt";
+  }
+  else if(DataYear==2016){
+    jecSRCtxtfile += "Regrouped_Fall17_17Nov2017_V32_MC_UncertaintySources_AK4PFchs.txt";
+  }
+  else if(DataYear==2018){
+    jecSRCtxtfile += "Regrouped_Autumn18_V19_MC_UncertaintySources_AK4PFchs.txt";
+  }
+  else{
+    cout << "WTF" << endl;
+    exit(EXIT_FAILURE);
+  }
+  cout << "[ExampleRun::initializeAnalyzer] jecSRCtxtfile = " << jecSRCtxtfile << endl;
+
+  srcnames = {
+    "Absolute", "Absolute_"+TString::Itoa(DataYear,10), "BBEC1", "BBEC1_"+TString::Itoa(DataYear,10), "EC2", "EC2_"+TString::Itoa(DataYear,10), "FlavorQCD", "HF", "HF_"+TString::Itoa(DataYear,10), "RelativeBal", "RelativeSample_"+TString::Itoa(DataYear,10),
+    "Total",
+  };
+
+  vsrc.clear();
+  for(unsigned int i=0; i<srcnames.size(); i++){
+    JetCorrectorParameters *p = new JetCorrectorParameters(jecSRCtxtfile.Data(), srcnames.at(i).Data());
+    JetCorrectionUncertainty *unc = new JetCorrectionUncertainty(*p);
+    vsrc.push_back( unc );
+  }
+
 }
 
 ExampleRun::~ExampleRun(){
@@ -224,6 +255,35 @@ void ExampleRun::executeEvent(){
       if(i==5) continue;
       if(i==7) continue;
       JSFillHist("XSecError", "MET_Scale_"+TString::Itoa(i,10), MET, PDFWeights_Scale->at(i), 200, 0., 200.);
+    }
+
+  }
+
+  //==============
+  //==== jec sys
+  //==============
+
+  vector<Jet> jets = GetJets("tightLepVeto", 40., 2.4);
+  //cout << "======================================================" << endl;
+  for(unsigned int ij=0; ij<jets.size(); ij++){
+
+    //cout << "@@@@ " << ij << " th jet " << " : " << jets.at(ij).EnShift(+1) << "\t" << jets.at(ij).EnShift(-1) << endl;
+
+    double jetpt = jets.at(ij).Pt();
+    double jeteta = jets.at(ij).Eta();
+
+    for(unsigned int isrc=0; isrc<srcnames.size(); isrc++){
+
+      JetCorrectionUncertainty *unc = vsrc.at(isrc);
+      unc->setJetPt(jetpt);
+      unc->setJetEta(jeteta);
+      double sup = unc->getUncertainty(true); // up variation
+      unc->setJetPt(jetpt);
+      unc->setJetEta(jeteta);
+      double sdw = unc->getUncertainty(false); // down variation
+
+      //cout << srcnames.at(isrc) << "\t" << sup << "\t" << sdw << endl;
+
     }
 
   }
