@@ -2,3 +2,6 @@
 	path = external/GEScaleSyst
 	url = git@github.com:jedori0228/GEScaleSyst.git
 	branch = ForSKFlatAnalyzer
+[submodule "external/jecsys"]
+	path = external/jecsys
+	url = git@github.com:jedori0228/jecsys.git
