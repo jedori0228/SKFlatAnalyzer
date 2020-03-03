@@ -3,6 +3,9 @@
 
 #include "AnalyzerCore.h"
 
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+
 class ExampleRun : public AnalyzerCore {
 
 public:
@@ -24,6 +27,9 @@ public:
   vector<Jet> AllJets;
 
   double weight_Prefire;
+
+  std::vector<TString> srcnames;
+  std::vector<JetCorrectionUncertainty*> vsrc;
 
   ExampleRun();
   ~ExampleRun();
