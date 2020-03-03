@@ -18,6 +18,7 @@ GEScaleSyst::
 jecsys::
 	(cd external/jecsys/CondFormats/JetMETObjects; make)
 	(mvexist.sh external/jecsys/CondFormats/JetMETObjects/src/jecsys_Dict_rdict.pcm lib/)
+	(mvexist.sh external/jecsys/CondFormats/JetMETObjects/libjecsys.rootmap lib/)
 
 Analyzers::
 	(cd Analyzers; make)
