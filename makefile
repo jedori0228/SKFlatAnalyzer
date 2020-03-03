@@ -3,14 +3,17 @@ all: DataFormats AnalyzerTools GEScaleSyst jecsys Analyzers Archive
 DataFormats::
 	(cd DataFormats; make)
 	(mvexist.sh DataFormats/src/DataFormats_Dict_rdict.pcm lib/)
+	(mvexist.sh DataFormats/libDataFormats.rootmap lib/)
 
 AnalyzerTools::
 	(cd AnalyzerTools; make)
 	(mvexist.sh AnalyzerTools/src/AnalyzerTools_Dict_rdict.pcm lib/)
+	(mvexist.sh AnalyzerTools/libAnalyzerTools.rootmap lib/)
 
 GEScaleSyst::
 	(cd external/GEScaleSyst; make)
 	(mvexist.sh external/GEScaleSyst/GEScaleSyst_Dict_rdict.pcm lib/)
+	(mvexist.sh external/GEScaleSyst/libGEScaleSyst.rootmap lib/)
 
 jecsys::
 	(cd external/jecsys/CondFormats/JetMETObjects; make)
@@ -19,6 +22,7 @@ jecsys::
 Analyzers::
 	(cd Analyzers; make)
 	(mvexist.sh Analyzers/src/Analyzers_Dict_rdict.pcm lib/)
+	(mvexist.sh Analyzers/libAnalyzers.rootmap lib/)
 
 Archive::
 	(tar -zcf lib/DataFormats.tar.gz DataFormats)
