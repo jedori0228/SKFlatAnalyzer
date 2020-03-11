@@ -120,6 +120,8 @@ public:
   bool passHEEP2018Prompt() const;
 
   bool passHEEPIDFast() const;
+  bool passHEEP2018PromptFastSim() const;
+
   bool Pass_SUSYMVAWP(TString wp) const;
   bool Pass_SUSYTight() const;
   bool Pass_SUSYLoose() const;
