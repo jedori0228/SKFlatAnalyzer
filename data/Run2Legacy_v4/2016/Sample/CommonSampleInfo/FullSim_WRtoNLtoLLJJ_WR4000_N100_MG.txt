@@ -1,0 +1,2 @@
+# alias PD xsec nmc sumw
+FullSim_WRtoNLtoLLJJ_WR4000_N100_MG	FullSim_WRtoNLtoLLJJ_WR4000_N100_MG	1.	50000	45158

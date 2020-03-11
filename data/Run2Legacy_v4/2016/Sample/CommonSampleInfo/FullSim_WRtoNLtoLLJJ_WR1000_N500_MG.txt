@@ -1,0 +1,2 @@
+# alias PD xsec nmc sumw
+FullSim_WRtoNLtoLLJJ_WR1000_N500_MG	FullSim_WRtoNLtoLLJJ_WR1000_N500_MG	1.	50000	49804
