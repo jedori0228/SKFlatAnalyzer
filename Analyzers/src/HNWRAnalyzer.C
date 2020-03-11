@@ -56,7 +56,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
     Triggers_Electron = {
       "HLT_Ele35_WPTight_Gsf_v",
       "HLT_Photon200_v",
-      "HLT_Ele115_CaloIdVT_GsfTrkIdT_v",
+      //"HLT_Ele115_CaloIdVT_GsfTrkIdT_v", // This trigger was off for the first ~5fb-1, so we are not using it
     };
     Triggers_Muon = {
       "HLT_Mu50_v",
