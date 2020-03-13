@@ -234,7 +234,7 @@ bool Electron::passHEEP2018Prompt() const {
 bool Electron::passHEEP2018PromptFastSim() const{
 
   //==== If not endcap, use original function
-  if( fabs(scEta()) < 1.566 ) return passHEEPID();
+  if( fabs(scEta()) < 1.566 ) return passHEEPIDFast();
 
   //==== https://github.com/CMSSNU/SKFlatMaker/blob/Run2Legacy_v4/SKFlatMaker/python/SKFlatMaker_cfi.py#L37-L50
   int HEEPcutbit = IDCutBit().at(11);
