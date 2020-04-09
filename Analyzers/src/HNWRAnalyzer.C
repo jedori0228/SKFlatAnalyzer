@@ -16,6 +16,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
   RunXsecSyst = HasFlag("RunXsecSyst");
   Signal = HasFlag("Signal");
+  SignalElectronOnly = HasFlag("SignalElectronOnly");
+  SignalMuonOnly = HasFlag("SignalMuonOnly");
 
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunCF = " << RunCF << endl;
@@ -161,6 +163,11 @@ void HNWRAnalyzer::executeEvent(){
     else{
       FillHist("SignalFlavour", -1., 1., 3, -1., 2.);
     }
+
+    if(SignalElectronOnly && SignalLeptonChannel!=0) return;
+    if(SignalMuonOnly && SignalLeptonChannel!=1) return;
+
+
   }
 
   //==== Prefire weight
@@ -926,7 +933,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
       for(unsigned int i=0; i<ForSF_electrons.size(); i++){
-        double this_recosf = mcCorr->ElectronReco_SF(ForSF_electrons.at(i)->scEta(),ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+        double this_recosf = mcCorr->ElectronReco_SF(ForSF_electrons.at(i)->scEta(),ForSF_electrons.at(i)->Pt(), SystDir_ElectronRecoSF);
         double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, ForSF_electrons.at(i)->scEta(), ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
         weight *= this_recosf*this_idsf;
       }
@@ -934,9 +941,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         double MiniAODP = sqrt( ForSF_muons.at(i)->MiniAODPt() * ForSF_muons.at(i)->MiniAODPt() + ForSF_muons.at(i)->Pz() * ForSF_muons.at(i)->Pz() );
 
-        double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, ForSF_muons.at(i)->Eta(), MiniAODP, SystDir_MuonIDSF);
+        double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, ForSF_muons.at(i)->Eta(), MiniAODP, SystDir_MuonRecoSF);
         double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-        double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+        double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonISOSF);
 
         weight *= this_recosf*this_idsf*this_isosf;
       }
@@ -1259,7 +1266,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       }
 
-
       JSFillHist(this_region, "NEvent_"+this_region, 0., weight, 1, 0., 1.);
       JSFillHist(this_region, "MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
 
@@ -1285,6 +1291,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       JSFillHist(this_region, "NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
       JSFillHist(this_region, "HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
+      JSFillHist(this_region, "PrefireRwg_"+this_region, 0, weight_Prefire, 1, 0., 1.);
+
       if(this_region.Contains("Boosted")){
         JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
 
@@ -1306,6 +1314,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
 
       JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+
       JSFillHist(this_region, "WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
 
       JSFillHist(this_region, "NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
@@ -1409,7 +1418,5 @@ double HNWRAnalyzer::LSFSF(int dir){
   else return 0.87-0.07;
 
 }
-
-
 
 
