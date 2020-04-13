@@ -62,6 +62,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
     };
     Triggers_Muon = {
       "HLT_Mu50_v",
+      "HLT_OldMu100_v",
+      "HLT_TkMu100_v",
     };
     TriggerNameForSF_Electron = "WREGammaTrigger";
     TriggerNameForSF_Muon = "Mu50";
@@ -245,7 +247,8 @@ void HNWRAnalyzer::executeEvent(){
   AllMuons = GetAllMuons();
   AllTunePMuons = UseTunePMuon( AllMuons );
   AllJets = GetAllJets();
-  AllFatJets = puppiCorr->Correct( GetAllFatJets() ); // TODO correct SD Mass here, but not sure about the systematics
+  //AllFatJets = puppiCorr->Correct( GetAllFatJets() ); // TODO correct SD Mass here, but not sure about the systematics
+  AllFatJets = GetAllFatJets();
 
   param.dRSeparation = 0.4;
 
