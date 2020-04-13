@@ -13,6 +13,8 @@ Muon::Muon() : Lepton() {
   j_MiniAODPt = -999.;
   j_MomentumScaleUp = -999.;
   j_MomentumScaleDown = -999.;
+  j_MomentumSmearUp = -999.;
+  j_MomentumSmearDown = -999.;
   j_TunePPtError = -999.;
   j_MVA = -999.;
   j_lowptMVA = -999.;
@@ -82,6 +84,10 @@ void Muon::SetMiniAODTunePPt(double d){
 void Muon::SetMomentumScaleUpDown(double pt_up, double pt_down){
   j_MomentumScaleUp = pt_up;
   j_MomentumScaleDown = pt_down;
+}
+void Muon::SetMomentumSmearUpDown(double pt_up, double pt_down){
+  j_MomentumSmearUp = pt_up;
+  j_MomentumSmearDown = pt_down;
 }
 
 void Muon::SetTuneP4(double pt, double pt_err, double eta, double phi, double q){

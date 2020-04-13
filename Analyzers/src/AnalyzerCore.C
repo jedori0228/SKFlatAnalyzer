@@ -554,7 +554,7 @@ std::vector<LHE> AnalyzerCore::GetLHEs(){
 
 }
 
-std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons){
+std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons, const std::vector<Gen>& gens){
 
   std::vector<Muon> out;
   for(unsigned int i=0; i<muons.size(); i++){
@@ -567,23 +567,29 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons){
     //==== 1) if tuneP Pt < 200 -> Rochester
     //==== 2) if tuneP pt >= 200 -> Generalized Endpoint
 
-    double new_pt( this_tunep4.Pt() ), new_pt_up( this_tunep4.Pt() ), new_pt_down( this_tunep4.Pt() );
+    double new_pt( this_tunep4.Pt() ); // Scale * Smear
+    double new_pt_scale_up( this_tunep4.Pt() ), new_pt_scale_down( this_tunep4.Pt() );
+    double new_pt_smear_up( this_tunep4.Pt() ), new_pt_smear_down( this_tunep4.Pt() );
     if(this_tunep4.Pt()<200){
 
       //==== 19/03/24 (jskim) : For 99% of the muons, MiniAODPt and TunePPt are same
       //==== we can just use MiniAODPt * RochesterCorrection, multiplied by (TuneP Pt)/(MiniAODPt)
       double TunePOverPt = this_tunep4.Pt() / this_muon.MiniAODPt();
       new_pt      = TunePOverPt * this_muon.Pt(); // this_muon.Pt() = MiniAODPt * RochesterCorrection
-      new_pt_up   = TunePOverPt * this_muon.MomentumShift(+1);
-      new_pt_down = TunePOverPt * this_muon.MomentumShift(-1);
+      new_pt_scale_up   = TunePOverPt * this_muon.MomentumShift(+1);
+      new_pt_scale_down = TunePOverPt * this_muon.MomentumShift(-1);
+
+      //==== no smearing for rochester
+      new_pt_smear_up = new_pt;
+      new_pt_smear_down = new_pt;
 
 /*
       cout << "## Rochester ##" << endl;
       cout << "this_muon.MiniAODPt() = " << this_muon.MiniAODPt() << endl;
       cout << "this_muon.MiniAODTunePPt() = " << this_muon.MiniAODTunePPt() << endl;
       cout << "new_pt = " << new_pt << endl;
-      cout << "new_pt_up = " << new_pt_up << endl;
-      cout << "new_pt_down = " << new_pt_down << endl;
+      cout << "new_pt_scale_up = " << new_pt_scale_up << endl;
+      cout << "new_pt_scale_down = " << new_pt_scale_down << endl;
 */
 
     }
@@ -604,15 +610,24 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons){
         new_pt = ptvalues.ScaledPt;
         //==== Mode == 1 : Kappa up
         //==== Mode == 2 : Kappa down
-        new_pt_up = ptvalues.ScaeldPt_Up;
-        new_pt_down = ptvalues.ScaeldPt_Down;
+        new_pt_scale_up = ptvalues.ScaeldPt_Up;
+        new_pt_scale_down = ptvalues.ScaeldPt_Down;
+
+        //==== now smearing
+        Gen g_muon = GetGenMatchedLepton(this_muon, gens);
+        if(g_muon.IsEmpty()){
+          //==== stochastic smearing
+        }
+        else{
+          //==== JER-style smearing
+        }
 
 /*
         cout << "## GeneralizedEndpointPt ##" << endl;
         cout << "old_pt = " << this_tunep4.Pt() << endl;
         cout << "new_pt = " << new_pt << endl;
-        cout << "new_pt_up = " << new_pt_up << endl;
-        cout << "new_pt_down = " << new_pt_down << endl;
+        cout << "new_pt_scale_up = " << new_pt_scale_up << endl;
+        cout << "new_pt_scale_down = " << new_pt_scale_down << endl;
 */
 
       }
@@ -621,7 +636,8 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons){
 
     //==== Scale the pt
     this_muon.SetPtEtaPhiM( new_pt, this_tunep4.Eta(), this_tunep4.Phi(), this_tunep4.M() );
-    this_muon.SetMomentumScaleUpDown(new_pt_up,new_pt_down);
+    this_muon.SetMomentumScaleUpDown(new_pt_scale_up,new_pt_scale_down);
+    this_muon.SetMomentumSmearUpDown(new_pt_smear_up,new_pt_smear_down);
     this_muon.SetCharge( this_tunep4.Charge() );
     this_muon.SetMiniAODPt( this_muon.MiniAODTunePPt() );
 

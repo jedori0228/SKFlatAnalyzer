@@ -88,6 +88,13 @@ public:
     else         return j_MomentumScaleDown;
   }
 
+  void SetMomentumSmearUpDown(double pt_up, double pt_down);
+  inline double MomentumShift(int s) const {
+    if(s==0) return Pt();
+    else if(s>0) return j_MomentumSmearUp;
+    else         return j_MomentumSmearDown;
+  }
+
   void SetTuneP4(double pt, double pt_err, double eta, double phi, double q);
   inline Particle TuneP4() const {return j_TuneP4;}
   inline double TunePPtError() const {return j_TunePPtError;}
@@ -114,6 +121,7 @@ private:
   double j_chi2;
   double j_PFCH04, j_PFNH04, j_PFPH04, j_PU04, j_trkiso;
   double j_MiniAODPt, j_MiniAODTunePPt, j_MomentumScaleUp, j_MomentumScaleDown;
+  double j_MomentumSmearUp, j_MomentumSmearDown;
   Particle j_TuneP4;
   double j_TunePPtError;
   double j_MVA, j_lowptMVA, j_softMVA;
