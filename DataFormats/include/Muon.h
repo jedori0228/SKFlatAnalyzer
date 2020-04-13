@@ -89,7 +89,7 @@ public:
   }
 
   void SetMomentumSmearUpDown(double pt_up, double pt_down);
-  inline double MomentumShift(int s) const {
+  inline double MomentumSmear(int s) const {
     if(s==0) return Pt();
     else if(s>0) return j_MomentumSmearUp;
     else         return j_MomentumSmearDown;
