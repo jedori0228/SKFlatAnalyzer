@@ -779,6 +779,20 @@ void SKFlatNtuple::Init()
    fChain->SetBranchAddress("pfMET_Type1_PhiCor_phi_shifts", &pfMET_Type1_PhiCor_phi_shifts, &b_pfMET_Type1_PhiCor_phi_shifts);
    fChain->SetBranchAddress("pfMET_Type1_PhiCor_SumEt_shifts", &pfMET_Type1_PhiCor_SumEt_shifts, &b_pfMET_Type1_PhiCor_SumEt_shifts);
 
+  //==== custom branches
+
+  muon_matched_pt = 0;
+  muon_matched_eta = 0;
+
+  //==== muon matching
+  if(!IsDATA){
+    TBranch* check_muon_match_branch = fChain->GetBranch("muon_matched_pt");
+    if(check_muon_match_branch){
+      fChain->SetBranchAddress("muon_matched_pt", &muon_matched_pt, &b_muon_matched_pt);
+      fChain->SetBranchAddress("muon_matched_eta", &muon_matched_eta, &b_muon_matched_eta);
+    }
+  }
+
 }
 
 

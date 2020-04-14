@@ -791,6 +791,14 @@ public :
    TBranch        *b_pfMET_Type1_PhiCor_phi_shifts;   //!
    TBranch        *b_pfMET_Type1_PhiCor_SumEt_shifts;   //!
 
+
+   //==== custom branches
+   vector<double>  *muon_matched_pt;
+   vector<double>  *muon_matched_eta;
+
+   TBranch        *b_muon_matched_pt;   //!
+   TBranch        *b_muon_matched_eta;   //!
+
 };
 
 #endif

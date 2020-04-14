@@ -121,25 +121,30 @@ void SkimTree_LRSMHighPt::executeEvent(){
   //=============================
   //==== If survived, fill tree
   //=============================
+
+  //==== Adding gen-matching variables
+
   muon_matched_pt.clear();
   muon_matched_eta.clear();
   if(!IsDATA){
     std::vector<Muon> muons_all = GetAllMuons();
-    std::vector<Lepton *> leps_muon =  MakeLeptonPointerVector(muons_all);
     vector<Gen> gens = GetGens();
-    for(unsigned int i = 0; i < leps_muon.size(); i++){
-      const Lepton current_lepton = *leps_muon.at(i);
-      Gen matched_gen = GetGenMatchedLepton(current_lepton, gens);
-      double current_muon_matched_pt = -9999.;
-      double current_muon_matched_eta = -9999.;
+    for(unsigned int i = 0; i < muons_all.size(); i++){
+
+      Gen matched_gen = GetGenMatchedLepton(muons_all.at(i), gens);
+
+      double current_muon_matched_pt = -1;
+      double current_muon_matched_eta = -1;
       if( !matched_gen.IsEmpty() ){
-	current_muon_matched_pt = matched_gen.Pt();
-	current_muon_matched_eta = matched_gen.Eta();
+        current_muon_matched_pt = matched_gen.Pt();
+        current_muon_matched_eta = matched_gen.Eta();
       }
       muon_matched_pt.push_back(current_muon_matched_pt);
       muon_matched_eta.push_back(current_muon_matched_eta);
+
     }
   }
+
   newtree->Fill();
 
 }

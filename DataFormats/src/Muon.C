@@ -85,6 +85,11 @@ void Muon::SetMomentumScaleUpDown(double pt_up, double pt_down){
   j_MomentumScaleUp = pt_up;
   j_MomentumScaleDown = pt_down;
 }
+void Muon::SetMatched(double pt, double eta){
+  j_matched_pt = pt;
+  j_matched_eta = eta;
+}
+
 void Muon::SetMomentumSmearUpDown(double pt_up, double pt_down){
   j_MomentumSmearUp = pt_up;
   j_MomentumSmearDown = pt_down;

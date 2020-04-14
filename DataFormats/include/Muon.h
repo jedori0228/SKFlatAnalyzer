@@ -88,6 +88,10 @@ public:
     else         return j_MomentumScaleDown;
   }
 
+  void SetMatched(double pt, double eta);
+  double MatchedPt() const { return j_matched_pt; }
+  double MatchedEta() const { return j_matched_eta; }
+
   void SetMomentumSmearUpDown(double pt_up, double pt_down);
   inline double MomentumSmear(int s) const {
     if(s==0) return Pt();
@@ -121,6 +125,7 @@ private:
   double j_chi2;
   double j_PFCH04, j_PFNH04, j_PFPH04, j_PU04, j_trkiso;
   double j_MiniAODPt, j_MiniAODTunePPt, j_MomentumScaleUp, j_MomentumScaleDown;
+  double j_matched_pt, j_matched_eta;
   double j_MomentumSmearUp, j_MomentumSmearDown;
   Particle j_TuneP4;
   double j_TunePPtError;

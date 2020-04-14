@@ -131,6 +131,10 @@ std::vector<Muon> AnalyzerCore::GetAllMuons(){
       mu.EA()
     );
 
+    if(muon_matched_pt){
+      mu.SetMatched(muon_matched_pt->at(i), muon_matched_eta->at(i));
+    }
+
     out.push_back(mu);
 
   }
@@ -554,7 +558,7 @@ std::vector<LHE> AnalyzerCore::GetLHEs(){
 
 }
 
-std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons, const std::vector<Gen>& gens){
+std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons){
 
   std::vector<Muon> out;
   for(unsigned int i=0; i<muons.size(); i++){
@@ -606,20 +610,63 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons, con
         //==== 19/09/02 : There is no GEScaleSyst map for 2016
         if(DataYear==2016) ptvalues = muonGE->GeneralizedEndpointPt(this_tunep4.Pt(), this_tunep4.Charge(), this_tunep4.Eta(), this_tunep4.Phi()*180./M_PI, event);
         else ptvalues = muonGEScaleSyst->GEPt(DataYear, this_tunep4.Pt(), this_tunep4.Eta(), this_tunep4.Phi(), this_tunep4.Charge());
-
-        new_pt = ptvalues.ScaledPt;
+/*
         //==== Mode == 1 : Kappa up
         //==== Mode == 2 : Kappa down
-        new_pt_scale_up = ptvalues.ScaeldPt_Up;
-        new_pt_scale_down = ptvalues.ScaeldPt_Down;
-
+*/
         //==== now smearing
-        Gen g_muon = GetGenMatchedLepton(this_muon, gens);
-        if(g_muon.IsEmpty()){
-          //==== stochastic smearing
+
+        //==== TODO fill ResSF values
+        double ResSF(1.), ResSFUp(1.), ResSFDown(1.);
+
+        if(this_muon.MatchedPt()>0){
+          //==== JER-style smearing
+
+          double dPt = new_pt - this_muon.MatchedPt();
+
+          double smearFactor = 1 + (ResSF - 1.) * dPt / new_pt;
+          double smearFactorUp = 1 + (ResSFUp - 1.) * dPt / new_pt;
+          double smearFactorDown = 1 + (ResSFDown - 1.) * dPt / new_pt;
+
+          new_pt            = smearFactor * ptvalues.ScaledPt;
+
+          new_pt_scale_up   = smearFactor * ptvalues.ScaeldPt_Up;
+          new_pt_scale_down = smearFactor * ptvalues.ScaeldPt_Down;
+
+          new_pt_smear_up   = new_pt * smearFactorUp/smearFactor;
+          new_pt_smear_down = new_pt * smearFactorDown/smearFactor;
+
         }
         else{
-          //==== JER-style smearing
+          //==== stochastic smearing
+
+          //==== TODO fill MuonMomRes
+          //==== e.g., if muon momentum resolution is 10%, MuonMomRes = 0.1
+          double MuonMomRes = 0.10;
+
+          std::uint32_t seed = this_muon.Pt() + fabs(this_muon.Eta()) + 1 + (lumi<<10) + (run<<20) + event;
+          m_random_generator.seed(seed);
+
+          double sigma = MuonMomRes * std::sqrt(ResSF * ResSF - 1);
+          std::normal_distribution<> d(0, sigma);
+          double smearFactor = 1. + d(m_random_generator);
+
+          double sigma_UP = MuonMomRes * std::sqrt(ResSFUp * ResSFUp - 1);
+          std::normal_distribution<> d_UP(0, sigma_UP);
+          double smearFactorUp = 1. + d_UP(m_random_generator);
+
+          double sigma_DOWN = MuonMomRes * std::sqrt(ResSFDown * ResSFDown - 1);
+          std::normal_distribution<> d_DOWN(0, sigma_DOWN);
+          double smearFactorDown = 1. + d_DOWN(m_random_generator);
+
+          new_pt            = smearFactor * ptvalues.ScaledPt;
+
+          new_pt_scale_up   = smearFactor * ptvalues.ScaeldPt_Up;
+          new_pt_scale_down = smearFactor * ptvalues.ScaeldPt_Down;
+
+          new_pt_smear_up   = new_pt * smearFactorUp/smearFactor;
+          new_pt_smear_down = new_pt * smearFactorDown/smearFactor;
+
         }
 
 /*
@@ -649,6 +696,8 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons, con
     cout << "this_muon.MomentumShift(0) = " << this_muon.MomentumShift(0) << endl;
     cout << "this_muon.MomentumShift(+1) = " << this_muon.MomentumShift(+1) << endl;
     cout << "this_muon.MomentumShift(-1) = " << this_muon.MomentumShift(-1) << endl;
+    cout << "this_muon.MomentumSmear(+1) = " << this_muon.MomentumSmear(+1) << endl;
+    cout << "this_muon.MomentumSmear-1) = " << this_muon.MomentumSmear(-1) << endl;
 */
 
     out.push_back(this_muon);
