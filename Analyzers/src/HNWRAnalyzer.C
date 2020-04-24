@@ -185,7 +185,9 @@ void HNWRAnalyzer::executeEvent(){
     //==== nPileUp starts from 0
     N_VTX = nPileUp+1;
     //==== but histogram is as a function of nPileUp not nVTX
-    int bin_pu = hist_PUReweight->FindBin(nPileUp);
+    int nPileUpForBin = nPileUp;
+    if(DataYear==2018) nPileUpForBin = max(5, nPileUpForBin);
+    int bin_pu = hist_PUReweight->FindBin(nPileUpForBin);
     weight_PU = hist_PUReweight->GetBinContent(bin_pu);
 
     weight_PU_Up = hist_PUReweight_Up->GetBinContent(bin_pu);
