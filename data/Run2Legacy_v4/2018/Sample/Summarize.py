@@ -5,12 +5,12 @@ lines = open('temp.txt').readlines()
 os.system('rm temp.txt')
 
 out_MC = open('SampleSummary_MC.txt','w')
-out_Sig_PairN = open('SampleSummary_Signal_PairN.txt','w')
 out_Sig_HNWR = open('SampleSummary_Signal_HNWR.txt','w')
+out_Sig_HNWR_FullSim = open('SampleSummary_Signal_HNWR_FullSim.txt','w')
+out_Sig_HNWR_Official = open('SampleSummary_Signal_HNWR_Official.txt','w')
 
 FirstLine = '# alias PD xsec nmc sumw\n'
 out_MC.write(FirstLine)
-out_Sig_PairN.write(FirstLine)
 out_Sig_HNWR.write(FirstLine)
 
 for line in lines:
@@ -20,13 +20,16 @@ for line in lines:
 
   infoline = open(line).readlines()[1]
 
-  if alias.startswith("HNPairToJJJJ"):
-    out_Sig_PairN.write(infoline)
-  elif alias.startswith("WRtoNLtoLLJJ"):
+  if alias.startswith("WRtoNLtoLLJJ_"):
     out_Sig_HNWR.write(infoline)
+  elif alias.startswith("FullSim_") and "WRtoNLtoLLJJ" in alias:
+    out_Sig_HNWR_FullSim.write(infoline)
+  elif "Official" in alias and "WRtoNLtoLLJJ" in alias:
+    out_Sig_HNWR_Official.write(infoline)
   else:
     out_MC.write(infoline)
 
 out_MC.close()
-out_Sig_PairN.close()
 out_Sig_HNWR.close()
+out_Sig_HNWR_FullSim.close()
+out_Sig_HNWR_Official.close()

@@ -21,6 +21,7 @@ public:
   bool NoTrigger;
   bool RunXsecSyst;
   bool Signal;
+  bool SignalElectronOnly, SignalMuonOnly;
 
   vector<Gen> gens;
 
@@ -59,7 +60,6 @@ public:
 
   //==== LSF SF
   double LSFSF(int dir);
-
 
 };
 
