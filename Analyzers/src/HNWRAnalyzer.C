@@ -210,12 +210,11 @@ void HNWRAnalyzer::executeEvent(){
 
   param.Electron_Tight_ID = "HNWRTight";
   if(DataYear>=2017 && IsFastSim) param.Electron_Tight_ID = "HNWRTightFastSim";
-/*
+  //==== use HEEPV70 2018Prompt for 2018
   if(DataYear==2018){
     param.Electron_Tight_ID = "HNWRTight2018Prompt";
     if(IsFastSim) param.Electron_Tight_ID = "HNWRTight2018PromptFastSim";
   }
-*/
   param.Electron_Loose_ID = "HNWRLoose";
   param.Electron_ID_SF_Key = "HEEP";
   param.Electron_Trigger_SF_Key = "HEEP";
