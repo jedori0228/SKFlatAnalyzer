@@ -3,6 +3,7 @@
 
 #include "AnalyzerCore.h"
 #include "GenFinderForDY.h"
+#include "GenFinderForHNWRSignal.h"
 
 class MyPlayGround : public AnalyzerCore {
 
@@ -17,6 +18,9 @@ public:
   ~MyPlayGround();
 
   GenFinderForDY *genFinderDY;
+
+  GenFinderForHNWRSignal *genFinderSig;
+  int SignalLeptonChannel;
 
 };
 
