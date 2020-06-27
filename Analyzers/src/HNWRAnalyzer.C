@@ -308,13 +308,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
     double normweight = 1./sumW/PDFWeights_Scale->at(0);
     for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
-      JSFillHist("XsecSyst_Den", "PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      FillHist("XsecSyst_Den/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
     for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
-      JSFillHist("XsecSyst_Den", "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      FillHist("XsecSyst_Den/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
     for(unsigned int i=0; i<PDFWeights_AlphaS->size(); i++){
-      JSFillHist("XsecSyst_Den", "PDFWeights_AlphaS_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_AlphaS->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      FillHist("XsecSyst_Den/PDFWeights_AlphaS_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_AlphaS->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
   }
 
@@ -885,6 +885,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool IsBoosted_DYCR_EE(false), IsBoosted_DYCR_MM(false);
   bool IsBoosted_CR_EMJet(false), IsBoosted_CR_MEJet(false);
   bool IsBoosted_LowWRCR_EMJet(false), IsBoosted_LowWRCR_MEJet(false);
+  int JetLepFlav=-1;
   if(!IsResolvedEvent){
 
     FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+param.Name, weight);
@@ -1045,11 +1046,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         if(HasAwayMergedFatJet){
 
-          if(!IsDATA){
-            //==== LSF SF
-            weight *= LSFSF(SystDir_LSFSF);
-          }
-
           FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasMergedJet_"+param.Name, weight);
 
           bool HasSFLooseLepton = false;
@@ -1115,6 +1111,22 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
             FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoExtraTight_"+param.Name, weight);
 
+            //=== now let's apply LSF SF w.r.t. lepton flavour
+            if(Suffix=="SingleElectron"){
+              if(HasSFLooseLepton) JetLepFlav = 0;
+              else if(HasOFLooseLepton) JetLepFlav = 1;
+            }
+            else if(Suffix=="SingleMuon"){
+              if(HasSFLooseLepton) JetLepFlav = 1;
+              else if(HasOFLooseLepton) JetLepFlav = 0;
+            }
+            if(!IsDATA && JetLepFlav>0){
+              //==== LSF SF
+              weight *= LSFSF(JetLepFlav, SystDir_LSFSF);
+            }
+
+            //==== 1) e+e-jet or mu+mu-jet
+
             if(HasSFLooseLepton){
 
               FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasSFLooseLepton_"+param.Name, weight);
@@ -1159,6 +1171,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               }
 
             }
+
+            //==== 2) e+mu-jet or mu+e-jet
 
             if(!HasSFLooseLepton){
 
@@ -1226,7 +1240,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   if(IsBoosted_SR_EE){
     for(unsigned int i=0; i<Tight_muons.size(); i++){
       if( fabs(Tight_muons.at(i)->DeltaPhi(HNFatJet)) > 2.0){
-        JSFillHist((param.Name), "IsBoosted_SR_EE_But_HasTightMuon_"+(param.Name), 0., weight, 1, 0., 1.);
+        FillHist((param.Name)+"/IsBoosted_SR_EE_But_HasTightMuon_"+(param.Name), 0., weight, 1, 0., 1.);
         break;
       }
     }
@@ -1234,7 +1248,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   if(IsBoosted_SR_MM){
     for(unsigned int i=0; i<Tight_electrons.size(); i++){
       if( fabs(Tight_electrons.at(i)->DeltaPhi(HNFatJet)) > 2.0){
-        JSFillHist((param.Name), "IsBoosted_SR_MM_But_HasTightElectron_"+(param.Name), 0., weight, 1, 0., 1.);
+        FillHist((param.Name)+"/IsBoosted_SR_MM_But_HasTightElectron_"+(param.Name), 0., weight, 1, 0., 1.);
         break;
 
       }
@@ -1253,91 +1267,93 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         double normweight = 1./sumW/PDFWeights_Scale->at(0);
         for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
-          //JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+          //FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
 
-          JSFillHist("XsecSyst_Num_"+this_region, "PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
+          FillHist("XsecSyst_Num_"+this_region+"/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
         }
         for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
-          //JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+          //FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
 
-          JSFillHist("XsecSyst_Num_"+this_region, "PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_Error->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
+          FillHist("XsecSyst_Num_"+this_region+"/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_Error->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
         }
         for(unsigned int i=0; i<PDFWeights_AlphaS->size(); i++){
-          //JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+          //FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
 
-          JSFillHist("XsecSyst_Num_"+this_region, "PDFWeights_AlphaS_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_AlphaS->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
+          FillHist("XsecSyst_Num_"+this_region+"/PDFWeights_AlphaS_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_AlphaS->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
         }
 
       }
 
-      JSFillHist(this_region, "NEvent_"+this_region, 0., weight, 1, 0., 1.);
-      JSFillHist(this_region, "MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
+      FillHist(this_region+"/NEvent_"+this_region, 0., weight, 1, 0., 1.);
+      FillHist(this_region+"/MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
 
-      JSFillHist(this_region, "nPileUp_"+this_region, nPileUp, weight, 200., 0., 200.);
-      JSFillHist(this_region, "nPV_"+this_region, nPV, weight, 200., 0., 200.);
-      JSFillHist(this_region, "N_VTX_"+this_region, N_VTX, weight, 200., 0., 200.);
+      FillHist(this_region+"/nPileUp_"+this_region, nPileUp, weight, 200., 0., 200.);
+      FillHist(this_region+"/nPV_"+this_region, nPV, weight, 200., 0., 200.);
+      FillHist(this_region+"/N_VTX_"+this_region, N_VTX, weight, 200., 0., 200.);
 
-      JSFillHist(this_region, "Lepton_Size_"+this_region, leps_for_plot.size(), weight, 10, 0., 10.);
+      FillHist(this_region+"/Lepton_Size_"+this_region, leps_for_plot.size(), weight, 10, 0., 10.);
 
-      JSFillHist(this_region, "NExtraLooseElectron_"+this_region, NExtraLooseElectron, weight, 10, 0., 10.);
-      JSFillHist(this_region, "NExtraLooseMuon_"+this_region, NExtraLooseMuon, weight, 10, 0., 10.);
-      JSFillHist(this_region, "NExtraLooseLepton_"+this_region, NExtraLooseLepton, weight, 10, 0., 10.);
+      FillHist(this_region+"/NExtraLooseElectron_"+this_region, NExtraLooseElectron, weight, 10, 0., 10.);
+      FillHist(this_region+"/NExtraLooseMuon_"+this_region, NExtraLooseMuon, weight, 10, 0., 10.);
+      FillHist(this_region+"/NExtraLooseLepton_"+this_region, NExtraLooseLepton, weight, 10, 0., 10.);
 
-      JSFillHist(this_region, "NExtraTightElectron_"+this_region, NExtraTightElectron, weight, 10, 0., 10.);
-      JSFillHist(this_region, "NExtraTightMuon_"+this_region, NExtraTightMuon, weight, 10, 0., 10.);
-      JSFillHist(this_region, "NExtraTightLepton_"+this_region, NExtraTightLepton, weight, 10, 0., 10.);
+      FillHist(this_region+"/NExtraTightElectron_"+this_region, NExtraTightElectron, weight, 10, 0., 10.);
+      FillHist(this_region+"/NExtraTightMuon_"+this_region, NExtraTightMuon, weight, 10, 0., 10.);
+      FillHist(this_region+"/NExtraTightLepton_"+this_region, NExtraTightLepton, weight, 10, 0., 10.);
 
-      JSFillHist(this_region, "FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
-      JSFillHist(this_region, "LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
-      JSFillHist(this_region, "FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
-      JSFillHist(this_region, "Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
+      FillHist(this_region+"/FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
+      FillHist(this_region+"/LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
+      FillHist(this_region+"/FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
+      FillHist(this_region+"/Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
-      JSFillHist(this_region, "NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
-      JSFillHist(this_region, "HT_"+this_region, HT, weight, 4000, 0., 4000.);
+      FillHist(this_region+"/NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
+      FillHist(this_region+"/HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
-      JSFillHist(this_region, "PrefireRwg_"+this_region, 0, weight_Prefire, 1, 0., 1.);
+      FillHist(this_region+"/PrefireRwg_"+this_region, 0, weight_Prefire, 1, 0., 1.);
 
       if(this_region.Contains("Boosted")){
-        JSFillHist(this_region, "dPhi_lJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
+        FillHist(this_region+"/dPhi_lJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
 
-        JSFillHist(this_region, "HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
-        JSFillHist(this_region, "HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
-        JSFillHist(this_region, "HNFatJet_Mass_"+this_region, HNFatJet.M(), weight, 3000, 0., 3000.);
-        JSFillHist(this_region, "HNFatJet_SDMass_"+this_region, HNFatJet.SDMass(), weight, 3000, 0., 3000.);
-        JSFillHist(this_region, "HNFatJet_PuppiTau21_"+this_region, HNFatJet.PuppiTau2()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
-        JSFillHist(this_region, "HNFatJet_PuppiTau31_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
-        JSFillHist(this_region, "HNFatJet_PuppiTau32_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau2(), weight, 100, 0., 1.);
-        JSFillHist(this_region, "HNFatJet_LSF_"+this_region, HNFatJet.LSF(), weight, 100, 0., 1.);
+        FillHist(this_region+"/HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
+        FillHist(this_region+"/HNFatJet_Mass_"+this_region, HNFatJet.M(), weight, 3000, 0., 3000.);
+        FillHist(this_region+"/HNFatJet_SDMass_"+this_region, HNFatJet.SDMass(), weight, 3000, 0., 3000.);
+        FillHist(this_region+"/HNFatJet_PuppiTau21_"+this_region, HNFatJet.PuppiTau2()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
+        FillHist(this_region+"/HNFatJet_PuppiTau31_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
+        FillHist(this_region+"/HNFatJet_PuppiTau32_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau2(), weight, 100, 0., 1.);
+        FillHist(this_region+"/HNFatJet_LSF_"+this_region, HNFatJet.LSF(), weight, 100, 0., 1.);
 
       }
 
       if( leps_for_plot.size()>=2 ){
-        JSFillHist(this_region, "ZCand_Mass_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).M(), weight, 2000, 0., 2000.);
-        JSFillHist(this_region, "ZCand_Pt_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt(), weight, 2000, 0., 2000.);
-        JSFillHist(this_region, "dPhi_ll_"+this_region, fabs((*leps_for_plot.at(0)).DeltaPhi(*leps_for_plot.at(1))), weight, 40, 0., 4.);
+        FillHist(this_region+"/ZCand_Mass_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).M(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/ZCand_Pt_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/dPhi_ll_"+this_region, fabs((*leps_for_plot.at(0)).DeltaPhi(*leps_for_plot.at(1))), weight, 40, 0., 4.);
       }
 
-      JSFillHist(this_region, "WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+      FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
 
-      JSFillHist(this_region, "WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
+      FillHist(this_region+"/WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
 
-      JSFillHist(this_region, "NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
-      JSFillHist(this_region, "NCand_Pt_"+this_region, NCand.Pt(), weight, 300, 0., 3000.);
-      JSFillHist(this_region, "NCand_1_Mass_"+this_region, NCand_1.M(), weight, 800, 0., 8000.);
-      JSFillHist(this_region, "NCand_1_Pt_"+this_region, NCand_1.Pt(), weight, 300, 0., 3000.);
-      JSFillHist(this_region, "NCand_2_Mass_"+this_region, NCand_2.M(), weight, 800, 0., 8000.);
-      JSFillHist(this_region, "NCand_2_Pt_"+this_region, NCand_2.Pt(), weight, 300, 0., 3000.);
+      FillHist(this_region+"/NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
+      FillHist(this_region+"/NCand_Pt_"+this_region, NCand.Pt(), weight, 300, 0., 3000.);
+      FillHist(this_region+"/NCand_1_Mass_"+this_region, NCand_1.M(), weight, 800, 0., 8000.);
+      FillHist(this_region+"/NCand_1_Pt_"+this_region, NCand_1.Pt(), weight, 300, 0., 3000.);
+      FillHist(this_region+"/NCand_2_Mass_"+this_region, NCand_2.M(), weight, 800, 0., 8000.);
+      FillHist(this_region+"/NCand_2_Pt_"+this_region, NCand_2.Pt(), weight, 300, 0., 3000.);
 
       if(Signal){
-        JSFillHist(this_region, "TriggerEff_"+this_region, 0., this_trigger_sf, 1, 0., 1.);
+        FillHist(this_region+"/TriggerEff_"+this_region, 0., this_trigger_sf, 1, 0., 1.);
       }
 
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
       if(jets.size()>=2){
-        JSFillHist(this_region, "dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
+        FillHist(this_region+"/dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
       }
+
+      FillHist(this_region+"/JetLepFlav_"+this_region, JetLepFlav, 1., 3, -1., 2.);
 
     } // END if(pass Region)
 
@@ -1409,17 +1425,32 @@ void HNWRAnalyzer::FillCutFlow(bool IsCentral, TString suffix, TString histname,
 
   if(IsCentral){
 
-    JSFillHist(suffix, histname, 0., weight, 1, 0., 1.);
+    FillHist(suffix+"/"+histname, 0., weight, 1, 0., 1.);
 
   }
 
 }
 
-double HNWRAnalyzer::LSFSF(int dir){
+double HNWRAnalyzer::LSFSF(int lepflav, int dir){
 
-  if(dir==0) return 0.87;
-  else if(dir>0) return 0.87+0.08;
-  else return 0.87-0.07;
+  //==== lepflav = 0 : electron-jet
+  //==== lepflav = 1 : mu-jet
+
+  if(lepflav==0){
+    if(dir==0)     return 1.04;
+    else if(dir>0) return 1.04+0.03;
+    else           return 1.04-0.04;
+  }
+  else if(lepflav==1){
+    if(dir==0)     return 1.01;
+    else if(dir>0) return 1.01+0.03;
+    else           return 1.01-0.03;
+  }
+  else{
+    cerr << "[HNWRAnalyzer::LSFSF] wrong lepflav : " <<  lepflav << endl;
+    exit(EXIT_FAILURE);
+    return 1.;
+  }
 
 }
 

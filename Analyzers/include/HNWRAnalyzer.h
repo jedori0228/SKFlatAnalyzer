@@ -59,7 +59,7 @@ public:
   void FillCutFlow(bool IsCentral, TString suffix, TString histname, double weight);
 
   //==== LSF SF
-  double LSFSF(int dir);
+  double LSFSF(int lepflav, int dir);
 
 };
 
