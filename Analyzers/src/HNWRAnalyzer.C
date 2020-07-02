@@ -19,6 +19,9 @@ void HNWRAnalyzer::initializeAnalyzer(){
   SignalElectronOnly = HasFlag("SignalElectronOnly");
   SignalMuonOnly = HasFlag("SignalMuonOnly");
 
+  HEM1516 = HasFlag("HEM1516");
+  BeforeRun319077 = HasFlag("BeforeRun319077");
+
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunFake = " << RunFake << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunCF = " << RunCF << endl;
   cout << "[HNWRAnalyzer::initializeAnalyzer()] RunSyst = " << RunSyst << endl;
@@ -128,6 +131,10 @@ void HNWRAnalyzer::initializeAnalyzer(){
 }
 
 void HNWRAnalyzer::executeEvent(){
+
+  if(BeforeRun319077){
+    if(run>=319077) return;
+  }
 
   //==========================
   //==== Gen for genmatching
@@ -1120,7 +1127,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               if(HasSFLooseLepton) JetLepFlav = 1;
               else if(HasOFLooseLepton) JetLepFlav = 0;
             }
-            if(!IsDATA && JetLepFlav>0){
+            if(!IsDATA && JetLepFlav>=0){
               //==== LSF SF
               weight *= LSFSF(JetLepFlav, SystDir_LSFSF);
             }
@@ -1323,6 +1330,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         FillHist(this_region+"/HNFatJet_PuppiTau32_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau2(), weight, 100, 0., 1.);
         FillHist(this_region+"/HNFatJet_LSF_"+this_region, HNFatJet.LSF(), weight, 100, 0., 1.);
 
+        if(HEM1516){
+          //==== HEM1516
+          int sign_eta = HNFatJet.Eta()<0 ? -1 : +1;
+          int sign_phi = HNFatJet.Phi()<0 ? -1 : +1;
+          TString this_section = "Eta"+TString::Itoa(sign_eta,10)+"_Phi"+TString::Itoa(sign_phi,10);
+          FillHist(this_region+"/WRCand_Mass_"+this_section+"_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+        }
+
       }
 
       if( leps_for_plot.size()>=2 ){
@@ -1348,6 +1363,25 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
+
+      //==== For HEM15/16
+      if(HEM1516){
+        for(unsigned int i=0; i<fatjets.size(); i++){
+
+          TString this_itoa = TString::Itoa(i,10);
+          int sign_eta = fatjets.at(i).Eta()<0 ? -1 : +1;
+          int sign_phi = fatjets.at(i).Phi()<0 ? -1 : +1;
+          TString this_section = "Eta"+TString::Itoa(sign_eta,10)+"_Phi"+TString::Itoa(sign_phi,10);
+
+          FillHist(this_region+"/FatJet_"+this_itoa+"_Energy_"+this_section+"_"+this_region, fatjets.at(i).E(), weight, 3000, 0., 3000.);
+          FillHist(this_region+"/FatJet_"+this_itoa+"_Pt_"+this_section+"_"+this_region, fatjets.at(i).Pt(), weight, 3000, 0., 3000.);
+          FillHist(this_region+"/FatJet_"+this_itoa+"_Eta_"+this_section+"_"+this_region, fatjets.at(i).Eta(), weight, 60, -3., 3.);
+          FillHist(this_region+"/FatJet_"+this_itoa+"_Mass_"+this_section+"_"+this_region, fatjets.at(i).M(), weight, 3000, 0., 3000.);
+          FillHist(this_region+"/FatJet_"+this_itoa+"_SDMass_"+this_section+"_"+this_region, fatjets.at(i).SDMass(), weight, 3000, 0., 3000.);
+          FillHist(this_region+"/FatJet_"+this_itoa+"_LSF_"+this_section+"_"+this_region, fatjets.at(i).LSF(), weight, 100, 0., 1.);
+
+        }
+      }
 
       if(jets.size()>=2){
         FillHist(this_region+"/dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);

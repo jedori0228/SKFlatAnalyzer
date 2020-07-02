@@ -22,6 +22,8 @@ public:
   bool RunXsecSyst;
   bool Signal;
   bool SignalElectronOnly, SignalMuonOnly;
+  bool HEM1516;
+  bool BeforeRun319077;
 
   vector<Gen> gens;
 
