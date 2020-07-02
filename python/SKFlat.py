@@ -5,8 +5,10 @@ import subprocess
 import argparse
 import datetime
 from CheckJobStatus import *
+from GetXSECTable import *
 from TimeTools import *
 import random
+import subprocess
 
 ## Arguments
 
@@ -23,7 +25,10 @@ parser.add_argument('--skim', dest='Skim', default="")
 parser.add_argument('--no_exec', action='store_true')
 parser.add_argument('--FastSim', action='store_true')
 parser.add_argument('--userflags', dest='Userflags', default="")
+parser.add_argument('--nmax', dest='NMax', default=0, type=int)
 parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
+parser.add_argument('--memory', dest='Memory', default=0, type=float)
+parser.add_argument('--batchname',dest='BatchName', default="")
 args = parser.parse_args()
 
 ## make userflags as a list
@@ -51,7 +56,6 @@ string_ThisTime = ""
 USER = os.environ['USER']
 exec('from UserInfo_'+USER+' import *')
 SKFlatLogEmail = UserInfo['SKFlatLogEmail']
-SKFlatLogWeb = UserInfo['SKFlatLogWeb']
 SKFlatLogWebDir = UserInfo['SKFlatLogWebDir']
 LogEvery = UserInfo['LogEvery']
 
@@ -73,7 +77,7 @@ if SKFlatLogEmail=='':
   print '[SKFlat.py] Put your email address in setup.sh'
   exit()
 SendLogToWeb = True
-if SKFlatLogWeb=='' or SKFlatLogWebDir=='':
+if SKFlatLogWebDir=='':
   SendLogToWeb = False
 
 ## Check hostname
@@ -151,6 +155,10 @@ else:
     StringForHash += args.InputSample
 FileRangesForEachSample = []
 
+## add flags to hash
+for flag in Userflags:
+  StringForHash += flag
+
 ## Get Random Number for webdir
 
 random.seed(hash(StringForHash+timestamp+args.Year))
@@ -187,6 +195,7 @@ os.system('cp '+SKFlat_LIB_PATH+'/* '+MasterJobDir+'/lib')
 SampleFinishedForEachSample = []
 PostJobFinishedForEachSample = []
 BaseDirForEachSample = []
+XsecForEachSample = []
 for InputSample in InputSamples:
 
   NJobs = args.NJobs
@@ -237,7 +246,7 @@ for InputSample in InputSamples:
 
   NTotalFiles = len(lines_files)
 
-  if NJobs>NTotalFiles:
+  if NJobs>NTotalFiles or NJobs==0:
     NJobs = NTotalFiles
 
   SubmitOutput = open(base_rundir+'/SubmitOutput.log','w')
@@ -277,8 +286,8 @@ for InputSample in InputSamples:
   ## Get xsec and SumW
 
   this_dasname = ""
-  this_xsec = 1.
-  this_sumw = 1.
+  this_xsec = -1
+  this_sumw = -1
   if not IsDATA:
     lines_SamplePath = open(SAMPLE_DATA_DIR+'/CommonSampleInfo/'+InputSample+'.txt').readlines()
     for line in lines_SamplePath:
@@ -290,6 +299,8 @@ for InputSample in InputSamples:
         this_xsec = words[2]
         this_sumw = words[4]
         break
+
+  XsecForEachSample.append(this_xsec)
 
   ## Write run script
 
@@ -311,6 +322,9 @@ Trial=0
 #### make sure use C locale
 export LC_ALL=C
 
+#### Don't make root history
+export ROOT_HIST=0
+
 #### use cvmfs for root ####
 export CMS_PATH=/cvmfs/cms.cern.ch
 source $CMS_PATH/cmsset_default.sh
@@ -324,6 +338,9 @@ eval `scramv1 runtime -sh`
 cd -
 source /cvmfs/cms.cern.ch/$SCRAM_ARCH/cms/$cmsswrel/external/$SCRAM_ARCH/bin/thisroot.sh
 
+### modifying LD_LIBRARY_PATH to use libraries in base_rundir
+export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH|sed 's@'$SKFlat_WD'/lib@{0}/lib@')
+
 while [ "$SumNoAuth" -ne 0 ]; do
 
   if [ "$Trial" -gt 9999 ]; then
@@ -332,7 +349,7 @@ while [ "$SumNoAuth" -ne 0 ]; do
 
   echo "#### running ####"
   echo "root -l -b -q {1}/run_${{SECTION}}.C"
-  root -l -b -q {1}/run_${{SECTION}}.C 2> err.log
+  root -l -b -q {1}/run_${{SECTION}}.C 2> err.log || echo "EXIT_FAILURE" >> err.log
   NoAuthError_Open=`grep "Error in <TNetXNGFile::Open>" err.log -R | wc -l`
   NoAuthError_Close=`grep "Error in <TNetXNGFile::Close>" err.log -R | wc -l`
 
@@ -348,8 +365,7 @@ while [ "$SumNoAuth" -ne 0 ]; do
 done
 
 cat err.log >&2
-
-'''.format(SKFlatV, base_rundir, SCRAM_ARCH, cmsswrel)
+'''.format(MasterJobDir, base_rundir, SCRAM_ARCH, cmsswrel)
     run_commands.close()
 
     submit_command = open(base_rundir+'/submit.jds','w')
@@ -387,6 +403,12 @@ queue {0}
 '''.format(str(NJobs), commandsfilename)
       submit_command.close()
     elif IsTAMSA:
+      concurrency_limits=''
+      if args.NMax:
+        concurrency_limits='concurrency_limits = n'+str(args.NMax)+'.'+os.getenv("USER")
+      request_memory=''
+      if args.Memory:
+        request_memory='request_memory = '+str(args.Memory)
       print>>submit_command,'''executable = {1}.sh
 universe   = vanilla
 arguments  = $(Process)
@@ -396,10 +418,11 @@ should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 output = job_$(Process).log
 error = job_$(Process).err
-accounting_group=group_cms
 transfer_output_remaps = "hists.root = output/hists_$(Process).root"
+{2}
+{3}
 queue {0}
-'''.format(str(NJobs), commandsfilename)
+'''.format(str(NJobs), commandsfilename,concurrency_limits,request_memory)
       submit_command.close()
 
   CheckTotalNFile=0
@@ -423,13 +446,7 @@ queue {0}
       os.system('mkdir -p '+thisjob_dir)
       runCfileFullPath = thisjob_dir+'run.C'
 
-    IncludeLine  = 'R__LOAD_LIBRARY(libPhysics.so)\n'
-    IncludeLine += 'R__LOAD_LIBRARY(libTree.so)\n'
-    IncludeLine += 'R__LOAD_LIBRARY(libHist.so)\n'
-    IncludeLine += 'R__LOAD_LIBRARY({0}libDataFormats.so)\n'.format(libdir)
-    IncludeLine += 'R__LOAD_LIBRARY({0}libAnalyzerTools.so)\n'.format(libdir)
-    IncludeLine += 'R__LOAD_LIBRARY({0}libAnalyzers.so)\n'.format(libdir)
-    IncludeLine += 'R__LOAD_LIBRARY(/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/lhapdf/6.2.1-fmblme/lib/libLHAPDF.so)\n'
+    IncludeLine = 'R__LOAD_LIBRARY(/cvmfs/cms.cern.ch/slc7_amd64_gcc700/external/lhapdf/6.2.1-gnimlf3/lib/libLHAPDF.so)\n'
 
     out = open(runCfileFullPath, 'w')
     print>>out,'''{3}
@@ -473,7 +490,7 @@ void {2}(){{
       tmp_filename = lines_files[ FileRanges[it_job][0] ].strip('\n')
       ## /data7/DATA/SKFlat/v949cand2_2/2017/DATA/SingleMuon/periodB/181107_231447/0000/SKFlatNtuple_2017_DATA_100.root
       ## /data7/DATA/SKFlat/v949cand2_2/2017/MC/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/181108_152345/0000/SKFlatNtuple_2017_MC_100.root
-      skimoutdir = '/data9/DATA/SKFlat/'+SKFlatV+'/'+args.Year+'/'
+      skimoutdir = '/gv0/DATA/SKFlat/'+SKFlatV+'/'+args.Year+'/'
       skimoutfilename = ""
       if IsDATA:
         skimoutdir += "DATA_"+args.Analyzer+"/"+InputSample+"/period"+DataPeriod+"/"
@@ -496,8 +513,8 @@ void {2}(){{
       out.write('  m.MaxEvent=m.fChain->GetEntries()/'+str(args.Reduction)+';\n')
 
     print>>out,'''  m.Init();
-  m.initializeAnalyzerTools();
   m.initializeAnalyzer();
+  m.initializeAnalyzerTools();
   m.SwitchToTempDir();
   m.Loop();
 
@@ -533,7 +550,10 @@ root -l -b -q run.C 1>stdout.log 2>stderr.log
     cwd = os.getcwd()
     os.chdir(base_rundir)
     if not args.no_exec:
-      os.system('condor_submit submit.jds')
+      condorOptions = ''
+      if args.BatchName!="":
+        condorOptions = ' -batch-name '+args.BatchName
+      os.system('condor_submit submit.jds '+condorOptions)
     os.chdir(cwd)
 
   else:
@@ -564,7 +584,7 @@ if args.Outputdir=="":
   if IsDATA:
     FinalOutputPath += '/DATA/'
 if IsSkimTree:
-  FinalOutputPath = '/data9/DATA/SKFlat/'+SKFlatV+'/'+args.Year+'/'
+  FinalOutputPath = '/gv0/DATA/SKFlat/'+SKFlatV+'/'+args.Year+'/'
 
 os.system('mkdir -p '+FinalOutputPath)
 
@@ -768,6 +788,7 @@ try:
         ThisTime = datetime.datetime.now()
         string_ThisTime =  ThisTime.strftime('%Y-%m-%d %H:%M:%S')
 
+        statuslog.write('XSEC = '+str(XsecForEachSample[it_sample])+'\n')
         statuslog.write('EventDone = '+str(EventDone)+'\n')
         statuslog.write('EventTotal = '+str(EventTotal)+'\n')
         statuslog.write('EventLeft = '+str(EventTotal-EventDone)+'\n')
@@ -866,8 +887,7 @@ try:
 
     if SendLogToWeb:
 
-      os.system('scp -r '+webdirpathbase+'/* '+SKFlatLogWeb+':'+SKFlatLogWebDir)
-      os.system('ssh -Y '+SKFlatLogWeb+' chmod -R 777 '+SKFlatLogWebDir+'/*'+args.Analyzer+"*")
+      os.system('cp -r '+webdirpathbase+'/* '+SKFlatLogWebDir)
 
     time.sleep(20)
 
@@ -881,11 +901,13 @@ JobFinishEmail = '''#### Job Info ####
 HOST = {3}
 JobID = {6}
 Analyzer = {0}
+Year = {7}
 Skim = {5}
 # of Jobs = {4}
 InputSample = {1}
+{8}
 Output sent to : {2}
-'''.format(args.Analyzer,InputSamples,FinalOutputPath,HOSTNAME,NJobs,args.Skim,str_RandomNumber)
+'''.format(args.Analyzer,InputSamples,FinalOutputPath,HOSTNAME,NJobs,args.Skim,str_RandomNumber,args.Year,GetXSECTable(InputSamples,XsecForEachSample))
 JobFinishEmail += '''##################
 Job started at {0}
 Job finished at {1}

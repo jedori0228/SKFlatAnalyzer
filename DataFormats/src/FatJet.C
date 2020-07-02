@@ -81,10 +81,10 @@ void FatJet::SetLSF(double lsf, int lsf_PID){
   j_lsf = lsf;
   j_lsf_pid = lsf_PID;
 }
-double FatJet::LSF(){
+double FatJet::LSF() const{
   return j_lsf;
 }
-double FatJet::LSF_PID(){
+double FatJet::LSF_PID() const{
   return j_lsf_pid;
 }
 
@@ -105,7 +105,7 @@ void FatJet::SetTightLepVetoJetID(double b){
   j_tightLepVetoJetID = b;
 }
 
-bool FatJet::PassID(TString ID){
+bool FatJet::PassID(TString ID) const {
 
   if(ID=="tight") return Pass_tightJetID();
   if(ID=="tightLepVeto") return Pass_tightLepVetoJetID();
@@ -117,19 +117,20 @@ bool FatJet::PassID(TString ID){
 
 }
 
-double FatJet::GetTaggerResult(Tagger tg){
-  if(tg==CSVv2) return j_CSVv2;
-  else if(tg==DeepCSV) return j_DeepCSV;
-  else if(tg==DeepFlavour_b) return j_DeepFlavour_b;
-  else if(tg==DeepFlavour_bb) return j_DeepFlavour_bb;
-  else if(tg==DeepFlavour_lepb) return j_DeepFlavour_lepb;
-  else if(tg==DeepFlavour_c) return j_DeepFlavour_c;
-  else if(tg==DeepFlavour_uds) return j_DeepFlavour_uds;
-  else if(tg==DeepFlavour_g) return j_DeepFlavour_g;
-  else if(tg==CvsL) return j_CvsL;
-  else if(tg==CvsB) return j_CvsB;
-  else if(tg==DeepCvsL) return j_DeepCvsL;
-  else if(tg==DeepCvsB) return j_DeepCvsB;
+double FatJet::GetTaggerResult(JetTagging::Tagger tg) const{
+  if(tg==JetTagging::CSVv2) return j_CSVv2;
+  else if(tg==JetTagging::DeepCSV) return j_DeepCSV;
+  else if(tg==JetTagging::DeepJet) return j_DeepFlavour_b+j_DeepFlavour_bb+j_DeepFlavour_lepb;
+  else if(tg==JetTagging::DeepFlavour_b) return j_DeepFlavour_b;
+  else if(tg==JetTagging::DeepFlavour_bb) return j_DeepFlavour_bb;
+  else if(tg==JetTagging::DeepFlavour_lepb) return j_DeepFlavour_lepb;
+  else if(tg==JetTagging::DeepFlavour_c) return j_DeepFlavour_c;
+  else if(tg==JetTagging::DeepFlavour_uds) return j_DeepFlavour_uds;
+  else if(tg==JetTagging::DeepFlavour_g) return j_DeepFlavour_g;
+  else if(tg==JetTagging::CvsL) return j_CvsL;
+  else if(tg==JetTagging::CvsB) return j_CvsB;
+  else if(tg==JetTagging::DeepCvsL) return j_DeepCvsL;
+  else if(tg==JetTagging::DeepCvsB) return j_DeepCvsB;
   else{
     cout << "[FatJet::GetTaggerResult] ERROR; Wrong tagger" << endl;
     return -999;

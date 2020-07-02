@@ -2,12 +2,14 @@
 
 AnalyzerCore::AnalyzerCore(){
 
+  outfile = NULL;
   mcCorr = new MCCorrection();
   puppiCorr = new PuppiSoftdropMassCorr();
   fakeEst = new FakeBackgroundEstimator();
   cfEst = new CFBackgroundEstimator();
   pdfReweight = new PDFReweight();
   muonGE = new GeneralizedEndpoint();
+  muonGEScaleSyst = new GEScaleSyst();
 
 }
 
@@ -25,15 +27,15 @@ AnalyzerCore::~AnalyzerCore(){
   }
   maphist_TH2D.clear();
 
-  //=== delete btag map
-  for(std::map<TString,BTagSFUtil*>::iterator it = MapBTagSF.begin(); it!= MapBTagSF.end(); it++){
-    delete it->second;
+  for(std::map< TString, TH3D* >::iterator mapit = maphist_TH3D.begin(); mapit!=maphist_TH3D.end(); mapit++){
+    delete mapit->second;
   }
-  MapBTagSF.clear();
-
+  maphist_TH3D.clear();
+  
   //==== output rootfile
 
-  outfile->Close();
+  if(outfile) outfile->Close();
+  delete outfile;
 
   //==== Tools
 
@@ -42,6 +44,8 @@ AnalyzerCore::~AnalyzerCore(){
   delete fakeEst;
   delete cfEst;
   delete pdfReweight;
+  delete muonGE;
+  delete muonGEScaleSyst;
 
 }
 
@@ -105,6 +109,8 @@ std::vector<Muon> AnalyzerCore::GetAllMuons(){
     //==== Apply scailing later with AnalyzerCore::UseTunePMuon()
     mu.SetTuneP4(muon_TuneP_pt->at(i), muon_TuneP_ptError->at(i), muon_TuneP_eta->at(i), muon_TuneP_phi->at(i), muon_TuneP_charge->at(i));
 
+    mu.SetMVA(muon_MVA->at(i));
+
     mu.SetdXY(muon_dxyVTX->at(i), muon_dxyerrVTX->at(i));
     mu.SetdZ(muon_dzVTX->at(i), muon_dzerrVTX->at(i));
     mu.SetIP3D(muon_3DIPVTX->at(i), muon_3DIPerrVTX->at(i));
@@ -113,6 +119,7 @@ std::vector<Muon> AnalyzerCore::GetAllMuons(){
     mu.SetisPOGHighPt(muon_ishighpt->at(i));
     mu.SetChi2(muon_normchi->at(i));
     mu.SetIso(muon_PfChargedHadronIsoR04->at(i),muon_PfNeutralHadronIsoR04->at(i),muon_PfGammaIsoR04->at(i),muon_PFSumPUIsoR04->at(i),muon_trkiso->at(i));
+    mu.SetTrackerLayers(muon_trackerLayers->at(i));
 
     //==== Should be set after Eta is set
     mu.SetMiniIso(
@@ -136,20 +143,19 @@ std::vector<Muon> AnalyzerCore::GetMuons(TString id, double ptmin, double fetama
   std::vector<Muon> muons = GetAllMuons();
   std::vector<Muon> out;
   for(unsigned int i=0; i<muons.size(); i++){
-    Muon this_muon=muons.at(i);
-    if(!( this_muon.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_muon.Pt() << ", cut = " << ptmin << endl;
+    if(!( muons.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << muons.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_muon.Eta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_muon.Eta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(muons.at(i).Eta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(muons.at(i).Eta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_muon.PassID(id) )){
+    if(!( muons.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_muon);
+    out.push_back( muons.at(i) );
   }
   return out;
 
@@ -180,6 +186,7 @@ std::vector<Electron> AnalyzerCore::GetAllElectrons(){
     el.SetPassConversionVeto(electron_passConversionVeto->at(i));
     el.SetNMissingHits(electron_mHits->at(i));
     el.SetRho(Rho);
+    el.SetIsGsfCtfScPixChargeConsistent(electron_isGsfCtfScPixChargeConsistent->at(i));
 
     el.SetCutBasedIDVariables(
       electron_Full5x5_SigmaIEtaIEta->at(i),
@@ -191,10 +198,20 @@ std::vector<Electron> AnalyzerCore::GetAllElectrons(){
       electron_e1x5OverE5x5->at(i),
       electron_trackIso->at(i),
       electron_dr03EcalRecHitSumEt->at(i),
-      electron_dr03HcalDepth1TowerSumEt->at(i)
+      electron_dr03HcalDepth1TowerSumEt->at(i),
+      electron_dr03HcalTowerSumEt->at(i),
+      electron_dr03TkSumPt->at(i),
+      electron_ecalPFClusterIso->at(i),
+      electron_hcalPFClusterIso->at(i),
+      electron_ecalDriven->at(i)
     );
 
     el.SetIDBit(electron_IDBit->at(i));
+    vector<int> temp_idcutbit;
+    for(unsigned int j=0; j<Electron::N_SELECTOR; j++){
+      temp_idcutbit.push_back( electron_IDCutBit->at( i*Electron::N_SELECTOR + j ) );
+    }
+    el.SetIDCutBit(temp_idcutbit);
     el.SetRelPFIso_Rho(electron_RelPFIso_Rho->at(i));
 
     //==== Should be ran after SCeta is set
@@ -219,26 +236,25 @@ std::vector<Electron> AnalyzerCore::GetElectrons(TString id, double ptmin, doubl
   std::vector<Electron> electrons = GetAllElectrons();
   std::vector<Electron> out;
   for(unsigned int i=0; i<electrons.size(); i++){
-    Electron this_electron= electrons.at(i);
-    if(!( this_electron.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_electron.Pt() << ", cut = " << ptmin << endl;
+    if(!( electrons.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << electrons.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_electron.scEta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_electron.scEta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(electrons.at(i).scEta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(electrons.at(i).scEta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_electron.PassID(id) )){
+    if(!( electrons.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_electron);
+    out.push_back( electrons.at(i) );
   }
   return out;
 
 }
 
-std::vector<Lepton *> AnalyzerCore::MakeLeptonPointerVector(std::vector<Muon>& muons, double TightIso, bool UseMini){
+std::vector<Lepton *> AnalyzerCore::MakeLeptonPointerVector(const std::vector<Muon>& muons, double TightIso, bool UseMini){
 
   std::vector<Lepton *> out;
   for(unsigned int i=0; i<muons.size(); i++){
@@ -260,7 +276,7 @@ std::vector<Lepton *> AnalyzerCore::MakeLeptonPointerVector(std::vector<Muon>& m
   return out;
 
 }
-std::vector<Lepton *> AnalyzerCore::MakeLeptonPointerVector(std::vector<Electron>& electrons, double TightIso, bool UseMini){
+std::vector<Lepton *> AnalyzerCore::MakeLeptonPointerVector(const std::vector<Electron>& electrons, double TightIso, bool UseMini){
 
   std::vector<Lepton *> out;
   for(unsigned int i=0; i<electrons.size(); i++){
@@ -329,17 +345,16 @@ std::vector<Photon> AnalyzerCore::GetPhotons(TString id, double ptmin, double fe
   std::vector<Photon> photons = GetAllPhotons();
   std::vector<Photon> out;
   for(unsigned int i=0; i<photons.size(); i++){
-    Photon this_photon= photons.at(i);
-    if(!( this_photon.Pt()>ptmin )){
+    if(!( photons.at(i).Pt()>ptmin )){
       continue;
     }
-    if(!( fabs(this_photon.scEta())<fetamax )){
+    if(!( fabs(photons.at(i).scEta())<fetamax )){
       continue;
     }
-    if(!( this_photon.PassID(id) )){
+    if(!( photons.at(i).PassID(id) )){
       continue;
     }
-    out.push_back(this_photon);
+    out.push_back( photons.at(i) );
   }
   return out;
 }
@@ -396,20 +411,19 @@ std::vector<Jet> AnalyzerCore::GetJets(TString id, double ptmin, double fetamax)
   std::vector<Jet> jets = GetAllJets();
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
-    Jet this_jet= jets.at(i);
-    if(!( this_jet.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_jet.Pt() << ", cut = " << ptmin << endl;
+    if(!( jets.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << jets.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_jet.Eta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_jet.Eta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(jets.at(i).Eta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(jets.at(i).Eta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_jet.PassID(id) )){
+    if(!( jets.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_jet);
+    out.push_back( jets.at(i) );
   }
   return out;
 
@@ -465,20 +479,19 @@ std::vector<FatJet> AnalyzerCore::GetFatJets(TString id, double ptmin, double fe
   std::vector<FatJet> jets = GetAllFatJets();
   std::vector<FatJet> out;
   for(unsigned int i=0; i<jets.size(); i++){
-    FatJet this_jet= jets.at(i);
-    if(!( this_jet.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_jet.Pt() << ", cut = " << ptmin << endl;
+    if(!( jets.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << jets.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_jet.Eta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_jet.Eta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(jets.at(i).Eta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(jets.at(i).Eta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_jet.PassID(id) )){
+    if(!( jets.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_jet);
+    out.push_back( jets.at(i) );
   }
   return out;
 
@@ -521,10 +534,31 @@ std::vector<Gen> AnalyzerCore::GetGens(){
 
 }
 
-std::vector<Muon> AnalyzerCore::UseTunePMuon(std::vector<Muon> muons){
+std::vector<LHE> AnalyzerCore::GetLHEs(){
+
+  std::vector<LHE> out;
+  if(IsDATA) return out;
+
+  for(unsigned int i=0; i<LHE_Px->size(); i++){
+
+    LHE lhe;
+
+    lhe.SetPxPyPzE(LHE_Px->at(i), LHE_Py->at(i), LHE_Pz->at(i), LHE_E->at(i));
+    lhe.SetIndexIDStatus(i, LHE_ID->at(i), LHE_Status->at(i));
+
+    out.push_back(lhe);
+
+  }
+
+  return out;
+
+}
+
+std::vector<Muon> AnalyzerCore::UseTunePMuon(const std::vector<Muon>& muons){
 
   std::vector<Muon> out;
   for(unsigned int i=0; i<muons.size(); i++){
+    //==== muons is a const vector. So in this function, we have to copy the elements like below
     Muon this_muon=muons.at(i);
 
     Particle this_tunep4 = this_muon.TuneP4();
@@ -533,7 +567,7 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(std::vector<Muon> muons){
     //==== 1) if tuneP Pt < 200 -> Rochester
     //==== 2) if tuneP pt >= 200 -> Generalized Endpoint
 
-    double new_pt, new_pt_up, new_pt_down;
+    double new_pt( this_tunep4.Pt() ), new_pt_up( this_tunep4.Pt() ), new_pt_down( this_tunep4.Pt() );
     if(this_tunep4.Pt()<200){
 
       //==== 19/03/24 (jskim) : For 99% of the muons, MiniAODPt and TunePPt are same
@@ -555,21 +589,33 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(std::vector<Muon> muons){
     }
     else{
 
-      //==== ScaledPts defined in GeneralizedEndpointPt.h ..
-      ScaledPts ptvalues = muonGE->GeneralizedEndpointPt(this_tunep4.Pt(), this_tunep4.Charge(), this_tunep4.Eta(), this_tunep4.Phi()*180./M_PI, event);
-      new_pt = ptvalues.ScaledPt;
-      //==== Mode == 1 : Kappa up
-      //==== Mode == 2 : Kappa down
-      new_pt_up = ptvalues.ScaeldPt_Up;
-      new_pt_down = ptvalues.ScaeldPt_Down;
+      //==== Unlike rochester, GE method should be only applied to MC
+
+      if(!IsDATA){
+
+        //==== ScaledPts defined in GeneralizedEndpointPt.h ..
+
+        ScaledPts ptvalues;
+        //==== TODO FIXME
+        //==== 19/09/02 : There is no GEScaleSyst map for 2016
+        if(DataYear==2016) ptvalues = muonGE->GeneralizedEndpointPt(this_tunep4.Pt(), this_tunep4.Charge(), this_tunep4.Eta(), this_tunep4.Phi()*180./M_PI, event);
+        else ptvalues = muonGEScaleSyst->GEPt(DataYear, this_tunep4.Pt(), this_tunep4.Eta(), this_tunep4.Phi(), this_tunep4.Charge());
+
+        new_pt = ptvalues.ScaledPt;
+        //==== Mode == 1 : Kappa up
+        //==== Mode == 2 : Kappa down
+        new_pt_up = ptvalues.ScaeldPt_Up;
+        new_pt_down = ptvalues.ScaeldPt_Down;
 
 /*
-      cout << "## GeneralizedEndpointPt ##" << endl;
-      cout << "old_pt = " << this_tunep4.Pt() << endl;
-      cout << "new_pt = " << new_pt << endl;
-      cout << "new_pt_up = " << new_pt_up << endl;
-      cout << "new_pt_down = " << new_pt_down << endl;
+        cout << "## GeneralizedEndpointPt ##" << endl;
+        cout << "old_pt = " << this_tunep4.Pt() << endl;
+        cout << "new_pt = " << new_pt << endl;
+        cout << "new_pt_up = " << new_pt_up << endl;
+        cout << "new_pt_down = " << new_pt_down << endl;
 */
+
+      }
 
     }
 
@@ -596,102 +642,99 @@ std::vector<Muon> AnalyzerCore::UseTunePMuon(std::vector<Muon> muons){
 
 }
 
-std::vector<Muon> AnalyzerCore::SelectMuons(std::vector<Muon> muons, TString id, double ptmin, double fetamax){
+std::vector<Muon> AnalyzerCore::SelectMuons(const std::vector<Muon>& muons, TString id, double ptmin, double fetamax){
 
   std::vector<Muon> out;
   for(unsigned int i=0; i<muons.size(); i++){
-    Muon this_muon=muons.at(i);
-    if(!( this_muon.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_muon.Pt() << ", cut = " << ptmin << endl;
+    if(!( muons.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << muons.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_muon.Eta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_muon.Eta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(muons.at(i).Eta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(muons.at(i).Eta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_muon.PassID(id) )){
+    if(!( muons.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_muon);
+    out.push_back( muons.at(i) );
   }
   return out;
 
 }
 
-std::vector<Electron> AnalyzerCore::SelectElectrons(std::vector<Electron> electrons, TString id, double ptmin, double fetamax){
+std::vector<Electron> AnalyzerCore::SelectElectrons(const std::vector<Electron>& electrons, TString id, double ptmin, double fetamax){
 
   std::vector<Electron> out;
   for(unsigned int i=0; i<electrons.size(); i++){
-    Electron this_electron= electrons.at(i);
-    if(!( this_electron.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_electron.Pt() << ", cut = " << ptmin << endl;
+    if(!( electrons.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << electrons.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_electron.scEta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_electron.scEta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(electrons.at(i).scEta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(electrons.at(i).scEta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_electron.PassID(id) )){
+    if(!( electrons.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_electron);
+    out.push_back(electrons.at(i));
   }
   return out;
 
 }
 
-std::vector<Jet> AnalyzerCore::SelectJets(std::vector<Jet> jets, TString id, double ptmin, double fetamax){
+std::vector<Jet> AnalyzerCore::SelectJets(const std::vector<Jet>& jets, TString id, double ptmin, double fetamax){
 
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
-    Jet this_jet= jets.at(i);
-    if(!( this_jet.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_jet.Pt() << ", cut = " << ptmin << endl;
+    if(!( jets.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << jets.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_jet.Eta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_jet.Eta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(jets.at(i).Eta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(jets.at(i).Eta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_jet.PassID(id) )){
+    if(!( jets.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_jet);
+    out.push_back( jets.at(i) );
   }
   return out;
 
 }
 
-std::vector<FatJet> AnalyzerCore::SelectFatJets(std::vector<FatJet> jets, TString id, double ptmin, double fetamax){
+std::vector<FatJet> AnalyzerCore::SelectFatJets(const std::vector<FatJet>& jets, TString id, double ptmin, double fetamax){
 
   std::vector<FatJet> out;
   for(unsigned int i=0; i<jets.size(); i++){
-    FatJet this_jet= jets.at(i);
-    if(!( this_jet.Pt()>ptmin )){
-      //cout << "Fail Pt : pt = " << this_jet.Pt() << ", cut = " << ptmin << endl;
+    if(!( jets.at(i).Pt()>ptmin )){
+      //cout << "Fail Pt : pt = " << jets.at(i).Pt() << ", cut = " << ptmin << endl;
       continue;
     }
-    if(!( fabs(this_jet.Eta())<fetamax )){
-      //cout << "Fail Eta : eta = " << fabs(this_jet.Eta()) << ", cut = " << fetamax << endl;
+    if(!( fabs(jets.at(i).Eta())<fetamax )){
+      //cout << "Fail Eta : eta = " << fabs(jets.at(i).Eta()) << ", cut = " << fetamax << endl;
       continue;
     }
-    if(!( this_jet.PassID(id) )){
+    if(!( jets.at(i).PassID(id) )){
       //cout << "Fail ID" << endl;
       continue;
     }
-    out.push_back(this_jet);
+    out.push_back( jets.at(i) );
   }
   return out;
 
 }
 
-std::vector<Electron> AnalyzerCore::ScaleElectrons(std::vector<Electron> electrons, int sys){
+std::vector<Electron> AnalyzerCore::ScaleElectrons(const std::vector<Electron>& electrons, int sys){
 
   std::vector<Electron> out;
   for(unsigned int i=0; i<electrons.size(); i++){
+    //==== electrons is a const vector. So in this function, we have to copy the elements like below
     Electron this_electron = electrons.at(i);
 
     double this_sf = this_electron.EnShift(sys);
@@ -703,10 +746,11 @@ std::vector<Electron> AnalyzerCore::ScaleElectrons(std::vector<Electron> electro
   return out;
 
 }
-std::vector<Electron> AnalyzerCore::SmearElectrons(std::vector<Electron> electrons, int sys){
+std::vector<Electron> AnalyzerCore::SmearElectrons(const std::vector<Electron>& electrons, int sys){
 
   std::vector<Electron> out;
   for(unsigned int i=0; i<electrons.size(); i++){
+    //==== electrons is a const vector. So in this function, we have to copy the elements like below
     Electron this_electron = electrons.at(i);
 
     double this_sf = this_electron.ResShift(sys);
@@ -719,10 +763,11 @@ std::vector<Electron> AnalyzerCore::SmearElectrons(std::vector<Electron> electro
 
 }
 
-std::vector<Muon> AnalyzerCore::ScaleMuons(std::vector<Muon> muons, int sys){
+std::vector<Muon> AnalyzerCore::ScaleMuons(const std::vector<Muon>& muons, int sys){
 
   std::vector<Muon> out;
   for(unsigned int i=0; i<muons.size(); i++){
+    //==== muons is a const vector. So in this function, we have to copy the elements like below
     Muon this_muon = muons.at(i);
 
     //==== Even for TuneP muons, MomentumShift() are set correctly from AnalyzerCore::UseTunePMuon()
@@ -738,10 +783,11 @@ std::vector<Muon> AnalyzerCore::ScaleMuons(std::vector<Muon> muons, int sys){
 
 }
 
-std::vector<Jet> AnalyzerCore::ScaleJets(std::vector<Jet> jets, int sys){
+std::vector<Jet> AnalyzerCore::ScaleJets(const std::vector<Jet>& jets, int sys){
 
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
+    //==== jets is a const vector. So in this function, we have to copy the elements like below
     Jet this_jet = jets.at(i);
 
     this_jet *= this_jet.EnShift(sys);
@@ -752,10 +798,11 @@ std::vector<Jet> AnalyzerCore::ScaleJets(std::vector<Jet> jets, int sys){
   return out;
 
 }
-std::vector<Jet> AnalyzerCore::SmearJets(std::vector<Jet> jets, int sys){
+std::vector<Jet> AnalyzerCore::SmearJets(const std::vector<Jet>& jets, int sys){
 
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
+    //==== jets is a const vector. So in this function, we have to copy the elements like below
     Jet this_jet = jets.at(i);
 
     this_jet *= this_jet.ResShift(sys);
@@ -767,10 +814,11 @@ std::vector<Jet> AnalyzerCore::SmearJets(std::vector<Jet> jets, int sys){
 
 }
 
-std::vector<FatJet> AnalyzerCore::ScaleFatJets(std::vector<FatJet> jets, int sys){
+std::vector<FatJet> AnalyzerCore::ScaleFatJets(const std::vector<FatJet>& jets, int sys){
 
   std::vector<FatJet> out;
   for(unsigned int i=0; i<jets.size(); i++){
+    //==== jets is a const vector. So in this function, we have to copy the elements like below
     FatJet this_jet = jets.at(i);
 
     this_jet *= this_jet.EnShift(sys);
@@ -781,10 +829,11 @@ std::vector<FatJet> AnalyzerCore::ScaleFatJets(std::vector<FatJet> jets, int sys
   return out;
 
 }
-std::vector<FatJet> AnalyzerCore::SmearFatJets(std::vector<FatJet> jets, int sys){
+std::vector<FatJet> AnalyzerCore::SmearFatJets(const std::vector<FatJet>& jets, int sys){
 
   std::vector<FatJet> out;
   for(unsigned int i=0; i<jets.size(); i++){
+    //==== jets is a const vector. So in this function, we have to copy the elements like below
     FatJet this_jet = jets.at(i);
 
     this_jet *= this_jet.ResShift(sys);
@@ -796,10 +845,11 @@ std::vector<FatJet> AnalyzerCore::SmearFatJets(std::vector<FatJet> jets, int sys
 
 }
 //Fatjet SDMass systematics (https://twiki.cern.ch/twiki/bin/view/CMS/JetWtagging#2016%20scale%20factors%20and%20correctio)
-std::vector<FatJet> AnalyzerCore::ScaleSDMassFatJets(std::vector<FatJet> jets, int sys){
+std::vector<FatJet> AnalyzerCore::ScaleSDMassFatJets(const std::vector<FatJet>& jets, int sys){
   
   std::vector<FatJet> out;
   for(unsigned int i=0; i<jets.size(); i++){
+    //==== jets is a const vector. So in this function, we have to copy the elements like below
     FatJet this_jet = jets.at(i);
     double current_SDMass = this_jet.SDMass() * (1. + double(sys) * 0.0094 );
     this_jet.SetSDMass( current_SDMass );
@@ -810,10 +860,11 @@ std::vector<FatJet> AnalyzerCore::ScaleSDMassFatJets(std::vector<FatJet> jets, i
   return out;
   
 }
-std::vector<FatJet> AnalyzerCore::SmearSDMassFatJets(std::vector<FatJet> jets, int sys){
+std::vector<FatJet> AnalyzerCore::SmearSDMassFatJets(const std::vector<FatJet>& jets, int sys){
 
   std::vector<FatJet> out;
   for(unsigned int i=0; i<jets.size(); i++){
+    //==== jets is a const vector. So in this function, we have to copy the elements like below
     FatJet this_jet = jets.at(i);
     double current_SDMass = this_jet.SDMass() * (1. + double(sys) * 0.20 );
     this_jet.SetSDMass( current_SDMass );
@@ -851,10 +902,14 @@ bool AnalyzerCore::PassMETFilter(){
 void AnalyzerCore::initializeAnalyzerTools(){
 
   //==== MCCorrection
+  mcCorr->SetMCSample(MCSample);
+  mcCorr->SetDataYear(DataYear);
+  mcCorr->SetIsDATA(IsDATA);
+  mcCorr->SetEventInfo(run, lumi, event);
+  mcCorr->SetIsFastSim(IsFastSim);
   if(!IsDATA){
-    mcCorr->SetMCSample(MCSample);
-    mcCorr->SetDataYear(DataYear);
     mcCorr->ReadHistograms();
+    mcCorr->SetupJetTagging();
   }
 
   puppiCorr->SetDataYear(DataYear);
@@ -893,93 +948,6 @@ double AnalyzerCore::GetPrefireWeight(int sys){
   return 1.;
 
 }
-
-
-void AnalyzerCore::SetupBTagger(std::vector<Jet::Tagger> taggers, std::vector<Jet::WP> wps, bool setup_systematics, bool period_dependant){
-
-  //=== Btagging code for 2016/2017/2018
-  
-  //=== Uses method 2 a) from twiki (more methods can be coded):
-  //=== https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods
-  
-  //=== if function already called exit
-  if(MapBTagSF.size() > 0) return;
-
-  for(std::vector<Jet::Tagger>::const_iterator it = taggers.begin(); it != taggers.end(); it++){
-    for(std::vector<Jet::WP>::const_iterator it2 = wps.begin(); it2 != wps.end(); it2++){
-    
-      //=== creat tmmp jet to get tagger string
-      Jet j;
-      TString stagger = j.TaggerString(*it);
-      TString swp = j.WPString(*it2);
-      
-      MapBTagSF[stagger + "_" + swp + "_lf"]              = new BTagSFUtil("incl"  ,  string(stagger), swp, DataYear, period_dependant,0);
-      MapBTagSF[stagger + "_" + swp + "_hf"]              = new BTagSFUtil("mujets",  string(stagger), swp, DataYear, period_dependant,0);
-      if(setup_systematics){
-        MapBTagSF[stagger + "_" + swp + "_lf_systup"]     = new BTagSFUtil("incl"  ,  string(stagger), swp, DataYear, period_dependant , 3);
-        MapBTagSF[stagger + "_" + swp + "_hf_systup"]     = new BTagSFUtil("mujets",  string(stagger), swp, DataYear, period_dependant , 1);
-        MapBTagSF[stagger + "_" + swp + "_lf_systdown"]   = new BTagSFUtil("incl"  ,  string(stagger), swp, DataYear, period_dependant , -3);
-        MapBTagSF[stagger + "_" + swp + "_hf_systdown"]   = new BTagSFUtil("mujets",  string(stagger), swp, DataYear, period_dependant , -1);
-      }
-    }
-  }
-  return;
-
-}
-
-
-bool AnalyzerCore::IsBTagged(Jet j, Jet::Tagger tagger, Jet::WP WP, bool applySF, int systematic){
-
-  //=== function to check if jet is btagged using SF to correct MC tag rate
-  
-  //=== create key from configuration
-  TString map_key = j.TaggerString(tagger) + "_"+  j.WPString(WP) ;
-
-  if(j.hadronFlavour() == 0 || IsDATA) map_key += "_lf";
-  else map_key +="_hf";
-
-  if(!IsDATA){
-    if(systematic > 0) map_key += "_systup";
-    else if (systematic < 0) map_key +=  "systdown";
-  }
-  
-  //=== use key to access correct BTagSFUtil object
-  
-  std::map<TString,BTagSFUtil*>::iterator it_jet_btagger = MapBTagSF.find(map_key);
-
-  if(it_jet_btagger == MapBTagSF.end()){
-    cout << "[AnalyzerCore::IsBTaggedCorrected]  ERROR, incorrect combination of tagger/WP : " << j.TaggerString(tagger) <<  "/" << j.WPString(WP) << " check SetupBTagger is correctly configured for tagger/WP and systematics" << endl;
-    exit(EXIT_FAILURE);
-  }
-  
-
-  //=== check if jet is btagged using BTagSFUtil
-  bool isBtag=false;
-  int jet_flavour = IsDATA ? -999999 : j.hadronFlavour();
-
-  if(applySF){
-
-    //=== Assign unique seed for jet
-    unsigned int runNum_uint  = static_cast <unsigned int> (run);
-    unsigned int lumiNum_uint = static_cast <unsigned int> (lumi);
-    unsigned int evNum_uint   = static_cast <unsigned int> (event);
-    unsigned int jet0eta = uint32_t(fabs(j.Eta())/0.01);
-    int m_nomVar=1;
-    std::uint32_t seed = jet0eta + m_nomVar + (lumiNum_uint<<10) + (runNum_uint<<20) + evNum_uint;
-
-    if (it_jet_btagger->second->IsTagged(j.GetTaggerResult(tagger), jet_flavour, j.Pt(), j.Eta(),seed))
-      isBtag=true;
-  }
-  else{
-    //===  dont apply correction to btag value
-    if (it_jet_btagger->second->IsUncorrectedTagged(j.GetTaggerResult(tagger), jet_flavour, j.Pt(), j.Eta()))
-      isBtag=true;
-  }
-  return isBtag;
-
-}
-
-
 
 double AnalyzerCore::GetPileUpWeight(int N_pileup, int syst){
 
@@ -1081,22 +1049,21 @@ bool AnalyzerCore::HasFlag(TString flag){
 
 }
 
-std::vector<Muon> AnalyzerCore::MuonWithoutGap(std::vector<Muon> muons){
+std::vector<Muon> AnalyzerCore::MuonWithoutGap(const std::vector<Muon>& muons){
 
   std::vector<Muon> out;
   for(unsigned int i=0; i<muons.size(); i++){
-    Muon this_muon = muons.at(i);
-    double this_eta = fabs( this_muon.Eta() );
+    double this_eta = fabs( muons.at(i).Eta() );
     if( 1.444 <= this_eta && this_eta < 1.566 ) continue;
 
-    out.push_back(this_muon);
+    out.push_back( muons.at(i) );
   }
 
   return out;
 
 }
 
-std::vector<Muon> AnalyzerCore::MuonPromptOnly(std::vector<Muon> muons, std::vector<Gen> gens){
+std::vector<Muon> AnalyzerCore::MuonPromptOnly(const std::vector<Muon>& muons, const std::vector<Gen>& gens){
 
   if(IsDATA) return muons;
 
@@ -1111,27 +1078,31 @@ std::vector<Muon> AnalyzerCore::MuonPromptOnly(std::vector<Muon> muons, std::vec
 
 }
 
-std::vector<Muon> AnalyzerCore::MuonUsePtCone(std::vector<Muon> muons){
+std::vector<Muon> AnalyzerCore::MuonUsePtCone(const std::vector<Muon>& muons){
 
   std::vector<Muon> out;
 
   for(unsigned int i=0; i<muons.size(); i++){
-    muons.at(i).SetPtEtaPhiM( muons.at(i).PtCone(), muons.at(i).Eta(), muons.at(i).Phi(), muons.at(i).M() );
-    out.push_back( muons.at(i) );
+    //==== muons is a const vector. So in this function, we have to copy the elements like below
+    Muon this_muon = muons.at(i);
+    this_muon.SetPtEtaPhiM( muons.at(i).PtCone(), muons.at(i).Eta(), muons.at(i).Phi(), muons.at(i).M() );
+    out.push_back( this_muon );
   }
 
   return out;
 
 }
 
-Muon AnalyzerCore::MuonUsePtCone(Muon muon){
+Muon AnalyzerCore::MuonUsePtCone(const Muon& muon){
 
-  muon.SetPtEtaPhiM( muon.PtCone(), muon.Eta(), muon.Phi(), muon.M() );
-  return muon;
+  //==== muon is a const object. So in this function, we have to copy the object like below
+  Muon this_muon = muon;
+  this_muon.SetPtEtaPhiM( muon.PtCone(), muon.Eta(), muon.Phi(), muon.M() );
+  return this_muon;
 
 }
 
-Particle AnalyzerCore::UpdateMET(Particle METv, std::vector<Muon> muons){
+Particle AnalyzerCore::UpdateMET(const Particle& METv, const std::vector<Muon>& muons){
 
   float met_x = METv.Px();
   float met_y = METv.Py();
@@ -1156,7 +1127,7 @@ Particle AnalyzerCore::UpdateMET(Particle METv, std::vector<Muon> muons){
 
 }
 
-std::vector<Muon> AnalyzerCore::MuonApplyPtCut(std::vector<Muon> muons, double ptcut){
+std::vector<Muon> AnalyzerCore::MuonApplyPtCut(const std::vector<Muon>& muons, double ptcut){
 
   std::vector<Muon> out;
 
@@ -1169,7 +1140,7 @@ std::vector<Muon> AnalyzerCore::MuonApplyPtCut(std::vector<Muon> muons, double p
 
 }
 
-std::vector<Electron> AnalyzerCore::ElectronPromptOnly(std::vector<Electron> electrons, std::vector<Gen> gens){
+std::vector<Electron> AnalyzerCore::ElectronPromptOnly(const std::vector<Electron>& electrons, const std::vector<Gen>& gens){
 
   if(IsDATA) return electrons;
 
@@ -1184,27 +1155,31 @@ std::vector<Electron> AnalyzerCore::ElectronPromptOnly(std::vector<Electron> ele
 
 }
 
-std::vector<Electron> AnalyzerCore::ElectronUsePtCone(std::vector<Electron> electrons){
+std::vector<Electron> AnalyzerCore::ElectronUsePtCone(const std::vector<Electron>& electrons){
 
   std::vector<Electron> out;
 
   for(unsigned int i=0; i<electrons.size(); i++){
-    electrons.at(i).SetPtEtaPhiM( electrons.at(i).PtCone(), electrons.at(i).Eta(), electrons.at(i).Phi(), electrons.at(i).M() );
-    out.push_back( electrons.at(i) );
+    //==== electrons is a const vector. So in this function, we have to copy the elements like below
+    Electron this_electron = electrons.at(i);
+    this_electron.SetPtEtaPhiM( electrons.at(i).PtCone(), electrons.at(i).Eta(), electrons.at(i).Phi(), electrons.at(i).M() );
+    out.push_back( this_electron );
   }
 
   return out;
 
 }
 
-Electron AnalyzerCore::ElectronUsePtCone(Electron electron){
+Electron AnalyzerCore::ElectronUsePtCone(const Electron& electron){
 
-  electron.SetPtEtaPhiM( electron.PtCone(), electron.Eta(), electron.Phi(), electron.M() );
-  return electron;
+  //==== electron is a const object. So in this function, we have to copy the object like below
+  Electron this_electron = electron;
+  this_electron.SetPtEtaPhiM( electron.PtCone(), electron.Eta(), electron.Phi(), electron.M() );
+  return this_electron;
 
 }
 
-std::vector<Electron> AnalyzerCore::ElectronApplyPtCut(std::vector<Electron> electrons, double ptcut){
+std::vector<Electron> AnalyzerCore::ElectronApplyPtCut(const std::vector<Electron>& electrons, double ptcut){
 
   std::vector<Electron> out;
 
@@ -1217,7 +1192,7 @@ std::vector<Electron> AnalyzerCore::ElectronApplyPtCut(std::vector<Electron> ele
 
 }
 
-std::vector<Jet> AnalyzerCore::JetsAwayFromFatJet(std::vector<Jet> jets, std::vector<FatJet> fatjets, double mindr){
+std::vector<Jet> AnalyzerCore::JetsAwayFromFatJet(const std::vector<Jet>& jets, const std::vector<FatJet>& fatjets, double mindr){
 
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
@@ -1237,16 +1212,15 @@ std::vector<Jet> AnalyzerCore::JetsAwayFromFatJet(std::vector<Jet> jets, std::ve
 
 }
 
-std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron> els, std::vector<Muon> mus){
+std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(const std::vector<Jet>& jets, const std::vector<Electron>& els, const std::vector<Muon>& mus, double dR){
 
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
-    Jet this_jet = jets.at(i);
 
     bool HasLeptonInside = false;
 
     for(unsigned int j=0; j<els.size(); j++){
-      if( this_jet.DeltaR( els.at(j) ) < 0.4 ){
+      if( jets.at(i).DeltaR( els.at(j) ) < dR ){
         HasLeptonInside = true;
         break;
       }
@@ -1254,7 +1228,39 @@ std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::
     if(HasLeptonInside) continue;
 
     for(unsigned int j=0; j<mus.size(); j++){
-      if( this_jet.DeltaR( mus.at(j) ) < 0.4 ){
+      if( jets.at(i).DeltaR( mus.at(j) ) < dR ){
+        HasLeptonInside = true;
+        break;
+      }
+    }
+    if(HasLeptonInside) continue;
+
+    //==== if all fine,
+    out.push_back( jets.at(i) );
+
+  }
+  return out;
+
+}
+
+std::vector<FatJet> AnalyzerCore::FatJetsVetoLeptonInside(const std::vector<FatJet>& jets, const std::vector<Electron>& els, const std::vector<Muon>& mus, double dR){
+
+  std::vector<FatJet> out;
+  for(unsigned int i=0; i<jets.size(); i++){
+    FatJet this_jet = jets.at(i);
+
+    bool HasLeptonInside = false;
+
+    for(unsigned int j=0; j<els.size(); j++){
+      if( this_jet.DeltaR( els.at(j) ) < dR ){
+        HasLeptonInside = true;
+        break;
+      }
+    }
+    if(HasLeptonInside) continue;
+
+    for(unsigned int j=0; j<mus.size(); j++){
+      if( this_jet.DeltaR( mus.at(j) ) < dR ){
         HasLeptonInside = true;
         break;
       }
@@ -1265,11 +1271,12 @@ std::vector<Jet> AnalyzerCore::JetsVetoLeptonInside(std::vector<Jet> jets, std::
     out.push_back( this_jet );
 
   }
+
   return out;
 
 }
 
-std::vector<Jet> AnalyzerCore::JetsAwayFromPhoton(std::vector<Jet> jets, std::vector<Photon> photons, double mindr){
+std::vector<Jet> AnalyzerCore::JetsAwayFromPhoton(const std::vector<Jet>& jets, const std::vector<Photon>& photons, double mindr){
   
   std::vector<Jet> out;
   for(unsigned int i=0; i<jets.size(); i++){
@@ -1290,7 +1297,7 @@ std::vector<Jet> AnalyzerCore::JetsAwayFromPhoton(std::vector<Jet> jets, std::ve
 }
 
 
-Particle AnalyzerCore::AddFatJetAndLepton(FatJet fatjet, Lepton lep){
+Particle AnalyzerCore::AddFatJetAndLepton(const FatJet& fatjet, const Lepton& lep){
 
   if(fatjet.DeltaR( lep )<0.8){
     return fatjet;
@@ -1304,7 +1311,7 @@ Particle AnalyzerCore::AddFatJetAndLepton(FatJet fatjet, Lepton lep){
 //=========================================================
 //==== Gen Matching Tools
 
-void AnalyzerCore::PrintGen(std::vector<Gen> gens){
+void AnalyzerCore::PrintGen(const std::vector<Gen>& gens){
 
   cout << "===========================================================" << endl;
   cout << "RunNumber:EventNumber = " << run << ":" << event << endl;
@@ -1318,7 +1325,7 @@ void AnalyzerCore::PrintGen(std::vector<Gen> gens){
 
 }
 
-Gen AnalyzerCore::GetGenMatchedLepton(Lepton lep, std::vector<Gen> gens){
+Gen AnalyzerCore::GetGenMatchedLepton(const Lepton& lep, const std::vector<Gen>& gens){
 
   //==== find status 1 lepton
 
@@ -1354,7 +1361,7 @@ Gen AnalyzerCore::GetGenMatchedLepton(Lepton lep, std::vector<Gen> gens){
 
 }
 
-Gen AnalyzerCore::GetGenMatchedPhoton(Lepton lep, std::vector<Gen> gens){
+Gen AnalyzerCore::GetGenMatchedPhoton(const Lepton& lep, const std::vector<Gen>& gens){
 
   double min_dR = 0.2;
   Gen gen_closest;
@@ -1389,7 +1396,7 @@ Gen AnalyzerCore::GetGenMatchedPhoton(Lepton lep, std::vector<Gen> gens){
 
 }
 
-vector<int> AnalyzerCore::TrackGenSelfHistory(Gen me, std::vector<Gen> gens){
+vector<int> AnalyzerCore::TrackGenSelfHistory(const Gen& me, const std::vector<Gen>& gens){
 
   int myindex = me.Index();
 
@@ -1418,7 +1425,7 @@ vector<int> AnalyzerCore::TrackGenSelfHistory(Gen me, std::vector<Gen> gens){
 
 }
 
-bool AnalyzerCore::IsFromHadron(Gen me, std::vector<Gen> gens){
+bool AnalyzerCore::IsFromHadron(const Gen& me, const std::vector<Gen>& gens){
 
   bool out = false;
 
@@ -1481,7 +1488,7 @@ bool AnalyzerCore::IsFromHadron(Gen me, std::vector<Gen> gens){
 
 }
 
-int AnalyzerCore::GetLeptonType(Lepton lep, std::vector<Gen> gens){
+int AnalyzerCore::GetLeptonType(const Lepton& lep, const std::vector<Gen>& gens){
 
   //==== [Type]
   //====  1 : EWPrompt
@@ -1700,7 +1707,7 @@ int AnalyzerCore::GetLeptonType(Lepton lep, std::vector<Gen> gens){
 
 }
 
-int AnalyzerCore::GetGenPhotonType(Gen genph, std::vector<Gen> gens){
+int AnalyzerCore::GetGenPhotonType(const Gen& genph, const std::vector<Gen>& gens){
 
   //==== [Type]
   //====  0 : Invalid input or Error or HardScatter is input when hardscatter is not final state
@@ -1785,11 +1792,23 @@ TH2D* AnalyzerCore::GetHist2D(TString histname){
 
 }
 
+TH3D* AnalyzerCore::GetHist3D(TString histname){
+  
+  TH3D *h = NULL;
+  std::map<TString, TH3D*>::iterator mapit = maphist_TH3D.find(histname);
+  if(mapit != maphist_TH3D.end()) return mapit->second;
+  
+  return h;
+  
+}
+
+
 void AnalyzerCore::FillHist(TString histname, double value, double weight, int n_bin, double x_min, double x_max){
 
   TH1D *this_hist = GetHist1D(histname);
   if( !this_hist ){
     this_hist = new TH1D(histname, "", n_bin, x_min, x_max);
+    this_hist->SetDirectory(NULL);
     maphist_TH1D[histname] = this_hist;
   }
 
@@ -1802,6 +1821,7 @@ void AnalyzerCore::FillHist(TString histname, double value, double weight, int n
   TH1D *this_hist = GetHist1D(histname);
   if( !this_hist ){
     this_hist = new TH1D(histname, "", n_bin, xbins);
+    this_hist->SetDirectory(NULL);
     maphist_TH1D[histname] = this_hist;
   }
 
@@ -1818,6 +1838,7 @@ void AnalyzerCore::FillHist(TString histname,
   TH2D *this_hist = GetHist2D(histname);
   if( !this_hist ){
     this_hist = new TH2D(histname, "", n_binx, x_min, x_max, n_biny, y_min, y_max);
+    this_hist->SetDirectory(NULL);
     maphist_TH2D[histname] = this_hist;
   }
 
@@ -1834,11 +1855,48 @@ void AnalyzerCore::FillHist(TString histname,
   TH2D *this_hist = GetHist2D(histname);
   if( !this_hist ){
     this_hist = new TH2D(histname, "", n_binx, xbins, n_biny, ybins);
+    this_hist->SetDirectory(NULL);
     maphist_TH2D[histname] = this_hist;
   }
 
   this_hist->Fill(value_x, value_y, weight);
 
+}
+
+void AnalyzerCore::FillHist(TString histname,
+          double value_x, double value_y, double value_z,
+          double weight,
+          int n_binx, double x_min, double x_max,
+          int n_biny, double y_min, double y_max,
+          int n_binz, double z_min, double z_max){
+  
+  TH3D *this_hist = GetHist3D(histname);
+  if( !this_hist ){
+    this_hist = new TH3D(histname, "", n_binx, x_min, x_max, n_biny, y_min, y_max, n_binz, z_min, z_max);
+    this_hist->SetDirectory(NULL);
+    maphist_TH3D[histname] = this_hist;
+  }
+  
+  this_hist->Fill(value_x, value_y, value_z, weight);
+  
+}
+
+void AnalyzerCore::FillHist(TString histname,
+          double value_x, double value_y, double value_z,
+          double weight,
+          int n_binx, double *xbins,
+          int n_biny, double *ybins,
+          int n_binz, double *zbins){
+  
+  TH3D *this_hist = GetHist3D(histname);
+  if( !this_hist ){
+    this_hist = new TH3D(histname, "", n_binx, xbins, n_biny, ybins, n_binz, zbins);
+    this_hist->SetDirectory(NULL);
+    maphist_TH3D[histname] = this_hist;
+  }
+  
+  this_hist->Fill(value_x, value_y, value_z, weight);
+  
 }
 
 TH1D* AnalyzerCore::JSGetHist1D(TString suffix, TString histname){
@@ -1947,6 +2005,18 @@ void AnalyzerCore::WriteHist(){
     outfile->cd();
   }
   for(std::map< TString, TH2D* >::iterator mapit = maphist_TH2D.begin(); mapit!=maphist_TH2D.end(); mapit++){
+    TString this_fullname=mapit->second->GetName();
+    TString this_name=this_fullname(this_fullname.Last('/')+1,this_fullname.Length());
+    TString this_suffix=this_fullname(0,this_fullname.Last('/'));
+    TDirectory *dir = outfile->GetDirectory(this_suffix);
+    if(!dir){
+      outfile->mkdir(this_suffix);
+    }
+    outfile->cd(this_suffix);
+    mapit->second->Write(this_name);
+    outfile->cd();
+  }
+  for(std::map< TString, TH3D* >::iterator mapit = maphist_TH3D.begin(); mapit!=maphist_TH3D.end(); mapit++){
     TString this_fullname=mapit->second->GetName();
     TString this_name=this_fullname(this_fullname.Last('/')+1,this_fullname.Length());
     TString this_suffix=this_fullname(0,this_fullname.Last('/'));

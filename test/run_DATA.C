@@ -3,8 +3,9 @@ R__LOAD_LIBRARY(libTree.so)
 R__LOAD_LIBRARY(libHist.so)
 R__LOAD_LIBRARY(libDataFormats.so)
 R__LOAD_LIBRARY(libAnalyzerTools.so)
+R__LOAD_LIBRARY(libGEScaleSyst.so)
 R__LOAD_LIBRARY(libAnalyzers.so)
-R__LOAD_LIBRARY(/cvmfs/cms.cern.ch/slc6_amd64_gcc630/external/lhapdf/6.2.1-fmblme/lib/libLHAPDF.so)
+R__LOAD_LIBRARY(/cvmfs/cms.cern.ch/slc7_amd64_gcc700/external/lhapdf/6.2.1-gnimlf3/lib/libLHAPDF.so)
 
 
 void run_DATA(){
@@ -51,8 +52,8 @@ void run_DATA(){
   m.SetOutfilePath("hists.root");
 
   m.Init();
-  m.initializeAnalyzerTools();
   m.initializeAnalyzer();
+  m.initializeAnalyzerTools();
   m.SwitchToTempDir();
   m.Loop();
 

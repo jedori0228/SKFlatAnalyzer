@@ -12,6 +12,7 @@ void SKFlatValidation::initializeAnalyzer(){
 
   if(DataYear==2016){
 
+    //==== Normal POG ID
     Triggers_POG_Electron = {
       "HLT_Ele27_WPTight_Gsf_v",
     };
@@ -24,14 +25,17 @@ void SKFlatValidation::initializeAnalyzer(){
     TriggerSafePt_POG_Electron = 30.;
     TriggerSafePt_POG_Muon = 26.;
 
+    //==== POG High pt ID
     Triggers_POGHighPt_Electron = {
       "HLT_Ele27_WPTight_Gsf_v",
+      "HLT_Photon175_v",
+      "HLT_Ele115_CaloIdVT_GsfTrkIdT_v",
     };
     Triggers_POGHighPt_Muon = {
       "HLT_Mu50",
       "HLT_TkMu50_v",
     };
-    TriggerNameForSF_POGHighPt_Electron = "Ele27_WPTight_Gsf";
+    TriggerNameForSF_POGHighPt_Electron = "WREGammaTrigger";
     TriggerNameForSF_POGHighPt_Muon = "Mu50";
     TriggerSafePt_POGHighPt_Electron = 30.;
     TriggerSafePt_POGHighPt_Muon = 52.;
@@ -39,6 +43,7 @@ void SKFlatValidation::initializeAnalyzer(){
   }
   else if(DataYear==2017){
 
+    //==== Normal POG ID
     Triggers_POG_Electron = {
       "HLT_Ele35_WPTight_Gsf_v",
     };
@@ -50,13 +55,18 @@ void SKFlatValidation::initializeAnalyzer(){
     TriggerSafePt_POG_Electron = 38.;
     TriggerSafePt_POG_Muon = 29.;
 
+    //==== POG High pt ID
     Triggers_POGHighPt_Electron = {
       "HLT_Ele35_WPTight_Gsf_v",
+      "HLT_Photon200_v",
+      "HLT_Ele115_CaloIdVT_GsfTrkIdT_v",
     };
     Triggers_POGHighPt_Muon = {
       "HLT_Mu50_v",
+      "HLT_OldMu100_v",
+      "HLT_TkMu100_v",
     };
-    TriggerNameForSF_POGHighPt_Electron = "Ele35_WPTight_Gsf";
+    TriggerNameForSF_POGHighPt_Electron = "WREGammaTrigger";
     TriggerNameForSF_POGHighPt_Muon = "Mu50";
     TriggerSafePt_POGHighPt_Electron = 38.;
     TriggerSafePt_POGHighPt_Muon = 52.;
@@ -64,6 +74,7 @@ void SKFlatValidation::initializeAnalyzer(){
   }
   else if(DataYear==2018){
 
+    //==== Normal POG ID
     Triggers_POG_Electron = {
       "HLT_Ele32_WPTight_Gsf_v",
     };
@@ -75,18 +86,19 @@ void SKFlatValidation::initializeAnalyzer(){
     TriggerSafePt_POG_Electron = 35.;
     TriggerSafePt_POG_Muon = 26.;
 
+    //==== POG High pt ID
     Triggers_POGHighPt_Electron = {
       "HLT_Ele32_WPTight_Gsf_v",
+      "HLT_Photon200_v",
+      "HLT_Ele115_CaloIdVT_GsfTrkIdT_v",
     };
     Triggers_POGHighPt_Muon = {
       "HLT_Mu50_v",
       "HLT_OldMu100_v",
       "HLT_TkMu100_v",
     };
-    TriggerNameForSF_POGHighPt_Electron = "Ele35_WPTight_Gsf";
+    TriggerNameForSF_POGHighPt_Electron = "WREGammaTrigger";
     TriggerNameForSF_POGHighPt_Muon = "Mu50";
-    TriggerNameForSF_POG_Electron = "Default";
-    TriggerNameForSF_POG_Muon = "Default";
     TriggerSafePt_POGHighPt_Electron = 35.;
     TriggerSafePt_POGHighPt_Muon = 52.;
     DoublePhotonSafePtCut = 75.;
@@ -97,19 +109,30 @@ void SKFlatValidation::initializeAnalyzer(){
   }
 
   //==== B-Tagging
+
   //==== add taggers and WP that you want to use in analysis
-  std::vector<Jet::Tagger> vtaggers;
-  vtaggers.push_back(Jet::DeepCSV);
-
-  std::vector<Jet::WP> v_wps;
-  v_wps.push_back(Jet::Medium);
-
-  //=== list of taggers, WP, setup systematics, use period SFs
-  SetupBTagger(vtaggers,v_wps, true, true);
+  std::vector<JetTagging::Parameters> jtps;
+  //==== If you want to use 1a and 2a method
+  jtps.push_back( JetTagging::Parameters(JetTagging::DeepCSV, JetTagging::Medium, JetTagging::incl, JetTagging::comb) );
+  //==== If you want to use 1d, which is a reshaping method
+  jtps.push_back( JetTagging::Parameters(JetTagging::DeepCSV, JetTagging::Medium, JetTagging::iterativefit, JetTagging::iterativefit) );
+  //==== now put temporary vector (jtps) to MCCorrection::jetTaggingPars
+  //==== jetTaggingPars will be looped over and used to read csv files when initializeAnalyzerTools() is ran.
+  mcCorr->SetJetTaggingParameters(jtps);
 
 }
 
 void SKFlatValidation::executeEvent(){
+
+  //==== Found one strange event from /gv0/DATA/SKFlat/Run2Legacy_v4/2016/MC/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/191229_034335/0000/SKFlatNtuple_2016_MC_541.root
+  //==== (run,event,lumi) = (1,111148613,240842)
+  //==== - This event has "nan" for all pfMET_* variables
+  //==== - I found it contains a jet with "(Pt, Eta, Phi, M, Charge) = 162845	-2.38395	2.04845	250.096	0"
+  //==== - Let's not use this event.. it gives stderr when calculating MT()
+  //==== - The PR that fixes this issue was not included in CMSSW_10_2_18
+  //====   - https://hypernews.cern.ch/HyperNews/CMS/get/JetMET/1969/1.html
+  //====   - https://github.com/cms-sw/cmssw/pull/27988/files
+  if(pfMET_Type1_pt!=pfMET_Type1_pt) return;
 
   //==== Prefire reweight
 
@@ -125,6 +148,7 @@ void SKFlatValidation::executeEvent(){
 
   param.Electron_Tight_ID = "passMediumID";
   param.Electron_ID_SF_Key = "passMediumID";
+  param.Electron_Trigger_SF_Key = "Default";
 
   param.Muon_Tight_ID = "POGTightWithTightIso";
   param.Muon_ID_SF_Key = "NUM_TightID_DEN_genTracks";
@@ -143,6 +167,7 @@ void SKFlatValidation::executeEvent(){
 
   param.Electron_Tight_ID = "passHEEPID";
   param.Electron_ID_SF_Key = "HEEP";
+  param.Electron_Trigger_SF_Key = "HEEP";
 
   param.Muon_Tight_ID = "POGHighPtWithLooseTrkIso";
   param.Muon_ID_SF_Key = "NUM_HighPtID_DEN_genTracks";
@@ -192,12 +217,32 @@ void SKFlatValidation::executeEventFromParameter(AnalyzerParameter param){
   std::vector<Electron> electrons = GetElectrons(param.Electron_Tight_ID, MinLeptonPt, 2.5);
 
   std::vector<Jet> myjets = JetsVetoLeptonInside( GetJets("tight", 30., 2.4), electrons, muons);
-  int NBJets=0;
+  int NBJets_NoSF(0), NBJets_WithSF_2a(0);
   double HT=0;
+
+  JetTagging::Parameters jtp_DeepCSV_Medium = JetTagging::Parameters(JetTagging::DeepCSV,
+                                                                     JetTagging::Medium,
+                                                                     JetTagging::incl, JetTagging::comb);
+  JetTagging::Parameters jtp_DeepCSV_Medium_Reshape = JetTagging::Parameters(JetTagging::DeepCSV,
+                                                                             JetTagging::Medium,
+                                                                             JetTagging::iterativefit, JetTagging::iterativefit);
+
+  //==== b tag SF; method 1a
+  double btagWeight_1a = mcCorr->GetBTaggingReweight_1a(myjets, jtp_DeepCSV_Medium);
+  double btagWeight_1d = mcCorr->GetBTaggingReweight_1d(myjets, jtp_DeepCSV_Medium_Reshape);
+
   for(unsigned int i=0; i<myjets.size(); i++){
     Jet this_jet = myjets.at(i);
     HT += this_jet.Pt();
-    if(IsBTagged(this_jet, Jet::DeepCSV, Jet::Medium,true,0)) NBJets++;
+
+    double this_discr = this_jet.GetTaggerResult(JetTagging::DeepCSV);
+
+    //==== No SF
+    if( this_discr > mcCorr->GetJetTaggingCutValue(JetTagging::DeepCSV, JetTagging::Medium) ) NBJets_NoSF++;
+
+    //==== 2a
+    if( mcCorr->IsBTagged_2a(jtp_DeepCSV_Medium, this_jet) ) NBJets_WithSF_2a++;
+
   }
 
   //==== Based on which trigger is fired
@@ -287,13 +332,22 @@ void SKFlatValidation::executeEventFromParameter(AnalyzerParameter param){
 
           weight *= this_idsf*this_isosf*this_trigsf;
 
+          if(param.Name=="POGHighPt"){
+            double MiniAODP = sqrt( muons.at(i).MiniAODPt() * muons.at(i).MiniAODPt() + muons.at(i).Pz() * muons.at(i).Pz() );
+            double this_recosf = mcCorr->MuonReco_SF("HighPtMuonRecoSF", this_eta, MiniAODP);
+            weight *= this_recosf;
+          }
+
         }
       }
       if( Suffix.Contains("DiElectron") || Suffix.Contains("SingleElectron") || Suffix.Contains("DiPhoton") ){
         for(unsigned int i=0; i<electrons.size(); i++){
           double this_recosf = mcCorr->ElectronReco_SF(electrons.at(i).scEta(),electrons.at(i).Pt());
           double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, electrons.at(i).scEta(), electrons.at(i).Pt());
-          weight *= this_recosf*this_idsf;
+          double this_trigsf = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, electrons);
+
+          weight *= this_recosf*this_idsf*this_trigsf;
+
         }
       }
 
@@ -314,8 +368,10 @@ void SKFlatValidation::executeEventFromParameter(AnalyzerParameter param){
           map_bool_To_Region["OnZ_OS"] = IsOnZ(Z.M(), 15.);
           //==== High ZMass event
           map_bool_To_Region["HigherDiLeptonPtCut_OS"] = HigherDiLeptonPtCut;
+          //==== OffZ, at least two jets, MET > 30 for dilepton ttbar
+          map_bool_To_Region["mllgt110_TwoJets_METgt30_OS"] = (Z.M() > 110) && (myjets.size()>2) && (METv.Pt()>30.);
           //==== With B-jet, MET > 30 for dilepton ttbar
-          map_bool_To_Region["WithBJet_METgt30_OS"] = (NBJets>0) && (METv.Pt()>30.);
+          map_bool_To_Region["WithBJet_METgt30_OS"] = (NBJets_NoSF>0) && (METv.Pt()>30.);
         }
         else{
           //==== generic two SS lepton
@@ -324,8 +380,10 @@ void SKFlatValidation::executeEventFromParameter(AnalyzerParameter param){
           map_bool_To_Region["OnZ_SS"] = IsOnZ(Z.M(), 15.);
           //==== High ZMass event
           map_bool_To_Region["HigherDiLeptonPtCut_SS"] = HigherDiLeptonPtCut;
+          //==== OffZ, at least two jets, MET > 30 for dilepton ttbar
+          map_bool_To_Region["mllgt110_TwoJets_METgt30_SS"] = (Z.M() > 110) && (myjets.size()>2) && (METv.Pt()>30.);
           //==== With B-jet, MET > 30 for dilepton ttbar
-          map_bool_To_Region["WithBJet_METgt30_SS"] = (NBJets>0) && (METv.Pt()>30.);
+          map_bool_To_Region["WithBJet_METgt30_SS"] = (NBJets_NoSF>0) && (METv.Pt()>30.);
         }
 
       }
@@ -357,7 +415,18 @@ void SKFlatValidation::executeEventFromParameter(AnalyzerParameter param){
         JSFillHist(this_region, "HT_"+this_region, HT, weight, 1000, 0., 1000.);
 
         JSFillHist(this_region, "Jet_Size_"+this_region, myjets.size(), weight, 10, 0., 10.);
-        JSFillHist(this_region, "NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
+        JSFillHist(this_region, "NBJets_NoSF_"+this_region, NBJets_NoSF, weight, 10, 0., 10.);
+        JSFillHist(this_region, "NBJets_WithSF_1a_"+this_region, NBJets_NoSF, weight*btagWeight_1a, 10, 0., 10.);
+        JSFillHist(this_region, "NBJets_WithSF_1d_"+this_region, NBJets_NoSF, weight*btagWeight_1d, 10, 0., 10.);
+        JSFillHist(this_region, "NBJets_WithSF_2a_"+this_region, NBJets_WithSF_2a, weight, 10, 0., 10.);
+
+        for(unsigned int ij=0; ij<myjets.size(); ij++){
+          TString this_itoa = TString::Itoa(ij,10);
+
+          double this_discr = myjets.at(ij).GetTaggerResult(JetTagging::DeepCSV);
+          JSFillHist(this_region, "Jet_"+this_itoa+"_DeepCSV_"+this_region, this_discr, weight, 120, 0., 1.2);
+          JSFillHist(this_region, "Jet_"+this_itoa+"_DeepCSV_Scaled_"+this_region, this_discr, weight*btagWeight_1d, 120, 0., 1.2);
+        }
 
         FillLeptonPlots(leps, this_region, weight);
 
