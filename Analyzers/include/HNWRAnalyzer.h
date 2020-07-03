@@ -22,6 +22,8 @@ public:
   bool RunXsecSyst;
   bool Signal;
   bool SignalElectronOnly, SignalMuonOnly;
+  bool HEM1516;
+  bool BeforeRun319077;
 
   vector<Gen> gens;
 
@@ -59,7 +61,7 @@ public:
   void FillCutFlow(bool IsCentral, TString suffix, TString histname, double weight);
 
   //==== LSF SF
-  double LSFSF(int dir);
+  double LSFSF(int lepflav, int dir);
 
 };
 
