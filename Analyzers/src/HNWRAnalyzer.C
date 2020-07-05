@@ -1364,6 +1364,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
+      if(jets.size()>=2){
+        FillHist(this_region+"/DiJet_Mass_"+this_region, (jets.at(0)+jets.at(1)).M(), weight, 400, 0., 4000.);
+        FillHist(this_region+"/DiJet_Pt_"+this_region, (jets.at(0)+jets.at(1)).Pt(), weight, 400, 0., 4000.);
+      }
+
       //==== For HEM15/16
       if(HEM1516){
         for(unsigned int i=0; i<fatjets.size(); i++){
