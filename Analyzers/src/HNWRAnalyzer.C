@@ -935,12 +935,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_"+param.Name, weight);
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    //@@@@ Apply scale factors
-
-    double trigger_sf_SingleElectron = 1.;
-    double trigger_sf_SingleMuon = 1.;
+    //@@@@ Apply lepton scale factors
 
     if(!IsDATA){
+
+      //==== lepton scale factors here
 
       mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
@@ -960,19 +959,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         weight *= this_recosf*this_idsf*this_isosf;
       }
 
-      //==== Trigger SF
-
-      trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
-      trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons, SystDir_MuonTriggerSF);
-
-    }
-    if(Suffix=="SingleElectron"){
-      trigger_sf_SingleMuon = trigger_sf_SingleElectron;
-      weight *= trigger_sf_SingleElectron;
-    }
-    else{
-      trigger_sf_SingleElectron = trigger_sf_SingleMuon;
-      weight *= trigger_sf_SingleMuon;
     }
     //@@@@
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -1000,6 +986,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           HasLowMll = true;
           LowMllLooseLepton = Loose_SF_leps.at(i);
           leps_for_plot.push_back( Loose_SF_leps.at(i) );
+
+          if(tmp_IsLeadM){
+            //==== In this case, the loose ID is HighPt ID muon.
+            //==== we want to apply the lepton scale factors to these muons
+            Muon *looseMuon = (Muon *)LowMllLooseLepton;
+            ForSF_muons.push_back( looseMuon );
+          }
+
           break;
         }
       }
@@ -1143,6 +1137,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                 FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
 
                 leps_for_plot.push_back( SFLooseLepton );
+                if(tmp_IsLeadM){
+                  //==== In this case, the loose ID is HighPt ID muon.
+                  //==== we want to apply the lepton scale factors to these muons
+                  Muon *looseMuon = (Muon *)SFLooseLepton;
+                  ForSF_muons.push_back( looseMuon );
+                }
 
                 if( (*LeadLep+*SFLooseLepton).M() > 200 ){
 
@@ -1231,6 +1231,25 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         } // END If has merged jet
 
       } // END If no m(ll)<150 pair
+
+      //==== Now we can apply trigger SFs, because for mm case, we selected correct loose muons
+
+      double trigger_sf_SingleElectron = 1.;
+      double trigger_sf_SingleMuon = 1.;
+      if(!IsDATA){
+        //==== Trigger SF
+        trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
+        trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, ForSF_muons, SystDir_MuonTriggerSF); // notice, we used ForSF_muons instead of Tight_muons
+      }
+      if(Suffix=="SingleElectron"){
+        trigger_sf_SingleMuon = trigger_sf_SingleElectron;
+        weight *= trigger_sf_SingleElectron;
+      }
+      else{
+        trigger_sf_SingleElectron = trigger_sf_SingleMuon;
+        weight *= trigger_sf_SingleMuon;
+      }
+
 
     } // END If trigger fired
 
