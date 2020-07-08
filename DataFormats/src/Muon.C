@@ -167,7 +167,8 @@ bool Muon::Pass_HNWRTight() const {
 }
 bool Muon::Pass_HNWRLoose() const {
 
-  if(! isPOGLoose() ) return false;
+  if(! isPOGHighPt() ) return false;
+  //if(! isPOGLoose() ) return false;
 
   return true;
 }
