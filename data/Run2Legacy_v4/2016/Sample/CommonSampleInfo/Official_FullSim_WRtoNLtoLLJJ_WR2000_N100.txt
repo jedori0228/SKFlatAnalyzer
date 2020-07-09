@@ -1,0 +1,2 @@
+# alias PD xsec nmc sumw
+Official_FullSim_WRtoNLtoLLJJ_WR2000_N100	WRtoNLtoLLJJ_WR2000_N100_TuneCUETP8M1_13TeV-madgraph-pythia8	1.	70000	69148
