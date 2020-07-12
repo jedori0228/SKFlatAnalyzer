@@ -142,6 +142,15 @@ void HNWRAnalyzer::executeEvent(){
 
   gens = GetGens();
 
+/*
+  //==== TEST) draw gen WR
+  genFinderSig->Run(gens);
+  FillHist("GenWR_Mass", genFinderSig->WR.M(), 1., 8000, 0., 8000.);
+  FillHist("IsOffShellPrimaryWR", genFinderSig->IsOffShellPrimaryWR, 1., 2, 0., 2.);
+  FillHist("GenlN_Mass", (genFinderSig->priLep+genFinderSig->N).M(), 1., 8000, 0., 8000.);
+  return;
+*/
+
   if(ApplyDYPtReweight){
     ZPtReweight = mcCorr->GetOfficialDYReweight(gens);
     ZPtReweight_Up = mcCorr->GetOfficialDYReweight(gens,+1);
