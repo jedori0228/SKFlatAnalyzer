@@ -151,6 +151,9 @@ void HNWRAnalyzer::executeEvent(){
   return;
 */
 
+  //=======================================================================
+  //==== Main analyzer
+
   if(ApplyDYPtReweight){
     ZPtReweight = mcCorr->GetOfficialDYReweight(gens);
     ZPtReweight_Up = mcCorr->GetOfficialDYReweight(gens,+1);
@@ -289,6 +292,49 @@ void HNWRAnalyzer::executeEvent(){
 }
 
 void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
+
+/*
+  //==== DY LO vs NLO stduy
+
+  vector<LHE> lhes = GetLHEs();
+
+  int LHE_lepton_flavour = -1; // 0 : ee, 1 : mm, 2 : tt
+  int nFinalParton = 0;
+
+  for(unsigned int i=0; i<lhes.size(); i++){
+    int this_ID = lhes.at(i).ID();
+    int this_Status = lhes.at(i).Status();
+
+    //==== Status 1
+    if( this_Status == 1){
+
+      //==== Check lepton flavour
+      if( abs(this_ID)== 11 ){
+        LHE_lepton_flavour = 0;
+      }
+      else if(abs(this_ID)== 13 ){
+        LHE_lepton_flavour = 1;
+      }
+      else if(abs(this_ID)== 15 ){
+        LHE_lepton_flavour = 2;
+      }
+
+      //==== final state parton
+      if( abs(this_ID) <= 6 ){
+        nFinalParton++;
+      }
+      if( abs(this_ID) == 9 || abs(this_ID) == 21 ){
+        nFinalParton++;
+      }
+
+    } // END if status 1
+  }
+  FillHist("LHEStudy/NoMassCut__LHE_lepton_flavour", LHE_lepton_flavour, 1, 4, -1., 3.);
+  FillHist("LHEStudy/NoMassCut__nFinalParton", nFinalParton, 1, 10, 0., 10.);
+*/
+
+  //=====================================================
+  //==== Main Analyzer
 
   bool IsCentral = !( param.Name.Contains("Syst_") );
 
@@ -814,7 +860,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved DYCR [IsResolved_DYCR_MM]
           //==== - HNWR_EMu_Resolved_DYCR : filled, but NOT USED [IsResolved_DYCR_EM]
 
-          if(DiLepMassLT150){
+          if(DiLepMassLT150 && WRMassGT800){
             map_bool_To_Region[Suffix+"_Resolved_DYCR"] = true;
             if(tmp_IsEE) IsResolved_DYCR_EE = true;
             else if(tmp_IsMM) IsResolved_DYCR_MM = true;
@@ -1028,11 +1074,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted DYCR [IsBoosted_DYCR_EE]
             //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted DYCR [IsBoosted_DYCR_MM]
 
-            map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
-            if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
-            else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
+            if( WRCand.M() > 800. ){
 
-            break;
+              map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
+              if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
+              else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
+
+              break;
+
+            }
           }
         }
       }      
@@ -1290,6 +1340,41 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
   }
   //================================================
+
+/*
+  //==== DY LO vs NLO stduy
+  bool IsHighWRMassResolvedDYEvent = (IsResolved_DYCR_EE||IsResolved_DYCR_MM) && (WRCand.M()>3000.);
+  bool IsHighWRMassBoostedDYEvent = (IsBoosted_DYCR_EE || IsBoosted_DYCR_MM) && (WRCand.M()>3000.);
+  //cout << "@@@@ High mass m(lljj) DY events found" << endl;
+  //cout << "m(lljj) = " << WRCand.M() << endl;
+  //cout << "m(ll) = " << ( (*leps_for_plot.at(0))+(*leps_for_plot.at(1)) ).M() << endl;
+
+  if(IsHighWRMassResolvedDYEvent){
+
+    cout << "@@@@ IsHighWRMassResolvedDYEvent " << endl;
+    cout << "[RECO]" << endl;
+    cout << "lep1 : "; leps_for_plot.at(0)->Print();
+    cout << "lep2 : "; leps_for_plot.at(1)->Print();
+    cout << "jet1 : "; jets.at(0).Print();
+    cout << "jet2 : "; jets.at(1).Print();
+
+    cout << "[LHE]" << endl;
+    for(unsigned int i=0; i<lhes.size(); i++){
+      lhes.at(i).Print();
+      int this_ID = lhes.at(i).ID();
+      int this_Status = lhes.at(i).Status();
+    }
+
+    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, 1, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__nFinalParton", nFinalParton, 1, 10, 0., 10.);
+  }
+  if(IsHighWRMassBoostedDYEvent){
+    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, 1, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__nFinalParton", nFinalParton, 1, 10, 0., 10.);
+  }
+
+  return;
+*/
 
   for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
