@@ -1,0 +1,2 @@
+# alias PD xsec nmc sumw
+preliminary_TTbarTypeIHeavyN-Mu_LepTop3L_LO_MN20	preliminary_TTbarTypeIHeavyN-Mu_LepTop3L_LO_MN20	1.	172000	172000
