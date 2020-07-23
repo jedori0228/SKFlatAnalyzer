@@ -329,8 +329,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     } // END if status 1
   }
-  FillHist("LHEStudy/NoMassCut__LHE_lepton_flavour", LHE_lepton_flavour, 1, 4, -1., 3.);
-  FillHist("LHEStudy/NoMassCut__nFinalParton", nFinalParton, 1, 10, 0., 10.);
+  FillHist("LHEStudy/NoMassCut__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+  FillHist("LHEStudy/NoMassCut__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
 */
 
   //=====================================================
@@ -1365,12 +1365,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       int this_Status = lhes.at(i).Status();
     }
 
-    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, 1, 4, -1., 3.);
-    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__nFinalParton", nFinalParton, 1, 10, 0., 10.);
+    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
   }
   if(IsHighWRMassBoostedDYEvent){
-    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, 1, 4, -1., 3.);
-    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__nFinalParton", nFinalParton, 1, 10, 0., 10.);
+    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
   }
 
   return;
