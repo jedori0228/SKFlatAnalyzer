@@ -58,6 +58,18 @@ public:
   TH1D *hist_PUReweight_Down;
   double weight_PU, weight_PU_Up, weight_PU_Down;
 
+  //==== DY reshape
+  TH1D *hist_DYReshape_Resolved_ratio_AllCh;
+  TH1D *hist_DYReshape_Resolved_EEOnlyRatio;
+  TH1D *hist_DYReshape_Resolved_MuMuOnlyRatio;
+
+  TH1D *hist_DYReshape_Boosted_ratio_AllCh;
+  TH1D *hist_DYReshape_Boosted_EEOnlyRatio;
+  TH1D *hist_DYReshape_Boosted_MuMuOnlyRatio;
+
+  double GetDYReshape(double mwr, TString region, int SystType);
+  bool ApplyDYReshape;
+
   void FillCutFlow(bool IsCentral, TString suffix, TString histname, double weight);
 
   //==== LSF SF

@@ -50,6 +50,8 @@ public:
     PUUp, PUDown,
     ZPtRwUp, ZPtRwDown,
     PrefireUp, PrefireDown,
+    DYReshapeSystUp, DYReshapeSystDown,
+    DYReshapeEEMMUp, DYReshapeEEMMDown,
     NSyst
   };
   Syst syst_;
