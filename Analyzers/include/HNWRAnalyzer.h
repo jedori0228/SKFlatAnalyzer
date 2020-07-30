@@ -22,6 +22,7 @@ public:
   bool RunXsecSyst;
   bool Signal;
   bool SignalElectronOnly, SignalMuonOnly;
+  bool CalculateAverageKFactor;
   bool HEM1516;
   bool BeforeRun319077;
 
@@ -74,6 +75,14 @@ public:
 
   //==== LSF SF
   double LSFSF(int lepflav, int dir);
+
+  //==== k-factor
+  TH1D *hist_kfactor;
+  int mWR, mN;
+  double mlN;
+  double this_avg_kfactor;
+  double this_kfactor;
+  double GetHNWRKFactor(double mlN);
 
 };
 

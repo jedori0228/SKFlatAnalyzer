@@ -17,8 +17,59 @@ void HNWRAnalyzer::initializeAnalyzer(){
   ApplyDYReshape = HasFlag("ApplyDYReshape");
   RunXsecSyst = HasFlag("RunXsecSyst");
   Signal = HasFlag("Signal");
+  CalculateAverageKFactor = HasFlag("CalculateAverageKFactor");
   SignalElectronOnly = HasFlag("SignalElectronOnly");
   SignalMuonOnly = HasFlag("SignalMuonOnly");
+
+  if(Signal){
+    //==== MCSample = WRtoNLtoLLJJ_WR1400_N1000
+    TString massstring = MCSample(TString("WRtoNLtoLLJJ_").Length(), MCSample.Length());
+    int i_underscore=-1;
+    for(int i=0; i<massstring.Length(); i++){
+      TString thissubstring = massstring(i);
+      if(thissubstring=="_"){
+        i_underscore = i;
+        break;
+      }
+    }
+    TString str_mWR = massstring(2,i_underscore-2);
+    TString str_mN = massstring(i_underscore+1+1,massstring.Length());
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] str_mWR = ["<<str_mWR<<"]" << endl;
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] str_mN = ["<<str_mN<<"]" << endl;
+
+    mWR = str_mWR.Atoi();
+    mN = str_mN.Atoi();
+
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] mWR = " << mWR << endl;
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] mN = " << mN << endl;
+
+    //==== Read kfactor vs m(lN) histogram
+    TString datapath = getenv("DATA_DIR");
+    TFile *file_kfactor = new TFile(datapath+"/HNWRGeneralData/kfactor.root");
+    hist_kfactor = (TH1D *)file_kfactor->Get("kfactor_all");
+    //==== get averaged kfactor
+    TString PUfname = datapath+"/"+TString::Itoa(DataYear,10)+"/PileUp/PUReweight_"+TString::Itoa(DataYear,10)+".root";
+    string kfactor_line;
+    ifstream kfactor_in(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRKFactor/AveragedKFactor.txt");
+    this_avg_kfactor = -1.;
+    while(getline(kfactor_in,kfactor_line)){
+      std::istringstream is( kfactor_line );
+
+      TString this_mass;
+      double avg_k_ee, avg_k_mm;
+      is >> this_mass;
+      is >> avg_k_ee;
+      is >> avg_k_mm;
+
+      if(massstring==this_mass){
+        if(SignalElectronOnly) this_avg_kfactor = avg_k_ee;
+        else if(SignalMuonOnly) this_avg_kfactor = avg_k_mm;
+        break;
+      }
+    }
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] this_avg_kfactor = " << this_avg_kfactor << endl;
+
+  }
 
   HEM1516 = HasFlag("HEM1516");
   BeforeRun319077 = HasFlag("BeforeRun319077");
@@ -178,6 +229,9 @@ void HNWRAnalyzer::executeEvent(){
   }
 
   if(Signal){
+
+    double this_MCweight = GetEvent().MCweight();
+
     int genNpid = -1;
     for(unsigned int i=2; i<gens.size(); i++){
       int pid = abs( gens.at(i).PID() );
@@ -192,19 +246,34 @@ void HNWRAnalyzer::executeEvent(){
     //==== 1 = muon
     if(genNpid==9900012){
       SignalLeptonChannel = 0;
-      FillHist("SignalFlavour", 0., 1., 3, -1., 2.);
+      FillHist("SignalFlavour", 0., this_MCweight, 3, -1., 2.);
     }
     else if(genNpid==9900014){
       SignalLeptonChannel = 1;
-      FillHist("SignalFlavour", 1., 1., 3, -1., 2.);
+      FillHist("SignalFlavour", 1., this_MCweight, 3, -1., 2.);
     }
     else{
-      FillHist("SignalFlavour", -1., 1., 3, -1., 2.);
+      FillHist("SignalFlavour", -1., this_MCweight, 3, -1., 2.);
+    }
+
+    genFinderSig->Run(gens);
+    this_kfactor = GetHNWRKFactor( (genFinderSig->priLep+genFinderSig->N).M() );
+
+    if(CalculateAverageKFactor){
+      FillHist("GenlN_Mass", (genFinderSig->priLep+genFinderSig->N).M(), 1., 8000, 0., 8000.);
+      double normweight = 1./sumW * this_MCweight;
+
+      if(SignalLeptonChannel==0){
+        FillHist("ElectronChannel_KFactor", 0., this_kfactor * normweight, 1, 0., 1.);
+      }
+      else if(SignalLeptonChannel==1){
+        FillHist("MuonChannel_KFactor", 0., this_kfactor * normweight, 1, 0., 1.);
+      }
+      return;
     }
 
     if(SignalElectronOnly && SignalLeptonChannel!=0) return;
     if(SignalMuonOnly && SignalLeptonChannel!=1) return;
-
 
   }
 
@@ -376,6 +445,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     }
 
+    if(Signal){
+      weight *= this_kfactor/this_avg_kfactor;
+    }
+
   }
 
   //=============
@@ -385,7 +458,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   FillCutFlow(IsCentral, "CutFlow", "NoCut_"+param.Name, weight);
 
   if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
-    double normweight = 1./sumW/PDFWeights_Scale->at(0);
+    double normweight = 1./sumW/PDFWeights_Scale->at(0) * this_kfactor/this_avg_kfactor;
     for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
       FillHist("XsecSyst_Den/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
@@ -1445,7 +1518,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
 
-        double normweight = 1./sumW/PDFWeights_Scale->at(0);
+        double normweight = 1./sumW/PDFWeights_Scale->at(0) * this_kfactor/this_avg_kfactor;
         for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
           //FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
 
@@ -1735,3 +1808,12 @@ double HNWRAnalyzer::GetDYReshape(double mwr, TString region, int SystType){
   }
 
 }
+
+double HNWRAnalyzer::GetHNWRKFactor(double mlN){
+
+  if(mlN<200.) mlN = 200.+1.;
+  int this_bin = hist_kfactor->FindBin(mlN);
+  return hist_kfactor->GetBinContent(this_bin);
+
+}
+
