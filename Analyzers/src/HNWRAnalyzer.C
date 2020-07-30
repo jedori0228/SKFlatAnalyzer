@@ -833,6 +833,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
           bool DiLepMass60to100  = (dilep_mass >= 60.) && (dilep_mass < 100.);
           bool DiLepMass100to150 = (dilep_mass >= 100.) && (dilep_mass < 150.);
+          bool DiLepMass200to400  = (dilep_mass >= 200.) && (dilep_mass < 400.);
 
           bool WRMassGT800 = ( WRCand.M() > 800. );
 
@@ -985,6 +986,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             if(DiLepMass100to150){
               map_bool_To_Region[Suffix+"_Resolved_DYCR2"] = true;
             }
+          }
+          if(DiLepMass200to400 && WRMassGT800){
+            map_bool_To_Region[Suffix+"_Resolved_DYCR3"] = true;
           }
 
           for(unsigned int i=0; i<Loose_leps.size(); i++){
@@ -1508,6 +1512,26 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   return;
 */
+
+  //==== Printing data info
+  if(IsDATA){
+
+  // bool IsResolved_SR_EE(false), IsResolved_SR_MM(false), IsResolved_SR_EM(false);
+  // bool IsBoosted_SR_EE(false), IsBoosted_SR_MM(false);
+
+    if(IsResolved_SR_EE || IsResolved_SR_MM){
+      if(WRCand.M() >= 3200.){
+        if(IsResolved_SR_EE) cout << "[HighMassDataEvent][IsResolved_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+        if(IsResolved_SR_MM) cout << "[HighMassDataEvent][IsResolved_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+      }
+    }
+    if(IsBoosted_SR_EE || IsBoosted_SR_MM){
+      if(WRCand.M() >= 1800.){
+        if(IsBoosted_SR_EE) cout << "[HighMassDataEvent][IsBoosted_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+        if(IsBoosted_SR_MM) cout << "[HighMassDataEvent][IsBoosted_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+      }
+    }
+  }
 
   for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
