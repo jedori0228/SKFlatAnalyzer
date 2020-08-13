@@ -1545,7 +1545,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         double normweight = 1./sumW/PDFWeights_Scale->at(0) * this_kfactor/this_avg_kfactor;
         for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
           //FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
-
           FillHist("XsecSyst_Num_"+this_region+"/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
         }
         for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
@@ -1745,15 +1744,47 @@ double HNWRAnalyzer::LSFSF(int lepflav, int dir){
   //==== lepflav = 0 : electron-jet
   //==== lepflav = 1 : mu-jet
 
+  //==== 2016
+  double LSFSF_EJet_Central = 1.04;
+  double LSFSF_EJet_Error_Up = 0.09;
+  double LSFSF_EJet_Error_Down = 0.08;
+
+  double LSFSF_MJet_Central = 1.01;
+  double LSFSF_MJet_Error_Up = 0.06;
+  double LSFSF_MJet_Error_Down = 0.06;
+
+  if(DataYear==2017){
+
+    LSFSF_EJet_Central = 1.02;
+    LSFSF_EJet_Error_Up = 0.08;
+    LSFSF_EJet_Error_Down = 0.08;
+
+    LSFSF_MJet_Central = 0.98;
+    LSFSF_MJet_Error_Up = 0.07;
+    LSFSF_MJet_Error_Down = 0.07;
+
+  }
+  if(DataYear==2018){
+
+    LSFSF_EJet_Central = 1.11;
+    LSFSF_EJet_Error_Up = 0.08;
+    LSFSF_EJet_Error_Down = 0.07;
+
+    LSFSF_MJet_Central = 1.06;
+    LSFSF_MJet_Error_Up = 0.06;
+    LSFSF_MJet_Error_Down = 0.05;
+
+  }
+
   if(lepflav==0){
-    if(dir==0)     return 1.04;
-    else if(dir>0) return 1.04+0.03;
-    else           return 1.04-0.04;
+    if(dir==0)     return LSFSF_EJet_Central;
+    else if(dir>0) return LSFSF_EJet_Central+LSFSF_EJet_Error_Up;
+    else           return LSFSF_EJet_Central-LSFSF_EJet_Error_Down;
   }
   else if(lepflav==1){
-    if(dir==0)     return 1.01;
-    else if(dir>0) return 1.01+0.03;
-    else           return 1.01-0.03;
+    if(dir==0)     return LSFSF_MJet_Central;
+    else if(dir>0) return LSFSF_MJet_Central+LSFSF_MJet_Error_Up;
+    else           return LSFSF_MJet_Central-LSFSF_MJet_Error_Down;
   }
   else{
     cerr << "[HNWRAnalyzer::LSFSF] wrong lepflav : " <<  lepflav << endl;
