@@ -861,7 +861,7 @@ try:
               HaddRightNow = False
               if IsTAMSA:
                 NHaddRunning = int(subprocess.check_output('ps -ef | grep '+USER+' | grep -v condor_shadow | grep "sh -c hadd" | grep -v "grep" | wc -l',shell=True).strip('\n'))
-                if NHaddRunning<=0:
+                if NHaddRunning<=3:
                   HaddRightNow = True
               else:
                 HaddRightNow = True
@@ -872,10 +872,10 @@ try:
                 continue
 
               if IsKISTI or IsTAMSA:
-                os.system('hadd -f -j 4 '+outputname+'.root output/*.root >> JobStatus.log')
+                os.system('hadd -f '+outputname+'.root output/*.root >> JobStatus.log')
                 os.system('rm output/*.root')
               else:
-                os.system('hadd -f -j 4 '+outputname+'.root job_*/*.root >> JobStatus.log')
+                os.system('hadd -f '+outputname+'.root job_*/*.root >> JobStatus.log')
                 os.system('rm job_*/*.root')
 
             ## Final Outputpath

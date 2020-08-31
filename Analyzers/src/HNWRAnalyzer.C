@@ -14,10 +14,62 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   PromptLeptonOnly = HasFlag("PromptLeptonOnly");
   ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
+  ApplyDYReshape = HasFlag("ApplyDYReshape");
   RunXsecSyst = HasFlag("RunXsecSyst");
   Signal = HasFlag("Signal");
+  CalculateAverageKFactor = HasFlag("CalculateAverageKFactor");
   SignalElectronOnly = HasFlag("SignalElectronOnly");
   SignalMuonOnly = HasFlag("SignalMuonOnly");
+
+  if(Signal){
+    //==== MCSample = WRtoNLtoLLJJ_WR1400_N1000
+    TString massstring = MCSample(TString("WRtoNLtoLLJJ_").Length(), MCSample.Length());
+    int i_underscore=-1;
+    for(int i=0; i<massstring.Length(); i++){
+      TString thissubstring = massstring(i);
+      if(thissubstring=="_"){
+        i_underscore = i;
+        break;
+      }
+    }
+    TString str_mWR = massstring(2,i_underscore-2);
+    TString str_mN = massstring(i_underscore+1+1,massstring.Length());
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] str_mWR = ["<<str_mWR<<"]" << endl;
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] str_mN = ["<<str_mN<<"]" << endl;
+
+    mWR = str_mWR.Atoi();
+    mN = str_mN.Atoi();
+
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] mWR = " << mWR << endl;
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] mN = " << mN << endl;
+
+    //==== Read kfactor vs m(lN) histogram
+    TString datapath = getenv("DATA_DIR");
+    TFile *file_kfactor = new TFile(datapath+"/HNWRGeneralData/kfactor.root");
+    hist_kfactor = (TH1D *)file_kfactor->Get("kfactor_all");
+    //==== get averaged kfactor
+    TString PUfname = datapath+"/"+TString::Itoa(DataYear,10)+"/PileUp/PUReweight_"+TString::Itoa(DataYear,10)+".root";
+    string kfactor_line;
+    ifstream kfactor_in(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRKFactor/AveragedKFactor.txt");
+    this_avg_kfactor = -1.;
+    while(getline(kfactor_in,kfactor_line)){
+      std::istringstream is( kfactor_line );
+
+      TString this_mass;
+      double avg_k_ee, avg_k_mm;
+      is >> this_mass;
+      is >> avg_k_ee;
+      is >> avg_k_mm;
+
+      if(massstring==this_mass){
+        if(SignalElectronOnly) this_avg_kfactor = avg_k_ee;
+        else if(SignalMuonOnly) this_avg_kfactor = avg_k_mm;
+        break;
+      }
+    }
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] this_avg_kfactor = " << this_avg_kfactor << endl;
+
+  }
 
   HEM1516 = HasFlag("HEM1516");
   BeforeRun319077 = HasFlag("BeforeRun319077");
@@ -107,6 +159,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
   genFinderSig = new GenFinderForHNWRSignal();
   SignalLeptonChannel = -1;
 
+  genFinderDY = new GenFinderForDY();
+
   //==== PUReweight
   if(!IsDATA){
     TString datapath = getenv("DATA_DIR");
@@ -128,6 +182,25 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   }
 
+  //==== DYReshape
+
+  if(!IsDATA){
+    TString datapath = getenv("DATA_DIR");
+
+    TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/Ratio.root");
+    hist_DYPtReweight = (TH2D *)file_DYPtReweight->Get("Ratio");
+
+    TFile *file_DYReshape = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYReshape/DYReshape_"+TString::Itoa(DataYear,10)+".root");
+    hist_DYReshape_Resolved_ratio_AllCh = (TH1D *)file_DYReshape->Get("Resolved_ratio_AllCh");
+    hist_DYReshape_Resolved_EEOnlyRatio = (TH1D *)file_DYReshape->Get("Resolved_EEOnlyRatio");
+    hist_DYReshape_Resolved_MuMuOnlyRatio = (TH1D *)file_DYReshape->Get("Resolved_MuMuOnlyRatio");
+
+    hist_DYReshape_Boosted_ratio_AllCh = (TH1D *)file_DYReshape->Get("Boosted_ratio_AllCh");
+    hist_DYReshape_Boosted_EEOnlyRatio = (TH1D *)file_DYReshape->Get("Boosted_EEOnlyRatio");
+    hist_DYReshape_Boosted_MuMuOnlyRatio = (TH1D *)file_DYReshape->Get("Boosted_MuMuOnlyRatio");
+
+  }
+
 }
 
 void HNWRAnalyzer::executeEvent(){
@@ -142,13 +215,49 @@ void HNWRAnalyzer::executeEvent(){
 
   gens = GetGens();
 
+/*
+  //==== TEST) draw gen WR
+  genFinderSig->Run(gens);
+  FillHist("GenWR_Mass", genFinderSig->WR.M(), 1., 8000, 0., 8000.);
+  FillHist("IsOffShellPrimaryWR", genFinderSig->IsOffShellPrimaryWR, 1., 2, 0., 2.);
+  FillHist("GenlN_Mass", (genFinderSig->priLep+genFinderSig->N).M(), 1., 8000, 0., 8000.);
+  return;
+*/
+
+  //=======================================================================
+  //==== Main analyzer
+
   if(ApplyDYPtReweight){
-    ZPtReweight = mcCorr->GetOfficialDYReweight(gens);
-    ZPtReweight_Up = mcCorr->GetOfficialDYReweight(gens,+1);
-    ZPtReweight_Down = mcCorr->GetOfficialDYReweight(gens,-1);
+
+    genFinderDY->Find(gens);
+    GenZParticle = genFinderDY->GenZ;
+
+    double mZ = GenZParticle.M();
+    double ptZ = GenZParticle.Pt();
+
+    if(mZ<50.) mZ=51.;
+    if(mZ>=1000.) mZ=999.;
+    //if(ptZ<70.) ptZ=71.;
+    if(ptZ>=1000.) ptZ=999.;
+
+    int bin_mass = hist_DYPtReweight->GetXaxis()->FindBin(mZ);
+    int bin_pt   = hist_DYPtReweight->GetYaxis()->FindBin(ptZ);
+
+    double value = hist_DYPtReweight->GetBinContent( bin_mass, bin_pt );
+    double error = hist_DYPtReweight->GetBinError( bin_mass, bin_pt );
+
+    ZPtReweight = value;
+    ZPtReweight_Up = value+error;
+    ZPtReweight_Down = value-error;
+
+    //cout << GenZParticle.M() << "\t" << GenZParticle.Pt() << " -> " << value << endl;
+
   }
 
   if(Signal){
+
+    double this_MCweight = GetEvent().MCweight();
+
     int genNpid = -1;
     for(unsigned int i=2; i<gens.size(); i++){
       int pid = abs( gens.at(i).PID() );
@@ -163,19 +272,34 @@ void HNWRAnalyzer::executeEvent(){
     //==== 1 = muon
     if(genNpid==9900012){
       SignalLeptonChannel = 0;
-      FillHist("SignalFlavour", 0., 1., 3, -1., 2.);
+      FillHist("SignalFlavour", 0., this_MCweight, 3, -1., 2.);
     }
     else if(genNpid==9900014){
       SignalLeptonChannel = 1;
-      FillHist("SignalFlavour", 1., 1., 3, -1., 2.);
+      FillHist("SignalFlavour", 1., this_MCweight, 3, -1., 2.);
     }
     else{
-      FillHist("SignalFlavour", -1., 1., 3, -1., 2.);
+      FillHist("SignalFlavour", -1., this_MCweight, 3, -1., 2.);
+    }
+
+    genFinderSig->Run(gens);
+    this_kfactor = GetHNWRKFactor( (genFinderSig->priLep+genFinderSig->N).M() );
+
+    if(CalculateAverageKFactor){
+      FillHist("GenlN_Mass", (genFinderSig->priLep+genFinderSig->N).M(), 1., 8000, 0., 8000.);
+      double normweight = 1./sumW * this_MCweight;
+
+      if(SignalLeptonChannel==0){
+        FillHist("ElectronChannel_KFactor", 0., this_kfactor * normweight, 1, 0., 1.);
+      }
+      else if(SignalLeptonChannel==1){
+        FillHist("MuonChannel_KFactor", 0., this_kfactor * normweight, 1, 0., 1.);
+      }
+      return;
     }
 
     if(SignalElectronOnly && SignalLeptonChannel!=0) return;
     if(SignalMuonOnly && SignalLeptonChannel!=1) return;
-
 
   }
 
@@ -281,6 +405,49 @@ void HNWRAnalyzer::executeEvent(){
 
 void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
+/*
+  //==== DY LO vs NLO stduy
+
+  vector<LHE> lhes = GetLHEs();
+
+  int LHE_lepton_flavour = -1; // 0 : ee, 1 : mm, 2 : tt
+  int nFinalParton = 0;
+
+  for(unsigned int i=0; i<lhes.size(); i++){
+    int this_ID = lhes.at(i).ID();
+    int this_Status = lhes.at(i).Status();
+
+    //==== Status 1
+    if( this_Status == 1){
+
+      //==== Check lepton flavour
+      if( abs(this_ID)== 11 ){
+        LHE_lepton_flavour = 0;
+      }
+      else if(abs(this_ID)== 13 ){
+        LHE_lepton_flavour = 1;
+      }
+      else if(abs(this_ID)== 15 ){
+        LHE_lepton_flavour = 2;
+      }
+
+      //==== final state parton
+      if( abs(this_ID) <= 6 ){
+        nFinalParton++;
+      }
+      if( abs(this_ID) == 9 || abs(this_ID) == 21 ){
+        nFinalParton++;
+      }
+
+    } // END if status 1
+  }
+  FillHist("LHEStudy/NoMassCut__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+  FillHist("LHEStudy/NoMassCut__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
+*/
+
+  //=====================================================
+  //==== Main Analyzer
+
   bool IsCentral = !( param.Name.Contains("Syst_") );
 
   Event ev = GetEvent();
@@ -304,6 +471,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     }
 
+    if(Signal){
+      weight *= this_kfactor/this_avg_kfactor;
+    }
+
   }
 
   //=============
@@ -313,12 +484,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   FillCutFlow(IsCentral, "CutFlow", "NoCut_"+param.Name, weight);
 
   if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
-    double normweight = 1./sumW/PDFWeights_Scale->at(0);
+    double normweight = 1./sumW/PDFWeights_Scale->at(0) * this_kfactor/this_avg_kfactor;
     for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
       FillHist("XsecSyst_Den/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
     for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
       FillHist("XsecSyst_Den/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      if(PDFWeights_Error->at(i)>0){
+        FillHist("XsecSyst_Den/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den_Positive", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      }
+      else{
+        FillHist("XsecSyst_Den/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den_Negative", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      }
     }
     for(unsigned int i=0; i<PDFWeights_AlphaS->size(); i++){
       FillHist("XsecSyst_Den/PDFWeights_AlphaS_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_AlphaS->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
@@ -364,6 +541,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   int SystDir_LSFSF(0);
   int SystDir_PU(0);
+
+  int SystDir_DYReshape(0);
 
   if(param.syst_ == AnalyzerParameter::Central){
 
@@ -469,6 +648,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   }
   else if(param.syst_ == AnalyzerParameter::PrefireDown){
 
+  }
+  else if(param.syst_ == AnalyzerParameter::DYReshapeSystUp){
+    SystDir_DYReshape = +1;
+  }
+  else if(param.syst_ == AnalyzerParameter::DYReshapeSystDown){
+    SystDir_DYReshape = -1;
+  }
+  else if(param.syst_ == AnalyzerParameter::DYReshapeEEMMUp){
+    SystDir_DYReshape = +2;
+  }
+  else if(param.syst_ == AnalyzerParameter::DYReshapeEEMMDown){
+    SystDir_DYReshape = -2;
   }
   else{
     cerr << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst : param.syst_ = " << param.syst_ << endl;
@@ -670,7 +861,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
           bool DiLepMassGT200 = (dilep_mass > 200.);
           bool DiLepMassGT400 = (dilep_mass > 400.);
-          bool DiLepMassLT150 = (dilep_mass > 60.) && (dilep_mass < 150.);
+          bool DiLepMassLT150 = (dilep_mass >= 60.) && (dilep_mass < 150.);
+
+          bool DiLepMass60to100  = (dilep_mass >= 60.) && (dilep_mass < 100.);
+          bool DiLepMass100to150 = (dilep_mass >= 100.) && (dilep_mass < 150.);
+          bool DiLepMass200to400  = (dilep_mass >= 200.) && (dilep_mass < 400.);
+
           bool WRMassGT800 = ( WRCand.M() > 800. );
 
           //==== Now IsResolvedEvent is set
@@ -706,6 +902,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
             trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
             trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons, SystDir_MuonTriggerSF);
+
+            //==== DYReshape for DY
+            if(ApplyDYReshape){
+              weight *= GetDYReshape(WRCand.M(), "Resolved", SystDir_DYReshape);
+            }
 
           }
           if(Suffix=="SingleElectron"){
@@ -805,12 +1006,21 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved DYCR [IsResolved_DYCR_MM]
           //==== - HNWR_EMu_Resolved_DYCR : filled, but NOT USED [IsResolved_DYCR_EM]
 
-          if(DiLepMassLT150){
+          if(DiLepMassLT150 && WRMassGT800){
             map_bool_To_Region[Suffix+"_Resolved_DYCR"] = true;
             if(tmp_IsEE) IsResolved_DYCR_EE = true;
             else if(tmp_IsMM) IsResolved_DYCR_MM = true;
             else if(tmp_IsEM) IsResolved_DYCR_EM = true;
 
+            if(DiLepMass60to100){
+              map_bool_To_Region[Suffix+"_Resolved_DYCR1"] = true;
+            }
+            if(DiLepMass100to150){
+              map_bool_To_Region[Suffix+"_Resolved_DYCR2"] = true;
+            }
+          }
+          if(DiLepMass200to400 && WRMassGT800){
+            map_bool_To_Region[Suffix+"_Resolved_DYCR3"] = true;
           }
 
           for(unsigned int i=0; i<Loose_leps.size(); i++){
@@ -935,12 +1145,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_"+param.Name, weight);
 
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    //@@@@ Apply scale factors
-
-    double trigger_sf_SingleElectron = 1.;
-    double trigger_sf_SingleMuon = 1.;
+    //@@@@ Apply lepton scale factors
 
     if(!IsDATA){
+
+      //==== lepton scale factors here
 
       mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
 
@@ -960,19 +1169,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         weight *= this_recosf*this_idsf*this_isosf;
       }
 
-      //==== Trigger SF
-
-      trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
-      trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons, SystDir_MuonTriggerSF);
-
-    }
-    if(Suffix=="SingleElectron"){
-      trigger_sf_SingleMuon = trigger_sf_SingleElectron;
-      weight *= trigger_sf_SingleElectron;
-    }
-    else{
-      trigger_sf_SingleElectron = trigger_sf_SingleMuon;
-      weight *= trigger_sf_SingleMuon;
     }
     //@@@@
     //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -989,6 +1185,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       //==== Check for DYCR very first time
 
       bool HasLowMll = false;
+      double LowMllMass = -1;
       Lepton *LowMllLooseLepton;
       for(unsigned int i=0; i<Loose_SF_leps.size(); i++){
         if(Loose_SF_leps.at(i)==LeadLep){
@@ -996,10 +1193,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           continue;
         }
         double dilep_mass  = (*(LeadLep)+*(Loose_SF_leps.at(i))).M();
-        if( (dilep_mass > 60.) && (dilep_mass < 150.) ){
+        if( (dilep_mass >= 60.) && (dilep_mass < 150.) ){
           HasLowMll = true;
+          LowMllMass = dilep_mass;
           LowMllLooseLepton = Loose_SF_leps.at(i);
           leps_for_plot.push_back( Loose_SF_leps.at(i) );
+
+          if(tmp_IsLeadM){
+            //==== In this case, the loose ID is HighPt ID muon.
+            //==== we want to apply the lepton scale factors to these muons
+            Muon *looseMuon = (Muon *)LowMllLooseLepton;
+            ForSF_muons.push_back( looseMuon );
+          }
+
           break;
         }
       }
@@ -1025,11 +1231,23 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted DYCR [IsBoosted_DYCR_EE]
             //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted DYCR [IsBoosted_DYCR_MM]
 
-            map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
-            if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
-            else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
+            if( WRCand.M() > 800. ){
 
-            break;
+              //==== 60~150
+              map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
+              if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
+              else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
+
+              if( LowMllMass < 100 ){
+                map_bool_To_Region[Suffix+"_Boosted_DYCR1"] = true;
+              }
+              else{
+                map_bool_To_Region[Suffix+"_Boosted_DYCR2"] = true;
+              }
+
+              break;
+
+            }
           }
         }
       }      
@@ -1143,6 +1361,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                 FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
 
                 leps_for_plot.push_back( SFLooseLepton );
+                if(tmp_IsLeadM){
+                  //==== In this case, the loose ID is HighPt ID muon.
+                  //==== we want to apply the lepton scale factors to these muons
+                  Muon *looseMuon = (Muon *)SFLooseLepton;
+                  ForSF_muons.push_back( looseMuon );
+                }
 
                 if( (*LeadLep+*SFLooseLepton).M() > 200 ){
 
@@ -1232,6 +1456,29 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       } // END If no m(ll)<150 pair
 
+      //==== Now we can apply trigger SFs, because for mm case, we selected correct loose muons
+
+      double trigger_sf_SingleElectron = 1.;
+      double trigger_sf_SingleMuon = 1.;
+      if(!IsDATA){
+        //==== Trigger SF
+        trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
+        trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, ForSF_muons, SystDir_MuonTriggerSF); // notice, we used ForSF_muons instead of Tight_muons
+      }
+      if(Suffix=="SingleElectron"){
+        trigger_sf_SingleMuon = trigger_sf_SingleElectron;
+        weight *= trigger_sf_SingleElectron;
+      }
+      else{
+        trigger_sf_SingleElectron = trigger_sf_SingleMuon;
+        weight *= trigger_sf_SingleMuon;
+      }
+
+      //==== DYReshape for DY
+      if(ApplyDYReshape){
+        weight *= GetDYReshape(WRCand.M(), "Boosted", SystDir_DYReshape);
+      }
+
     } // END If trigger fired
 
   } // END If not resolved
@@ -1263,6 +1510,61 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   }
   //================================================
 
+/*
+  //==== DY LO vs NLO stduy
+  bool IsHighWRMassResolvedDYEvent = (IsResolved_DYCR_EE||IsResolved_DYCR_MM) && (WRCand.M()>3000.);
+  bool IsHighWRMassBoostedDYEvent = (IsBoosted_DYCR_EE || IsBoosted_DYCR_MM) && (WRCand.M()>3000.);
+  //cout << "@@@@ High mass m(lljj) DY events found" << endl;
+  //cout << "m(lljj) = " << WRCand.M() << endl;
+  //cout << "m(ll) = " << ( (*leps_for_plot.at(0))+(*leps_for_plot.at(1)) ).M() << endl;
+
+  if(IsHighWRMassResolvedDYEvent){
+
+    cout << "@@@@ IsHighWRMassResolvedDYEvent " << endl;
+    cout << "[RECO]" << endl;
+    cout << "lep1 : "; leps_for_plot.at(0)->Print();
+    cout << "lep2 : "; leps_for_plot.at(1)->Print();
+    cout << "jet1 : "; jets.at(0).Print();
+    cout << "jet2 : "; jets.at(1).Print();
+
+    cout << "[LHE]" << endl;
+    for(unsigned int i=0; i<lhes.size(); i++){
+      lhes.at(i).Print();
+      int this_ID = lhes.at(i).ID();
+      int this_Status = lhes.at(i).Status();
+    }
+
+    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
+  }
+  if(IsHighWRMassBoostedDYEvent){
+    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
+  }
+
+  return;
+*/
+
+  //==== Printing data info
+  if(IsDATA){
+
+  // bool IsResolved_SR_EE(false), IsResolved_SR_MM(false), IsResolved_SR_EM(false);
+  // bool IsBoosted_SR_EE(false), IsBoosted_SR_MM(false);
+
+    if(IsResolved_SR_EE || IsResolved_SR_MM){
+      if(WRCand.M() >= 3200.){
+        if(IsResolved_SR_EE) cout << "[HighMassDataEvent][IsResolved_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+        if(IsResolved_SR_MM) cout << "[HighMassDataEvent][IsResolved_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+      }
+    }
+    if(IsBoosted_SR_EE || IsBoosted_SR_MM){
+      if(WRCand.M() >= 1800.){
+        if(IsBoosted_SR_EE) cout << "[HighMassDataEvent][IsBoosted_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+        if(IsBoosted_SR_MM) cout << "[HighMassDataEvent][IsBoosted_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+      }
+    }
+  }
+
   for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
     TString this_region = it_map->first;
@@ -1272,10 +1574,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
 
-        double normweight = 1./sumW/PDFWeights_Scale->at(0);
+        double normweight = 1./sumW/PDFWeights_Scale->at(0) * this_kfactor/this_avg_kfactor;
         for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
           //FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
-
           FillHist("XsecSyst_Num_"+this_region+"/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
         }
         for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
@@ -1364,6 +1665,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       FillLeptonPlots(leps_for_plot, this_region, weight);
       FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
+      if(jets.size()>=2){
+        FillHist(this_region+"/DiJet_Mass_"+this_region, (jets.at(0)+jets.at(1)).M(), weight, 400, 0., 4000.);
+        FillHist(this_region+"/DiJet_Pt_"+this_region, (jets.at(0)+jets.at(1)).Pt(), weight, 400, 0., 4000.);
+      }
+
       //==== For HEM15/16
       if(HEM1516){
         for(unsigned int i=0; i<fatjets.size(); i++){
@@ -1385,6 +1691,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       if(jets.size()>=2){
         FillHist(this_region+"/dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
+      }
+
+      if(ApplyDYPtReweight){
+        double this_WRMass = WRCand.M();
+        if( this_WRMass < 1000 ){
+          FillHist(this_region+"/ZPtReweight_"+this_region, ZPtReweight, 1., 40, 0., 4.);
+          FillHist(this_region+"/GenZ_Mass_"+this_region, GenZParticle.M(), weight, 2000, 0., 2000.);
+          FillHist(this_region+"/GenZ_Pt_"+this_region, GenZParticle.Pt(), weight, 2000, 0., 2000.);
+        }
       }
 
       FillHist(this_region+"/JetLepFlav_"+this_region, JetLepFlav, 1., 3, -1., 2.);
@@ -1470,15 +1785,47 @@ double HNWRAnalyzer::LSFSF(int lepflav, int dir){
   //==== lepflav = 0 : electron-jet
   //==== lepflav = 1 : mu-jet
 
+  //==== 2016
+  double LSFSF_EJet_Central = 1.04;
+  double LSFSF_EJet_Error_Up = 0.09;
+  double LSFSF_EJet_Error_Down = 0.08;
+
+  double LSFSF_MJet_Central = 1.01;
+  double LSFSF_MJet_Error_Up = 0.06;
+  double LSFSF_MJet_Error_Down = 0.06;
+
+  if(DataYear==2017){
+
+    LSFSF_EJet_Central = 1.02;
+    LSFSF_EJet_Error_Up = 0.08;
+    LSFSF_EJet_Error_Down = 0.08;
+
+    LSFSF_MJet_Central = 0.98;
+    LSFSF_MJet_Error_Up = 0.07;
+    LSFSF_MJet_Error_Down = 0.07;
+
+  }
+  if(DataYear==2018){
+
+    LSFSF_EJet_Central = 1.11;
+    LSFSF_EJet_Error_Up = 0.08;
+    LSFSF_EJet_Error_Down = 0.07;
+
+    LSFSF_MJet_Central = 1.06;
+    LSFSF_MJet_Error_Up = 0.06;
+    LSFSF_MJet_Error_Down = 0.05;
+
+  }
+
   if(lepflav==0){
-    if(dir==0)     return 1.04;
-    else if(dir>0) return 1.04+0.03;
-    else           return 1.04-0.04;
+    if(dir==0)     return LSFSF_EJet_Central;
+    else if(dir>0) return LSFSF_EJet_Central+LSFSF_EJet_Error_Up;
+    else           return LSFSF_EJet_Central-LSFSF_EJet_Error_Down;
   }
   else if(lepflav==1){
-    if(dir==0)     return 1.01;
-    else if(dir>0) return 1.01+0.03;
-    else           return 1.01-0.03;
+    if(dir==0)     return LSFSF_MJet_Central;
+    else if(dir>0) return LSFSF_MJet_Central+LSFSF_MJet_Error_Up;
+    else           return LSFSF_MJet_Central-LSFSF_MJet_Error_Down;
   }
   else{
     cerr << "[HNWRAnalyzer::LSFSF] wrong lepflav : " <<  lepflav << endl;
@@ -1488,4 +1835,81 @@ double HNWRAnalyzer::LSFSF(int lepflav, int dir){
 
 }
 
+double HNWRAnalyzer::GetDYReshape(double mwr, TString region, int SystType){
+
+  if(mwr>=8000.) mwr=8000.;
+
+  
+
+  int this_bin = -1;
+  if(region=="Resolved"){
+    this_bin = hist_DYReshape_Resolved_ratio_AllCh->FindBin(mwr);
+  }
+  else if(region=="Boosted"){
+    this_bin = hist_DYReshape_Boosted_ratio_AllCh->FindBin(mwr);
+  }
+  else{
+    cout << "[HNWRAnalyzer::GetDYReshape] Wrong regoin : " << region << endl;
+  }
+
+  //==== central
+  if(SystType==0){
+    if(region=="Resolved"){
+      return hist_DYReshape_Resolved_ratio_AllCh->GetBinContent(this_bin);
+    }
+    else{
+      return hist_DYReshape_Boosted_ratio_AllCh->GetBinContent(this_bin);
+    }
+  }
+  //==== stat up
+  else if(SystType==+1){
+    if(region=="Resolved"){
+      return hist_DYReshape_Resolved_ratio_AllCh->GetBinContent(this_bin) + hist_DYReshape_Resolved_ratio_AllCh->GetBinError(this_bin);
+    }
+    else{
+      return hist_DYReshape_Boosted_ratio_AllCh->GetBinContent(this_bin) + hist_DYReshape_Boosted_ratio_AllCh->GetBinError(this_bin);
+    }
+  }
+  //==== stat down
+  else if(SystType==-1){
+    if(region=="Resolved"){
+      return hist_DYReshape_Resolved_ratio_AllCh->GetBinContent(this_bin) - hist_DYReshape_Resolved_ratio_AllCh->GetBinError(this_bin);
+    }
+    else{
+      return hist_DYReshape_Boosted_ratio_AllCh->GetBinContent(this_bin) - hist_DYReshape_Boosted_ratio_AllCh->GetBinError(this_bin);
+    }
+  }
+  //==== ee-only
+  else if(SystType==+2){
+    if(region=="Resolved"){
+      return hist_DYReshape_Resolved_EEOnlyRatio->GetBinContent(this_bin);
+    }
+    else{
+      return hist_DYReshape_Boosted_EEOnlyRatio->GetBinContent(this_bin);
+    }
+  }
+  //==== mm-only
+  else if(SystType==-2){
+    if(region=="Resolved"){
+      return hist_DYReshape_Resolved_MuMuOnlyRatio->GetBinContent(this_bin);
+    }
+    else{
+      return hist_DYReshape_Boosted_MuMuOnlyRatio->GetBinContent(this_bin);
+    }
+  }
+  else{
+    cout << "[HNWRAnalyzer::GetDYReshape] Wrong input; mwr = " << mwr << ", region = " << region << ", SystType = " << SystType << endl;
+    exit(EXIT_FAILURE);
+    return 1.;
+  }
+
+}
+
+double HNWRAnalyzer::GetHNWRKFactor(double mlN){
+
+  if(mlN<200.) mlN = 200.+1.;
+  int this_bin = hist_kfactor->FindBin(mlN);
+  return hist_kfactor->GetBinContent(this_bin);
+
+}
 
