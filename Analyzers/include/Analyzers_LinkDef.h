@@ -26,6 +26,7 @@
 #pragma link C++ class TriggerWithPtRange+;
 
 #pragma link C++ class MyPlayGround+;
+#pragma link C++ class GetZPtReweight+;
 #pragma link C++ class CompareFullAndFast+;
 
 #endif

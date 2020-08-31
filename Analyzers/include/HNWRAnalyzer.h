@@ -2,6 +2,7 @@
 #define HNWRAnalyzer_h
 
 #include "AnalyzerCore.h"
+#include "GenFinderForDY.h"
 #include "GenFinderForHNWRSignal.h"
 
 class HNWRAnalyzer : public AnalyzerCore {
@@ -40,7 +41,10 @@ public:
   double TriggerSafePt_Electron, TriggerSafePt_Muon;
 
   //==== DYPtReweight
+  GenFinderForDY *genFinderDY;
   bool ApplyDYPtReweight;
+  TH2D *hist_DYPtReweight;
+  Particle GenZParticle;
   double ZPtReweight, ZPtReweight_Up, ZPtReweight_Down;
 
   //==== My tool

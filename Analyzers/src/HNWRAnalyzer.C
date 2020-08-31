@@ -159,6 +159,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
   genFinderSig = new GenFinderForHNWRSignal();
   SignalLeptonChannel = -1;
 
+  genFinderDY = new GenFinderForDY();
+
   //==== PUReweight
   if(!IsDATA){
     TString datapath = getenv("DATA_DIR");
@@ -184,6 +186,9 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   if(!IsDATA){
     TString datapath = getenv("DATA_DIR");
+
+    TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/Ratio.root");
+    hist_DYPtReweight = (TH2D *)file_DYPtReweight->Get("Ratio");
 
     TFile *file_DYReshape = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYReshape/DYReshape_"+TString::Itoa(DataYear,10)+".root");
     hist_DYReshape_Resolved_ratio_AllCh = (TH1D *)file_DYReshape->Get("Resolved_ratio_AllCh");
@@ -223,9 +228,30 @@ void HNWRAnalyzer::executeEvent(){
   //==== Main analyzer
 
   if(ApplyDYPtReweight){
-    ZPtReweight = mcCorr->GetOfficialDYReweight(gens);
-    ZPtReweight_Up = mcCorr->GetOfficialDYReweight(gens,+1);
-    ZPtReweight_Down = mcCorr->GetOfficialDYReweight(gens,-1);
+
+    genFinderDY->Find(gens);
+    GenZParticle = genFinderDY->GenZ;
+
+    double mZ = GenZParticle.M();
+    double ptZ = GenZParticle.Pt();
+
+    if(mZ<50.) mZ=51.;
+    if(mZ>=1000.) mZ=999.;
+    //if(ptZ<70.) ptZ=71.;
+    if(ptZ>=1000.) ptZ=999.;
+
+    int bin_mass = hist_DYPtReweight->GetXaxis()->FindBin(mZ);
+    int bin_pt   = hist_DYPtReweight->GetYaxis()->FindBin(ptZ);
+
+    double value = hist_DYPtReweight->GetBinContent( bin_mass, bin_pt );
+    double error = hist_DYPtReweight->GetBinError( bin_mass, bin_pt );
+
+    ZPtReweight = value;
+    ZPtReweight_Up = value+error;
+    ZPtReweight_Down = value-error;
+
+    //cout << GenZParticle.M() << "\t" << GenZParticle.Pt() << " -> " << value << endl;
+
   }
 
   if(Signal){
@@ -464,6 +490,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
     for(unsigned int i=0; i<PDFWeights_Error->size(); i++){
       FillHist("XsecSyst_Den/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      if(PDFWeights_Error->at(i)>0){
+        FillHist("XsecSyst_Den/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den_Positive", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      }
+      else{
+        FillHist("XsecSyst_Den/PDFWeights_Error_"+TString::Itoa(i,10)+"_XsecSyst_Den_Negative", 0., PDFWeights_Error->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
+      }
     }
     for(unsigned int i=0; i<PDFWeights_AlphaS->size(); i++){
       FillHist("XsecSyst_Den/PDFWeights_AlphaS_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_AlphaS->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
@@ -1659,6 +1691,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       if(jets.size()>=2){
         FillHist(this_region+"/dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
+      }
+
+      if(ApplyDYPtReweight){
+        double this_WRMass = WRCand.M();
+        if( this_WRMass < 1000 ){
+          FillHist(this_region+"/ZPtReweight_"+this_region, ZPtReweight, 1., 40, 0., 4.);
+          FillHist(this_region+"/GenZ_Mass_"+this_region, GenZParticle.M(), weight, 2000, 0., 2000.);
+          FillHist(this_region+"/GenZ_Pt_"+this_region, GenZParticle.Pt(), weight, 2000, 0., 2000.);
+        }
       }
 
       FillHist(this_region+"/JetLepFlav_"+this_region, JetLepFlav, 1., 3, -1., 2.);
