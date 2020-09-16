@@ -298,7 +298,6 @@ void HNWRAnalyzer::executeEvent(){
       return;
     }
 
-    if(SignalElectronOnly && SignalLeptonChannel!=0) return;
     if(SignalMuonOnly && SignalLeptonChannel!=1) return;
 
   }
@@ -1556,12 +1555,19 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         if(IsResolved_SR_EE) cout << "[HighMassDataEvent][IsResolved_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
         if(IsResolved_SR_MM) cout << "[HighMassDataEvent][IsResolved_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
       }
+      leps_for_plot.at(0)->Print();
+      leps_for_plot.at(1)->Print();
+      jets.at(0).Print();
+      jets.at(1).Print();
     }
     if(IsBoosted_SR_EE || IsBoosted_SR_MM){
       if(WRCand.M() >= 1800.){
         if(IsBoosted_SR_EE) cout << "[HighMassDataEvent][IsBoosted_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
         if(IsBoosted_SR_MM) cout << "[HighMassDataEvent][IsBoosted_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
       }
+      leps_for_plot.at(0)->Print();
+      leps_for_plot.at(1)->Print();
+      HNFatJet.Print();
     }
   }
 
