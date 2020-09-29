@@ -285,6 +285,9 @@ void HNWRAnalyzer::executeEvent(){
     genFinderSig->Run(gens);
     this_kfactor = GetHNWRKFactor( (genFinderSig->priLep+genFinderSig->N).M() );
 
+    FillHist("GEN_WR_Mass", genFinderSig->WR.M(), 1., 800, 0., 8000.);
+    FillHist("GEN_WR_Mass_"+TString::Itoa(SignalLeptonChannel,10), genFinderSig->WR.M(), 1., 800, 0., 8000.);
+
     if(CalculateAverageKFactor){
       FillHist("GenlN_Mass", (genFinderSig->priLep+genFinderSig->N).M(), 1., 8000, 0., 8000.);
       double normweight = 1./sumW * this_MCweight;
@@ -1653,7 +1656,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         FillHist(this_region+"/dPhi_ll_"+this_region, fabs((*leps_for_plot.at(0)).DeltaPhi(*leps_for_plot.at(1))), weight, 40, 0., 4.);
       }
 
-      FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
+      double this_mWR = WRCand.M();
+      if(this_mWR<800.) this_mWR = 800.+1.;
+      if(this_mWR>=8000.) this_mWR = 7999.;
+      FillHist(this_region+"/WRCand_Mass_"+this_region, this_mWR, weight, 800, 0., 8000.);
 
       FillHist(this_region+"/WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
 
