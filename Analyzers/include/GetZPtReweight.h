@@ -13,6 +13,7 @@ public:
   void executeEvent();
 
   bool DoLowPt;
+  bool NewPDF;
 
   GetZPtReweight();
   ~GetZPtReweight();
