@@ -2,6 +2,7 @@
 #define HNWRSignalStudy_h
 
 #include "AnalyzerCore.h"
+#include "GenFinderForHNWRSignal.h"
 
 class HNWRSignalStudy : public AnalyzerCore {
 
@@ -12,6 +13,8 @@ public:
   void executeEvent();
 
   bool RunNewPDF;
+
+  GenFinderForHNWRSignal *genFinderSig;
 
   HNWRSignalStudy();
   ~HNWRSignalStudy();
