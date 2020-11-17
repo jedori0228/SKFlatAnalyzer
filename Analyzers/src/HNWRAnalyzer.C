@@ -227,10 +227,11 @@ void HNWRAnalyzer::executeEvent(){
   //=======================================================================
   //==== Main analyzer
 
-  if(ApplyDYPtReweight){
-
+  if(MCSample.Contains("DYJets")){
     genFinderDY->Find(gens);
     GenZParticle = genFinderDY->GenZ;
+  }
+  if(ApplyDYPtReweight){
 
     double mZ = GenZParticle.M();
     double ptZ = GenZParticle.Pt();
@@ -287,6 +288,8 @@ void HNWRAnalyzer::executeEvent(){
 
     FillHist("GEN_WR_Mass", genFinderSig->WR.M(), 1., 800, 0., 8000.);
     FillHist("GEN_WR_Mass_"+TString::Itoa(SignalLeptonChannel,10), genFinderSig->WR.M(), 1., 800, 0., 8000.);
+    FillHist("GEN_LepFalv_"+TString::Itoa(SignalLeptonChannel,10)+"_Pt", genFinderSig->priLep.Pt(), 1., 400, 0., 4000.);
+    FillHist("GEN_LepFalv_"+TString::Itoa(SignalLeptonChannel,10)+"_Pt", genFinderSig->secLep.Pt(), 1., 400, 0., 4000.);
 
     if(CalculateAverageKFactor){
       FillHist("GenlN_Mass", (genFinderSig->priLep+genFinderSig->N).M(), 1., 8000, 0., 8000.);
@@ -731,11 +734,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== # of leptons
   int n_Loose_leptons = Loose_electrons.size()+Loose_muons.size();
   int n_Tight_leptons = Tight_electrons.size()+Tight_muons.size();
-  //==== [CUT] : return if no tight lepton
-  if(n_Tight_leptons==0) return;
-
-  //==== [CUT] return if lead pt <= 60 GeV
-  if(Tight_leps.at(0)->Pt()<=60.) return;
 
   //===========
   //==== Jets
@@ -796,7 +794,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool IsResolved_LowWRCR_EE(false), IsResolved_LowWRCR_MM(false), IsResolved_LowWRCR_EM(false);
   bool IsResolved_DYCR_EE(false), IsResolved_DYCR_MM(false), IsResolved_DYCR_EM(false);
 
-  if(n_Tight_leptons==2){
+  if( (n_Tight_leptons==2) && (Tight_leps.at(0)->Pt()>60.) ){
 
     FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+param.Name, weight);
 
@@ -1109,293 +1107,314 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+param.Name, weight);
 
-    Lepton *LeadLep = Tight_leps.at(0);
-    bool tmp_IsLeadE(false), tmp_IsLeadM(false);
-    TString Suffix = "";
-    bool this_triggerpass(false);
-    std::vector<Electron *> ForSF_electrons;
-    std::vector<Muon *> ForSF_muons;
-    if(LeadLep->LeptonFlavour()==Lepton::ELECTRON){
-      tmp_IsLeadE = true;
-      Suffix = "SingleElectron";
-      this_triggerpass = PassSingleElectron;
+    if( (n_Tight_leptons>0) && (Tight_leps.at(0)->Pt()>60.) ){
 
-      ForSF_electrons.push_back( Tight_electrons.at(0) );
+      FillCutFlow(IsCentral, "CutFlow", "NotResolved_TightLeptonExist_"+param.Name, weight);
 
-      if(Signal){
-        if(SignalLeptonChannel!=0) return;
-      }
+      Lepton *LeadLep = Tight_leps.at(0);
+      bool tmp_IsLeadE(false), tmp_IsLeadM(false);
+      TString Suffix = "";
+      bool this_triggerpass(false);
+      std::vector<Electron *> ForSF_electrons;
+      std::vector<Muon *> ForSF_muons;
+      if(LeadLep->LeptonFlavour()==Lepton::ELECTRON){
+        tmp_IsLeadE = true;
+        Suffix = "SingleElectron";
+        this_triggerpass = PassSingleElectron;
 
-    }
-    else if(LeadLep->LeptonFlavour()==Lepton::MUON){
-      tmp_IsLeadM = true;
-      Suffix = "SingleMuon";
-      this_triggerpass = PassMu50;
+        ForSF_electrons.push_back( Tight_electrons.at(0) );
 
-      ForSF_muons.push_back( Tight_muons.at(0) );
-
-      if(Signal){
-        if(SignalLeptonChannel!=1) return;
-      }
-
-    }
-    else{
-      cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong flavour : " << LeadLep->LeptonFlavour() << endl;
-      exit(EXIT_FAILURE);
-    }
-
-    FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_"+param.Name, weight);
-
-    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    //@@@@ Apply lepton scale factors
-
-    if(!IsDATA){
-
-      //==== lepton scale factors here
-
-      mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
-
-      for(unsigned int i=0; i<ForSF_electrons.size(); i++){
-        double this_recosf = mcCorr->ElectronReco_SF(ForSF_electrons.at(i)->scEta(),ForSF_electrons.at(i)->Pt(), SystDir_ElectronRecoSF);
-        double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, ForSF_electrons.at(i)->scEta(), ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
-        weight *= this_recosf*this_idsf;
-      }
-      for(unsigned int i=0; i<ForSF_muons.size(); i++){
-
-        double MiniAODP = sqrt( ForSF_muons.at(i)->MiniAODPt() * ForSF_muons.at(i)->MiniAODPt() + ForSF_muons.at(i)->Pz() * ForSF_muons.at(i)->Pz() );
-
-        double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, ForSF_muons.at(i)->Eta(), MiniAODP, SystDir_MuonRecoSF);
-        double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
-        double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonISOSF);
-
-        weight *= this_recosf*this_idsf*this_isosf;
-      }
-
-    }
-    //@@@@
-    //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-    if(this_triggerpass){
-
-      FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_PassTrigger_"+param.Name, weight);
-
-      leps_for_plot.push_back( Tight_leps.at(0) );
-
-      std::vector<Lepton *> Loose_SF_leps = tmp_IsLeadE ? Loose_leps_el : Loose_leps_mu;
-      std::vector<Lepton *> Loose_OF_leps = tmp_IsLeadE ? Loose_leps_mu : Loose_leps_el;;
-
-      //==== Check for DYCR very first time
-
-      bool HasLowMll = false;
-      double LowMllMass = -1;
-      Lepton *LowMllLooseLepton;
-      for(unsigned int i=0; i<Loose_SF_leps.size(); i++){
-        if(Loose_SF_leps.at(i)==LeadLep){
-          //cout << "--> duplicate" << endl;
-          continue;
+        if(Signal){
+          if(SignalLeptonChannel!=0) return;
         }
-        double dilep_mass  = (*(LeadLep)+*(Loose_SF_leps.at(i))).M();
-        if( (dilep_mass >= 60.) && (dilep_mass < 150.) ){
-          HasLowMll = true;
-          LowMllMass = dilep_mass;
-          LowMllLooseLepton = Loose_SF_leps.at(i);
-          leps_for_plot.push_back( Loose_SF_leps.at(i) );
 
-          if(tmp_IsLeadM){
-            //==== In this case, the loose ID is HighPt ID muon.
-            //==== we want to apply the lepton scale factors to these muons
-            Muon *looseMuon = (Muon *)LowMllLooseLepton;
-            ForSF_muons.push_back( looseMuon );
-          }
-
-          break;
-        }
       }
+      else if(LeadLep->LeptonFlavour()==Lepton::MUON){
+        tmp_IsLeadM = true;
+        Suffix = "SingleMuon";
+        this_triggerpass = PassMu50;
 
-      if(HasLowMll){
+        ForSF_muons.push_back( Tight_muons.at(0) );
 
-        for(unsigned int i=0; i<fatjets.size(); i++){
-          FatJet this_fatjet = fatjets.at(i);
-          if( fabs( LeadLep->DeltaPhi(this_fatjet) ) > 2.0 ){
-
-            //==== Now this is the DY sideband we want
-
-            HNFatJet = this_fatjet;
-            if( this_fatjet.DeltaR( *LowMllLooseLepton ) < 0.8 ){
-              NCand = HNFatJet;
-            }
-            else{
-              NCand = HNFatJet + *(LowMllLooseLepton);
-            }
-            WRCand = *LeadLep+NCand;
-
-            //==== Region Dictionary
-            //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted DYCR [IsBoosted_DYCR_EE]
-            //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted DYCR [IsBoosted_DYCR_MM]
-
-            if( WRCand.M() > 800. ){
-
-              //==== 60~150
-              map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
-              if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
-              else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
-
-              if( LowMllMass < 100 ){
-                map_bool_To_Region[Suffix+"_Boosted_DYCR1"] = true;
-              }
-              else{
-                map_bool_To_Region[Suffix+"_Boosted_DYCR2"] = true;
-              }
-
-              break;
-
-            }
-          }
+        if(Signal){
+          if(SignalLeptonChannel!=1) return;
         }
-      }      
 
-      //==== If not, look for merged jet
+      }
       else{
+        cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong flavour : " << LeadLep->LeptonFlavour() << endl;
+        exit(EXIT_FAILURE);
+      }
 
-        FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoLowmll_"+param.Name, weight);
+      FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_"+param.Name, weight);
 
-        bool HasAwayMergedFatJet = false;
-        for(unsigned int i=0; i<fatjets_LSF.size(); i++){
-          FatJet this_fatjet = fatjets_LSF.at(i);
-          if( fabs( LeadLep->DeltaPhi(this_fatjet) ) > 2.0 ){
-            HasAwayMergedFatJet = true;
-            HNFatJet = this_fatjet;
-            NCand = HNFatJet;
-            WRCand = *LeadLep+NCand;
+      //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      //@@@@ Apply lepton scale factors
+
+      if(!IsDATA){
+
+        //==== lepton scale factors here
+
+        mcCorr->IgnoreNoHist = param.MCCorrrectionIgnoreNoHist;
+
+        for(unsigned int i=0; i<ForSF_electrons.size(); i++){
+          double this_recosf = mcCorr->ElectronReco_SF(ForSF_electrons.at(i)->scEta(),ForSF_electrons.at(i)->Pt(), SystDir_ElectronRecoSF);
+          double this_idsf = mcCorr->ElectronID_SF(param.Electron_ID_SF_Key, ForSF_electrons.at(i)->scEta(), ForSF_electrons.at(i)->Pt(), SystDir_ElectronIDSF);
+          weight *= this_recosf*this_idsf;
+        }
+        for(unsigned int i=0; i<ForSF_muons.size(); i++){
+
+          double MiniAODP = sqrt( ForSF_muons.at(i)->MiniAODPt() * ForSF_muons.at(i)->MiniAODPt() + ForSF_muons.at(i)->Pz() * ForSF_muons.at(i)->Pz() );
+
+          double this_recosf = mcCorr->MuonReco_SF(param.Muon_RECO_SF_Key, ForSF_muons.at(i)->Eta(), MiniAODP, SystDir_MuonRecoSF);
+          double this_idsf  = mcCorr->MuonID_SF (param.Muon_ID_SF_Key,  ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonIDSF);
+          double this_isosf = mcCorr->MuonISO_SF(param.Muon_ISO_SF_Key, ForSF_muons.at(i)->Eta(), ForSF_muons.at(i)->MiniAODPt(), SystDir_MuonISOSF);
+
+          weight *= this_recosf*this_idsf*this_isosf;
+        }
+
+      }
+      //@@@@
+      //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+      if(this_triggerpass){
+
+        FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_PassTrigger_"+param.Name, weight);
+
+        leps_for_plot.push_back( Tight_leps.at(0) );
+
+        std::vector<Lepton *> Loose_SF_leps = tmp_IsLeadE ? Loose_leps_el : Loose_leps_mu;
+        std::vector<Lepton *> Loose_OF_leps = tmp_IsLeadE ? Loose_leps_mu : Loose_leps_el;;
+
+        //==== Check for DYCR very first time
+
+        bool HasLowMll = false;
+        double LowMllMass = -1;
+        Lepton *LowMllLooseLepton;
+        for(unsigned int i=0; i<Loose_SF_leps.size(); i++){
+          if(Loose_SF_leps.at(i)==LeadLep){
+            //cout << "--> duplicate" << endl;
+            continue;
+          }
+          double dilep_mass  = (*(LeadLep)+*(Loose_SF_leps.at(i))).M();
+          if( (dilep_mass >= 60.) && (dilep_mass < 150.) ){
+            HasLowMll = true;
+            LowMllMass = dilep_mass;
+            LowMllLooseLepton = Loose_SF_leps.at(i);
+            leps_for_plot.push_back( Loose_SF_leps.at(i) );
+
+            if(tmp_IsLeadM){
+              //==== In this case, the loose ID is HighPt ID muon.
+              //==== we want to apply the lepton scale factors to these muons
+              Muon *looseMuon = (Muon *)LowMllLooseLepton;
+              ForSF_muons.push_back( looseMuon );
+            }
+
             break;
           }
         }
 
-        if(HasAwayMergedFatJet){
+        if(HasLowMll){
 
-          FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasMergedJet_"+param.Name, weight);
+          FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasLowMll_"+param.Name, weight);
 
-          bool HasSFLooseLepton = false;
-          Lepton *SFLooseLepton;
-          bool HasOFLooseLepton = false;
-          Lepton *OFLooseLepton;
+          map_bool_To_Region[Suffix+"_Boosted_LowMll"] = true;
 
-          for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
-            if( LeadLep->DeltaR( *(Loose_SF_leps.at(k)) ) < 0.01 ) continue;
-            if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
-            if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
-              HasSFLooseLepton = true;
-              SFLooseLepton = Loose_SF_leps.at(k);
-              break;
-            }
-          }
+          for(unsigned int i=0; i<fatjets.size(); i++){
 
-          for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
+            FatJet this_fatjet = fatjets.at(i);
 
-            if( LeadLep->DeltaR( *(Loose_OF_leps.at(k)) ) < 0.01 ) continue;
-            if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
-            if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
-              HasOFLooseLepton = true;
-              OFLooseLepton = Loose_OF_leps.at(k);
-              break;
-            }
-          }
+            if( fabs( LeadLep->DeltaPhi(this_fatjet) ) > 2.0 ){
 
-          //==== Now, veto with additoanl Tight lepton
-          for(unsigned int i=0; i<Loose_leps.size(); i++){
-            if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SFLooseLepton || Loose_leps.at(i)==OFLooseLepton ){
-              //cout << "--> duplicate" << endl;
-              continue;
-            }
-            NExtraLooseLepton++;
-            if(Loose_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraLooseElectron++;
-            else if(Loose_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraLooseMuon++;
-            else{
-              cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra loose lepton in BOOSTED" << endl;
-              exit(EXIT_FAILURE);
-            }
+              FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasLowMll_HasBackToBackAK8Jet_"+param.Name, weight);
 
-          }
-          for(unsigned int i=0; i<Tight_leps.size(); i++){
-            if(Tight_leps.at(i)==LeadLep || Tight_leps.at(i)==SFLooseLepton || Tight_leps.at(i)==OFLooseLepton ){
-              //cout << "--> duplicate" << endl;
-              continue;
-            }
-            NExtraTightLepton++;
-            if(Tight_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraTightElectron++;
-            else if(Tight_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraTightMuon++;
-            else{
-              cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra Tight lepton in BOOSTED" << endl;
-              exit(EXIT_FAILURE);
-            }
+              map_bool_To_Region[Suffix+"_Boosted_LowMll"] = true;
 
-          }
+              //==== Now this is the DY sideband we want
 
-          bool NoExtraTightLepton = (NExtraTightLepton==0);
-          bool WRMassGT800 = ( WRCand.M() > 800. );
+              HNFatJet = this_fatjet;
+              if( this_fatjet.DeltaR( *LowMllLooseLepton ) < 0.8 ){
+                NCand = HNFatJet;
+              }
+              else{
+                NCand = HNFatJet + *(LowMllLooseLepton);
+              }
+              WRCand = *LeadLep+NCand;
 
-          if(NoExtraTightLepton){
+              //==== Region Dictionary
+              //==== - HNWR_SingleElectron_Boosted_DYCR : ee Boosted DYCR [IsBoosted_DYCR_EE]
+              //==== - HNWR_SingleMuon_Boosted_DYCR : mm Boosted DYCR [IsBoosted_DYCR_MM]
 
-            FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoExtraTight_"+param.Name, weight);
+              if( WRCand.M() > 800. ){
 
-            //=== now let's apply LSF SF w.r.t. lepton flavour
-            if(Suffix=="SingleElectron"){
-              if(HasSFLooseLepton) JetLepFlav = 0;
-              else if(HasOFLooseLepton) JetLepFlav = 1;
-            }
-            else if(Suffix=="SingleMuon"){
-              if(HasSFLooseLepton) JetLepFlav = 1;
-              else if(HasOFLooseLepton) JetLepFlav = 0;
-            }
-            if(!IsDATA && JetLepFlav>=0){
-              //==== LSF SF
-              weight *= LSFSF(JetLepFlav, SystDir_LSFSF);
-            }
+                FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_DYCR_"+param.Name, weight);
 
-            //==== 1) e+e-jet or mu+mu-jet
+                //==== 60~150
+                map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
+                if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
+                else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
 
-            if(HasSFLooseLepton){
-
-              FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasSFLooseLepton_"+param.Name, weight);
-
-              if(!HasOFLooseLepton){
-
-                FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
-
-                leps_for_plot.push_back( SFLooseLepton );
-                if(tmp_IsLeadM){
-                  //==== In this case, the loose ID is HighPt ID muon.
-                  //==== we want to apply the lepton scale factors to these muons
-                  Muon *looseMuon = (Muon *)SFLooseLepton;
-                  ForSF_muons.push_back( looseMuon );
+                if( LowMllMass < 100 ){
+                  map_bool_To_Region[Suffix+"_Boosted_DYCR1"] = true;
+                }
+                else{
+                  map_bool_To_Region[Suffix+"_Boosted_DYCR2"] = true;
                 }
 
-                if( (*LeadLep+*SFLooseLepton).M() > 200 ){
+              }
 
-                  FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mllGT200_"+param.Name, weight);
+              break;
 
-                  if(WRMassGT800){
+            } // END if back-to-back
 
-                    FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mWRGT800_"+param.Name, weight);
+          } // END loop fatjet
 
-                    //==== Region Dictionary
-                    //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR [IsBoosted_SR_EE]
-                    //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR [IsBoosted_SR_MM]
+        } // END if HasLowMll
 
-                    map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
-                    if(tmp_IsLeadE) IsBoosted_SR_EE = true;
-                    else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
+        //==== If not, look for merged jet
+        else{
 
+          FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoLowmll_"+param.Name, weight);
+
+          bool HasAwayMergedFatJet = false;
+          for(unsigned int i=0; i<fatjets_LSF.size(); i++){
+            FatJet this_fatjet = fatjets_LSF.at(i);
+            if( fabs( LeadLep->DeltaPhi(this_fatjet) ) > 2.0 ){
+              HasAwayMergedFatJet = true;
+              HNFatJet = this_fatjet;
+              NCand = HNFatJet;
+              WRCand = *LeadLep+NCand;
+              break;
+            }
+          }
+
+          if(HasAwayMergedFatJet){
+
+            FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasMergedJet_"+param.Name, weight);
+
+            bool HasSFLooseLepton = false;
+            Lepton *SFLooseLepton;
+            bool HasOFLooseLepton = false;
+            Lepton *OFLooseLepton;
+
+            for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
+              if( LeadLep->DeltaR( *(Loose_SF_leps.at(k)) ) < 0.01 ) continue;
+              if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
+              if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
+                HasSFLooseLepton = true;
+                SFLooseLepton = Loose_SF_leps.at(k);
+                break;
+              }
+            }
+
+            for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
+
+              if( LeadLep->DeltaR( *(Loose_OF_leps.at(k)) ) < 0.01 ) continue;
+              if( Loose_OF_leps.at(k)->Pt() <= 53. ) continue;
+              if( HNFatJet.DeltaR( *(Loose_OF_leps.at(k)) ) < 0.8 ){
+                HasOFLooseLepton = true;
+                OFLooseLepton = Loose_OF_leps.at(k);
+                break;
+              }
+            }
+
+            //==== Now, veto with additoanl Tight lepton
+            for(unsigned int i=0; i<Loose_leps.size(); i++){
+              if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SFLooseLepton || Loose_leps.at(i)==OFLooseLepton ){
+                //cout << "--> duplicate" << endl;
+                continue;
+              }
+              NExtraLooseLepton++;
+              if(Loose_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraLooseElectron++;
+              else if(Loose_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraLooseMuon++;
+              else{
+                cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra loose lepton in BOOSTED" << endl;
+                exit(EXIT_FAILURE);
+              }
+
+            }
+            for(unsigned int i=0; i<Tight_leps.size(); i++){
+              if(Tight_leps.at(i)==LeadLep || Tight_leps.at(i)==SFLooseLepton || Tight_leps.at(i)==OFLooseLepton ){
+                //cout << "--> duplicate" << endl;
+                continue;
+              }
+              NExtraTightLepton++;
+              if(Tight_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraTightElectron++;
+              else if(Tight_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraTightMuon++;
+              else{
+                cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra Tight lepton in BOOSTED" << endl;
+                exit(EXIT_FAILURE);
+              }
+
+            }
+
+            bool NoExtraTightLepton = (NExtraTightLepton==0);
+            bool WRMassGT800 = ( WRCand.M() > 800. );
+
+            if(NoExtraTightLepton){
+
+              FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoExtraTight_"+param.Name, weight);
+
+              //=== now let's apply LSF SF w.r.t. lepton flavour
+              if(Suffix=="SingleElectron"){
+                if(HasSFLooseLepton) JetLepFlav = 0;
+                else if(HasOFLooseLepton) JetLepFlav = 1;
+              }
+              else if(Suffix=="SingleMuon"){
+                if(HasSFLooseLepton) JetLepFlav = 1;
+                else if(HasOFLooseLepton) JetLepFlav = 0;
+              }
+              if(!IsDATA && JetLepFlav>=0){
+                //==== LSF SF
+                weight *= LSFSF(JetLepFlav, SystDir_LSFSF);
+              }
+
+              //==== 1) e+e-jet or mu+mu-jet
+
+              if(HasSFLooseLepton){
+
+                FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasSFLooseLepton_"+param.Name, weight);
+
+                if(!HasOFLooseLepton){
+
+                  FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
+
+                  leps_for_plot.push_back( SFLooseLepton );
+                  if(tmp_IsLeadM){
+                    //==== In this case, the loose ID is HighPt ID muon.
+                    //==== we want to apply the lepton scale factors to these muons
+                    Muon *looseMuon = (Muon *)SFLooseLepton;
+                    ForSF_muons.push_back( looseMuon );
                   }
-                  else{
 
-                    //==== Region Dictionary
-                    //==== - HNWR_SingleElectron_Boosted_LowWRCR : ee Boosted, but low m(WR) [IsBoosted_LowWRCR_EE]
-                    //==== - HNWR_SingleMuon_Boosted_LowWRCR : mm Boosted, but low m(WR) [IsBoosted_LowWRCR_MM]
+                  if( (*LeadLep+*SFLooseLepton).M() > 200 ){
 
-                    map_bool_To_Region[Suffix+"_Boosted_LowWRCR"] = true;
-                    if(tmp_IsLeadE) IsBoosted_LowWRCR_EE = true;
-                    else if(tmp_IsLeadM) IsBoosted_LowWRCR_MM = true;
+                    FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mllGT200_"+param.Name, weight);
+
+                    if(WRMassGT800){
+
+                      FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_mWRGT800_"+param.Name, weight);
+
+                      //==== Region Dictionary
+                      //==== - HNWR_SingleElectron_Boosted_SR : ee Boosted SR [IsBoosted_SR_EE]
+                      //==== - HNWR_SingleMuon_Boosted_SR : mm Boosted SR [IsBoosted_SR_MM]
+
+                      map_bool_To_Region[Suffix+"_Boosted_SR"] = true;
+                      if(tmp_IsLeadE) IsBoosted_SR_EE = true;
+                      else if(tmp_IsLeadM) IsBoosted_SR_MM = true;
+
+                    }
+                    else{
+
+                      //==== Region Dictionary
+                      //==== - HNWR_SingleElectron_Boosted_LowWRCR : ee Boosted, but low m(WR) [IsBoosted_LowWRCR_EE]
+                      //==== - HNWR_SingleMuon_Boosted_LowWRCR : mm Boosted, but low m(WR) [IsBoosted_LowWRCR_MM]
+
+                      map_bool_To_Region[Suffix+"_Boosted_LowWRCR"] = true;
+                      if(tmp_IsLeadE) IsBoosted_LowWRCR_EE = true;
+                      else if(tmp_IsLeadM) IsBoosted_LowWRCR_MM = true;
+
+                    }
 
                   }
 
@@ -1403,46 +1422,46 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               }
 
-            }
+              //==== 2) e+mu-jet or mu+e-jet
 
-            //==== 2) e+mu-jet or mu+e-jet
+              if(!HasSFLooseLepton){
 
-            if(!HasSFLooseLepton){
+                FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_NoHasSFLooseLepton_"+param.Name, weight);
 
-              FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_NoHasSFLooseLepton_"+param.Name, weight);
+                if(HasOFLooseLepton){
 
-              if(HasOFLooseLepton){
+                  FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_HasOFLooseLepton_"+param.Name, weight);
 
-                FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_HasOFLooseLepton_"+param.Name, weight);
+                  leps_for_plot.push_back( OFLooseLepton );
 
-                leps_for_plot.push_back( OFLooseLepton );
+                  if( (*LeadLep+*OFLooseLepton).M() > 200 ){
 
-                if( (*LeadLep+*OFLooseLepton).M() > 200 ){
+                    FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mllGT200_"+param.Name, weight);
 
-                  FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mllGT200_"+param.Name, weight);
+                    if(WRMassGT800){
 
-                  if(WRMassGT800){
+                      FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mWRGT800_"+param.Name, weight);
 
-                    FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mWRGT800_"+param.Name, weight);
+                      //==== Region Dictionary
+                      //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant) [IsBoosted_CR_EMJet]
+                      //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK8jet (ttbar dominant) [IsBoosted_CR_MEJet]
 
-                    //==== Region Dictionary
-                    //==== - HNWR_SingleElectron_EMu_Boosted_CR : isolated e + mu-AK8jet (ttbar dominant) [IsBoosted_CR_EMJet]
-                    //==== - HNWR_SingleMuon_EMu_Boosted_CR : isolated m + e-AK8jet (ttbar dominant) [IsBoosted_CR_MEJet]
+                      map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
+                      if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
+                      else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
 
-                    map_bool_To_Region[Suffix+"_EMu_Boosted_CR"] = true;
-                    if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
-                    else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
+                    }
+                    else{
 
-                  }
-                  else{
+                      //==== Region Dictionary
+                      //==== - HNWR_SingleElectron_EMu_Boosted_LowWRCR : isolated e + mu-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_EMJet]
+                      //==== - HNWR_SingleMuon_EMu_Boosted_LowWRCR : isolated m + e-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_MEJet]
 
-                    //==== Region Dictionary
-                    //==== - HNWR_SingleElectron_EMu_Boosted_LowWRCR : isolated e + mu-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_EMJet]
-                    //==== - HNWR_SingleMuon_EMu_Boosted_LowWRCR : isolated m + e-AK8jet (ttbar dominant), but low m(WR) [IsBoosted_LowWRCR_MEJet]
+                      map_bool_To_Region[Suffix+"_EMu_Boosted_LowWRCR"] = true;
+                      if(tmp_IsLeadE) IsBoosted_LowWRCR_EMJet = true;
+                      else if(tmp_IsLeadM) IsBoosted_LowWRCR_MEJet = true;
 
-                    map_bool_To_Region[Suffix+"_EMu_Boosted_LowWRCR"] = true;
-                    if(tmp_IsLeadE) IsBoosted_LowWRCR_EMJet = true;
-                    else if(tmp_IsLeadM) IsBoosted_LowWRCR_MEJet = true;
+                    }
 
                   }
 
@@ -1450,38 +1469,38 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               }
 
-            }
+            } // END No Extra Tight Lepton
 
-          } // END No Extra Tight Lepton
+          } // END If has merged jet
 
-        } // END If has merged jet
+        } // END If no m(ll)<150 pair
 
-      } // END If no m(ll)<150 pair
+        //==== Now we can apply trigger SFs, because for mm case, we selected correct loose muons
 
-      //==== Now we can apply trigger SFs, because for mm case, we selected correct loose muons
+        double trigger_sf_SingleElectron = 1.;
+        double trigger_sf_SingleMuon = 1.;
+        if(!IsDATA){
+          //==== Trigger SF
+          trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
+          trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, ForSF_muons, SystDir_MuonTriggerSF); // notice, we used ForSF_muons instead of Tight_muons
+        }
+        if(Suffix=="SingleElectron"){
+          trigger_sf_SingleMuon = trigger_sf_SingleElectron;
+          weight *= trigger_sf_SingleElectron;
+        }
+        else{
+          trigger_sf_SingleElectron = trigger_sf_SingleMuon;
+          weight *= trigger_sf_SingleMuon;
+        }
 
-      double trigger_sf_SingleElectron = 1.;
-      double trigger_sf_SingleMuon = 1.;
-      if(!IsDATA){
-        //==== Trigger SF
-        trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
-        trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, ForSF_muons, SystDir_MuonTriggerSF); // notice, we used ForSF_muons instead of Tight_muons
-      }
-      if(Suffix=="SingleElectron"){
-        trigger_sf_SingleMuon = trigger_sf_SingleElectron;
-        weight *= trigger_sf_SingleElectron;
-      }
-      else{
-        trigger_sf_SingleElectron = trigger_sf_SingleMuon;
-        weight *= trigger_sf_SingleMuon;
-      }
+        //==== DYReshape for DY
+        if(ApplyDYReshape){
+          weight *= GetDYReshape(WRCand.M(), "Boosted", SystDir_DYReshape);
+        }
 
-      //==== DYReshape for DY
-      if(ApplyDYReshape){
-        weight *= GetDYReshape(WRCand.M(), "Boosted", SystDir_DYReshape);
-      }
+      } // END If trigger fired
 
-    } // END If trigger fired
+    } // END tight lepton exist
 
   } // END If not resolved
 
@@ -1549,9 +1568,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   //==== Printing data info
   if(IsDATA){
-
-  // bool IsResolved_SR_EE(false), IsResolved_SR_MM(false), IsResolved_SR_EM(false);
-  // bool IsBoosted_SR_EE(false), IsBoosted_SR_MM(false);
 
     if(IsResolved_SR_EE || IsResolved_SR_MM){
       if(WRCand.M() >= 3200.){
@@ -1629,8 +1645,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       FillHist(this_region+"/PrefireRwg_"+this_region, 0, weight_Prefire, 1, 0., 1.);
 
       if(this_region.Contains("Boosted")){
-        FillHist(this_region+"/dPhi_lJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
-
+        FillHist(this_region+"/dPhi_LeadlJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
+        FillHist(this_region+"/dR_SubleadlJ_"+this_region, fabs( leps_for_plot.at(1)->DeltaR(HNFatJet) ), weight, 40, 0., 4.);
         FillHist(this_region+"/HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
         FillHist(this_region+"/HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
         FillHist(this_region+"/HNFatJet_Mass_"+this_region, HNFatJet.M(), weight, 3000, 0., 3000.);
@@ -1658,7 +1674,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       double this_mWR = WRCand.M();
       if(this_mWR<800.) this_mWR = 800.+1.;
-      if(this_mWR>=8000.) this_mWR = 7999.;
+      if(this_mWR>=8000. && Signal) this_mWR = 7999.;
       FillHist(this_region+"/WRCand_Mass_"+this_region, this_mWR, weight, 800, 0., 8000.);
 
       FillHist(this_region+"/WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
@@ -1705,13 +1721,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         FillHist(this_region+"/dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
       }
 
-      if(ApplyDYPtReweight){
-        double this_WRMass = WRCand.M();
-        if( this_WRMass < 1000 ){
-          FillHist(this_region+"/ZPtReweight_"+this_region, ZPtReweight, 1., 40, 0., 4.);
-          FillHist(this_region+"/GenZ_Mass_"+this_region, GenZParticle.M(), weight, 2000, 0., 2000.);
-          FillHist(this_region+"/GenZ_Pt_"+this_region, GenZParticle.Pt(), weight, 2000, 0., 2000.);
-        }
+      if( (MCSample.Contains("DYJets")) && IsCentral){
+        FillHist(this_region+"/ZPtReweight_"+this_region, ZPtReweight, 1., 40, 0., 4.);
+        FillHist(this_region+"/GenZ_Mass_"+this_region, GenZParticle.M(), weight, 800, 0., 8000.);
+        FillHist(this_region+"/GenZ_Pt_"+this_region, GenZParticle.Pt(), weight, 800, 0., 8000.);
       }
 
       FillHist(this_region+"/JetLepFlav_"+this_region, JetLepFlav, 1., 3, -1., 2.);
