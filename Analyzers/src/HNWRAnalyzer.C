@@ -23,7 +23,10 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   if(Signal){
     //==== MCSample = WRtoNLtoLLJJ_WR1400_N1000
-    TString massstring = MCSample(TString("WRtoNLtoLLJJ_").Length(), MCSample.Length());
+    TString massstring = "";
+    if(MCSample.Contains("WRtoNLtoLLJJ_")) massstring = MCSample(TString("WRtoNLtoLLJJ_").Length(), MCSample.Length());
+    else if(MCSample.Contains("Official") && MCSample.Contains("WR")) massstring = MCSample(TString("Official_FullSim_").Length(), MCSample.Length());
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] massstring = " << massstring << endl;
     int i_underscore=-1;
     for(int i=0; i<massstring.Length(); i++){
       TString thissubstring = massstring(i);
@@ -48,9 +51,13 @@ void HNWRAnalyzer::initializeAnalyzer(){
     TFile *file_kfactor = new TFile(datapath+"/HNWRGeneralData/kfactor.root");
     hist_kfactor = (TH1D *)file_kfactor->Get("kfactor_all");
     //==== get averaged kfactor
-    TString PUfname = datapath+"/"+TString::Itoa(DataYear,10)+"/PileUp/PUReweight_"+TString::Itoa(DataYear,10)+".root";
     string kfactor_line;
-    ifstream kfactor_in(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRKFactor/AveragedKFactor.txt");
+    TString path_AveragedKFactor = datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRKFactor/AveragedKFactor.txt";
+    if(MCSample.Contains("Official") && MCSample.Contains("WR")){
+      path_AveragedKFactor = datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRKFactor/AveragedKFactor_WROfficial.txt";
+    }
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] Average-kfactor taken from \"" << path_AveragedKFactor << "\"" << endl;
+    ifstream kfactor_in(path_AveragedKFactor);
     this_avg_kfactor = -1.;
     while(getline(kfactor_in,kfactor_line)){
       std::istringstream is( kfactor_line );
@@ -304,6 +311,7 @@ void HNWRAnalyzer::executeEvent(){
       return;
     }
 
+    if(SignalElectronOnly && SignalLeptonChannel!=0) return;
     if(SignalMuonOnly && SignalLeptonChannel!=1) return;
 
   }
@@ -489,7 +497,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   FillCutFlow(IsCentral, "CutFlow", "NoCut_"+param.Name, weight);
 
   if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
-    double normweight = 1./sumW/PDFWeights_Scale->at(0) * this_kfactor/this_avg_kfactor;
+    double normweight = 1./sumW/PDFWeights_Error->at(0) * this_kfactor/this_avg_kfactor;
     for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
       FillHist("XsecSyst_Den/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Den", 0., PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 1, 0., 1.);
     }
@@ -1228,7 +1236,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasLowMll_HasBackToBackAK8Jet_"+param.Name, weight);
 
-              map_bool_To_Region[Suffix+"_Boosted_LowMll"] = true;
+              map_bool_To_Region[Suffix+"_Boosted_LowMllWithAK8Jet"] = true;
 
               //==== Now this is the DY sideband we want
 
@@ -1599,7 +1607,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       if(RunXsecSyst && param.syst_ == AnalyzerParameter::Central){
 
-        double normweight = 1./sumW/PDFWeights_Scale->at(0) * this_kfactor/this_avg_kfactor;
+        double normweight = 1./sumW/PDFWeights_Error->at(0) * this_kfactor/this_avg_kfactor;
         for(unsigned int i=0; i<PDFWeights_Scale->size(); i++){
           //FillHist(this_region+"/WRCand_Mass_"+this_region, WRCand.M(), weight, 800, 0., 8000.);
           FillHist("XsecSyst_Num_"+this_region+"/PDFWeights_Scale_"+TString::Itoa(i,10)+"_XsecSyst_Num_"+this_region, WRCand.M(), PDFWeights_Scale->at(i)*ev.MCweight()*normweight, 800, 0., 8000.);
@@ -1716,6 +1724,34 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         }
       }
+
+      //==== 2020/11/24 : DY Boosted study
+
+      int nAwayFatJet(0);
+      for(unsigned int i=0; i<fatjets.size(); i++){
+        TString this_itoa = TString::Itoa(i,10);
+        double dPhi_Lead = fabs( leps_for_plot.at(0)->DeltaPhi( fatjets.at(i) ) );
+        if(dPhi_Lead<0.8) continue;
+        nAwayFatJet++;
+        FillHist(this_region+"/AwayFatJet_dPhi_LeadlJ_"+this_itoa+"_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi( fatjets.at(i) ) ), weight, 40, 0., 4.);
+        FillHist(this_region+"/AwayFatJet_partonFlavour_"+this_itoa+"_"+this_region, fatjets.at(i).partonFlavour(), weight, 60, -30., 30.);
+        FillHist(this_region+"/AwayFatJet_hadronFlavour_"+this_itoa+"_"+this_region, fatjets.at(i).hadronFlavour(), weight, 6, 0., 6.);
+
+        FillHist(this_region+"/AwayFatJet_dPhi_LeadlJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi( fatjets.at(i) ) ), weight, 40, 0., 4.);
+        FillHist(this_region+"/AwayFatJet_partonFlavour_"+this_region, fatjets.at(i).partonFlavour(), weight, 60, -30., 30.);
+        FillHist(this_region+"/AwayFatJet_hadronFlavour_"+this_region, fatjets.at(i).hadronFlavour(), weight, 6, 0., 6.);
+
+      }
+      FillHist(this_region+"/AwayFatJet_Size_"+this_region, nAwayFatJet, weight, 10, 0., 10.);
+      for(unsigned int i=0; i<fatjets.size(); i++){
+
+        TString this_itoa = TString::Itoa(i,10);
+        FillHist(this_region+"/FatJet_"+this_itoa+"_Eta_"+this_region, fatjets.at(i).Eta(), weight, 60, -3., 3.);
+        FillHist(this_region+"/FatJet_"+this_itoa+"_Phi_"+this_region, fatjets.at(i).Phi(), weight, 80, -4., 4.);
+        FillHist(this_region+"/FatJet_"+this_itoa+"_Eta_vs_Phi_"+this_region, fatjets.at(i).Eta(), fatjets.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+
+      }
+
 
       if(jets.size()>=2){
         FillHist(this_region+"/dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
