@@ -1,0 +1,2 @@
+# alias PD xsec nmc sumw
+Official_FullSim_WR4400_N600	Official_FullSim_WR4400_N600	1.	44368	37370

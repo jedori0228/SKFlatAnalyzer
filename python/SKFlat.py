@@ -24,11 +24,13 @@ parser.add_argument('-y', dest='Year', default="2017")
 parser.add_argument('--skim', dest='Skim', default="")
 parser.add_argument('--no_exec', action='store_true')
 parser.add_argument('--FastSim', action='store_true')
+parser.add_argument('--IsWROfficial', action='store_true')
 parser.add_argument('--userflags', dest='Userflags', default="")
 parser.add_argument('--nmax', dest='NMax', default=0, type=int)
 parser.add_argument('--reduction', dest='Reduction', default=1, type=float)
 parser.add_argument('--memory', dest='Memory', default=0, type=float)
 parser.add_argument('--batchname',dest='BatchName', default="")
+parser.add_argument('--no_monit',action='store_true')
 args = parser.parse_args()
 
 ## make userflags as a list
@@ -474,6 +476,11 @@ void {2}(){{
       else:
         out.write('  m.IsFastSim = false;\n')
 
+      if args.IsWROfficial:
+        out.write('  m.IsWROfficial = true;\n')
+      else:
+        out.write('  m.IsWROfficial = false;\n')
+
     out.write('  m.DataYear = '+str(args.Year)+';\n')
 
     if len(Userflags)>0:
@@ -499,6 +506,9 @@ void {2}(){{
         skimoutdir += "MC_"+args.Analyzer+"/"+this_dasname+"/"
         skimoutfilename = "SKFlatNtuple_"+args.Year+"_MC_"+str(it_job)+".root"
       skimoutdir += timestamp+"/"
+
+      if args.Outputdir!="":
+        skimoutdir = args.Outputdir
 
       os.system('mkdir -p '+skimoutdir)
       out.write('  m.SetOutfilePath("'+skimoutdir+skimoutfilename+'");\n')
@@ -603,6 +613,11 @@ if IsKNU:
   print '- Queue = '+args.Queue
 print '- output will be send to : '+FinalOutputPath
 print '##################################################'
+
+if args.no_monit:
+  #print '[SKFlat.py] Put your email address in setup.sh'
+  exit()
+
 
 ##########################
 ## Submittion all done. ##

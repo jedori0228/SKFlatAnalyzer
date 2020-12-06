@@ -1,0 +1,2 @@
+# alias PD xsec nmc sumw
+Official_FullSim_WR1000_N400	Official_FullSim_WR1000_N400	1.	49410	49248

@@ -12,6 +12,8 @@ out_Sig_HNWR_Official = open('SampleSummary_Signal_HNWR_Official.txt','w')
 FirstLine = '# alias PD xsec nmc sumw\n'
 out_MC.write(FirstLine)
 out_Sig_HNWR.write(FirstLine)
+out_Sig_HNWR_FullSim.write(FirstLine)
+out_Sig_HNWR_Official.write(FirstLine)
 
 for line in lines:
 
@@ -24,7 +26,7 @@ for line in lines:
     out_Sig_HNWR.write(infoline)
   elif alias.startswith("FullSim_") and "WRtoNLtoLLJJ" in alias:
     out_Sig_HNWR_FullSim.write(infoline)
-  elif "Official" in alias and "WRtoNLtoLLJJ" in alias:
+  elif "Official" in alias and "WR" in alias:
     out_Sig_HNWR_Official.write(infoline)
   else:
     out_MC.write(infoline)

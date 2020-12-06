@@ -7,13 +7,24 @@ void MyPlayGround::initializeAnalyzer(){
   genFinderSig = new GenFinderForHNWRSignal();
   SignalLeptonChannel = -1;
 
+  ApplyDYPtReweight = HasFlag("ApplyDYPtReweight");
+  if(ApplyDYPtReweight){
+    TString datapath = getenv("DATA_DIR");
+
+    TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/Ratio.root");
+    hist_DYPtReweight = (TH2D *)file_DYPtReweight->Get("Ratio");
+  }
+
 }
 
 void MyPlayGround::executeEvent(){
 
 
   AnalyzerParameter param;
+  param.Name = "Trigger";
+  executeEventFromParameter(param);
 
+  param.Name = "Lepton200GeV";
   executeEventFromParameter(param);
 
 }
@@ -36,82 +47,163 @@ std::vector<Lepton *> MyPlayGround::TESTFunction(std::vector<Muon>& muons){
 
 void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
 
-  vector<Gen> gens = GetGens();
+  vector<TString> Triggers_Muon;
 
-	int genNpid = -1;
-	int SignalLeptonChannel = -1;
-  Gen Gen_N;
-	for(unsigned int i=2; i<gens.size(); i++){
-		int pid = abs( gens.at(i).PID() );
-		if( pid==9900012 || pid==9900014 ){
-			genNpid = pid;
-      Gen_N = gens.at(i);
-			break;
-		}
-	}
-	//==== 0 = electron
-	//==== 1 = muon
-  TString ChName = "";
-	if(genNpid==9900012){
-		SignalLeptonChannel = 0;
-    ChName = "Electron";
-	}
-	else if(genNpid==9900014){
-		SignalLeptonChannel = 1;
-    ChName = "Muon";
-	}
-	else{
-	}
+  if(DataYear==2016){
 
-	if(SignalLeptonChannel<0) return;
+    Triggers_Muon = {
+      "HLT_Mu50_v",
+      "HLT_TkMu50_v",
+    };
 
-  vector<FatJet> fatjets = GetFatJets("HN", 200, 2.4);
-  FatJet MatchedJet;
-  bool IsFatJetMatched = false;
+  }
+  else if(DataYear==2017){
+
+    Triggers_Muon = {
+      "HLT_Mu50_v",
+      "HLT_OldMu100_v",
+      "HLT_TkMu100_v",
+    };
+
+  }
+  else if(DataYear==2018){
+
+    Triggers_Muon = {
+      "HLT_Mu50_v",
+      "HLT_OldMu100_v",
+      "HLT_TkMu100_v",
+    };
+
+  }
+
+  Event ev = GetEvent();
+  if( ! (ev.PassTrigger(Triggers_Muon)) ) return;
+
+  vector<Muon> muons = GetMuons("POGTightWithTightIso", 20., 2.4);
+  if(muons.size()!=2) return;
+  if(muons.at(0).Pt()<53) return;
+  if( !IsOnZ( (muons.at(0)+muons.at(1)).M(), 15 ) ) return;
+
+  if(param.Name=="Lepton200GeV"){
+    if(muons.at(0).Pt()<200.) return;
+  }
+
+  vector<FatJet> fatjets_LepVeto = GetFatJets("tightLepVeto", 200., 2.4);
+  vector<FatJet> fatjets_HN = GetFatJets("HN", 200., 2.4);
+  vector<FatJet> fatjets = GetFatJets("tight", 200., 2.4);
+  vector<Jet> jets_LepVeto = GetJets("tightLepVeto", 200., 2.4);
+  vector<Jet> jets = GetJets("tight", 200., 2.4);
+
+  TString this_region = param.Name;
+  double weight = ev.MCweight() * weight_norm_1invpb * ev.GetTriggerLumi("Full");
+  if(IsDATA) weight = 1.;
+
+  //==== zpt reweight
+  if(ApplyDYPtReweight){
+
+    vector<Gen> gens = GetGens();
+    genFinderDY->Find(gens);
+    Particle GenZParticle = genFinderDY->GenZ;
+
+    double mZ = GenZParticle.M();
+    double ptZ = GenZParticle.Pt();
+
+    if(mZ<50.) mZ=51.;
+    if(mZ>=1000.) mZ=999.;
+    //if(ptZ<70.) ptZ=71.;
+    if(ptZ>=1000.) ptZ=999.;
+
+    int bin_mass = hist_DYPtReweight->GetXaxis()->FindBin(mZ);
+    int bin_pt   = hist_DYPtReweight->GetYaxis()->FindBin(ptZ);
+
+    double value = hist_DYPtReweight->GetBinContent( bin_mass, bin_pt );
+
+    weight *= value;
+
+  }
+
+
   for(unsigned int i=0; i<fatjets.size(); i++){
-    if( fatjets.at(i).DeltaR( Gen_N ) < 0.8 ){
-      IsFatJetMatched = true;
-      MatchedJet = fatjets.at(i);
-      break;
-    }
-  }
-  if(IsFatJetMatched){
 
-    FillHist(ChName+"_MatchedFatJetFound", 0., 1., 1, 0., 1.);
+    TString this_itoa = TString::Itoa(i,10);
+    FillHist(this_region+"/FatJet_"+this_itoa+"_Eta_"+this_region, fatjets.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/FatJet_"+this_itoa+"_Phi_"+this_region, fatjets.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/FatJet_"+this_itoa+"_Eta_vs_Phi_"+this_region, fatjets.at(i).Eta(), fatjets.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/FatJet_"+this_itoa+"_SDMass_"+this_region, fatjets.at(i).SDMass(), weight, 500, 0., 500.);
 
-    FillHist(ChName+"_Gen_N_Pt", Gen_N.Pt(), 1., 3000, 0., 3000.);
-    FillHist(ChName+"_Gen_N_M", Gen_N.M(), 1., 1000, 0., 1000.);
-
-    FillHist(ChName+"_MatchedJet_Pt", MatchedJet.Pt(), 1., 3000, 0., 3000.);
-    FillHist(ChName+"_MatchedJet_M", MatchedJet.M(), 1., 1000, 0., 1000.);
-
-
-    //==== check lepton
-    if(SignalLeptonChannel==0){
-      //vector<Electron> electrons = GetElectrons("HNWRLoose", 53., 2.4);
-      vector<Electron> electrons = GetElectrons("NOCUT", 53., 2.4);
-      for(unsigned int j=0; j<electrons.size(); j++){
-        if( electrons.at(j).DeltaR( MatchedJet ) < 0.8){
-          FillHist(ChName+"_LeptonFoundInsideJet", 0., 1., 1, 0., 1.);
-          FillHist(ChName+"_LeptonFoundInsideJet_MatchedJet_Pt", MatchedJet.Pt(), 1., 3000, 0., 3000.);
-          break;
-        }
-      }
-    }
-    else{
-      vector<Muon> muons = GetMuons("HNWRLoose", 53., 2.4);
-      for(unsigned int j=0; j<muons.size(); j++){
-        if( muons.at(j).DeltaR( MatchedJet ) < 0.8){
-          FillHist(ChName+"_LeptonFoundInsideJet", 0., 1., 1, 0., 1.);
-          FillHist(ChName+"_LeptonFoundInsideJet_MatchedJet_Pt", MatchedJet.Pt(), 1., 3000, 0., 3000.);
-          break;
-        }
-      }
-    }
-
-
+    FillHist(this_region+"/FatJet_Eta_"+this_region, fatjets.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/FatJet_Phi_"+this_region, fatjets.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/FatJet_Eta_vs_Phi_"+this_region, fatjets.at(i).Eta(), fatjets.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/FatJet_SDMass_"+this_region, fatjets.at(i).SDMass(), weight, 500, 0., 500.);
 
   }
+
+  for(unsigned int i=0; i<fatjets_LepVeto.size(); i++){
+
+    TString this_itoa = TString::Itoa(i,10);
+    FillHist(this_region+"/LepVetoFatJet_"+this_itoa+"_Eta_"+this_region, fatjets_LepVeto.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/LepVetoFatJet_"+this_itoa+"_Phi_"+this_region, fatjets_LepVeto.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJet_"+this_itoa+"_Eta_vs_Phi_"+this_region, fatjets_LepVeto.at(i).Eta(), fatjets_LepVeto.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJet_"+this_itoa+"_SDMass_"+this_region, fatjets_LepVeto.at(i).SDMass(), weight, 500, 0., 500.);
+
+    FillHist(this_region+"/LepVetoFatJet_Eta_"+this_region, fatjets_LepVeto.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/LepVetoFatJet_Phi_"+this_region, fatjets_LepVeto.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJet_Eta_vs_Phi_"+this_region, fatjets_LepVeto.at(i).Eta(), fatjets_LepVeto.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJet_SDMass_"+this_region, fatjets_LepVeto.at(i).SDMass(), weight, 500, 0., 500.);
+
+  }
+
+  for(unsigned int i=0; i<fatjets_HN.size(); i++){
+
+    TString this_itoa = TString::Itoa(i,10);
+    FillHist(this_region+"/HNFatJet_"+this_itoa+"_Eta_"+this_region, fatjets_HN.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/HNFatJet_"+this_itoa+"_Phi_"+this_region, fatjets_HN.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/HNFatJet_"+this_itoa+"_Eta_vs_Phi_"+this_region, fatjets_HN.at(i).Eta(), fatjets_HN.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/HNFatJet_"+this_itoa+"_SDMass_"+this_region, fatjets_HN.at(i).SDMass(), weight, 500, 0., 500.);
+
+    FillHist(this_region+"/HNFatJet_Eta_"+this_region, fatjets_HN.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/HNFatJet_Phi_"+this_region, fatjets_HN.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/HNFatJet_Eta_vs_Phi_"+this_region, fatjets_HN.at(i).Eta(), fatjets_HN.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/HNFatJet_SDMass_"+this_region, fatjets_HN.at(i).SDMass(), weight, 500, 0., 500.);
+
+  }
+
+  for(unsigned int i=0; i<jets.size(); i++){
+
+    TString this_itoa = TString::Itoa(i,10);
+    FillHist(this_region+"/Jet_"+this_itoa+"_Eta_"+this_region, jets.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/Jet_"+this_itoa+"_Phi_"+this_region, jets.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/Jet_"+this_itoa+"_Eta_vs_Phi_"+this_region, jets.at(i).Eta(), jets.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+
+    FillHist(this_region+"/Jet_Eta_"+this_region, jets.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/Jet_Phi_"+this_region, jets.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/Jet_Eta_vs_Phi_"+this_region, jets.at(i).Eta(), jets.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+
+  }
+
+  for(unsigned int i=0; i<jets_LepVeto.size(); i++){
+
+    TString this_itoa = TString::Itoa(i,10);
+    FillHist(this_region+"/LepVetoJet_"+this_itoa+"_Eta_"+this_region, jets_LepVeto.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/LepVetoJet_"+this_itoa+"_Phi_"+this_region, jets_LepVeto.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/LepVetoJet_"+this_itoa+"_Eta_vs_Phi_"+this_region, jets_LepVeto.at(i).Eta(), jets_LepVeto.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+
+    FillHist(this_region+"/LepVetoJet_Eta_"+this_region, jets_LepVeto.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/LepVetoJet_Phi_"+this_region, jets_LepVeto.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/LepVetoJet_Eta_vs_Phi_"+this_region, jets_LepVeto.at(i).Eta(), jets_LepVeto.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+
+  }
+
+/*
+  vector<Gen> gens = GetGens();
+  vector<Muon> muons = GetMuons("POGTightWithTightIso", 10., 2.4);
+  if(muons.size()!=2) return;
+  if( muons.at(0).Charge()!=muons.at(1).Charge() ) return;
+  for(unsigned int i=0; i<2; i++){
+    int leptonType = GetLeptonType(muons.at(i), gens);
+    FillHist("LeptonType", leptonType, 1., 20, -10., 10.);
+  }
+*/
 
 }
 

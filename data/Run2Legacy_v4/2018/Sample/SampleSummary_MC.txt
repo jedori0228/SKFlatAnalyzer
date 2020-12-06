@@ -56,6 +56,9 @@ SingleTop_tW_antitop_NoFullyHad	ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_1
 SingleTop_tW_top_NoFullyHad	ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8	19.20	8722734	8683040	NNLO
 SingleTop_tch_antitop_Incl	ST_t-channel_antitop_5f_TuneCP5_13TeV-powheg-pythia8	80.95	3838836	3817576	NLO
 SingleTop_tch_top_Incl	ST_t-channel_top_5f_TuneCP5_13TeV-powheg-pythia8	136.02	5903676	5869872	NLO
+TEST_MWR3500to5000	TEST_MWR3500to5000	1.	6707346	5438956
+TEST_MWR5000to6000	TEST_MWR5000to6000	1.	6654274	4496536
+TEST_MWR500to3500	TEST_MWR500to3500	1.	7840140	7604928
 TG	TGJets_TuneCP5_13TeV_amcatnlo_madspin_pythia8	2.967	1109000	213354
 TTG	TTGJets_TuneCP5_13TeV-amcatnloFXFX-madspin-pythia8	3.795	4691915	1842387
 TTLJ_powheg	TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8	365.34	301475998	299042028	NNLO

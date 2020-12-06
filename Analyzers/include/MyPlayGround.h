@@ -22,6 +22,9 @@ public:
   GenFinderForHNWRSignal *genFinderSig;
   int SignalLeptonChannel;
 
+  bool ApplyDYPtReweight;
+  TH2D *hist_DYPtReweight;
+
 };
 
 

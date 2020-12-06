@@ -22,6 +22,7 @@ void SKFlatNtuple::Loop(){
   cout << "[SKFlatNtuple::Loop] DataStream = " << DataStream << endl;
   cout << "[SKFlatNtuple::Loop] MCSample = " << MCSample << endl;
   cout << "[SKFlatNtuple::Loop] IsFastSim = " << IsFastSim << endl;
+  cout << "[SKFlatNtuple::Loop] IsWROfficial = " << IsWROfficial << endl;
   cout << "[SKFlatNtuple::Loop] DataYear = " << DataYear << endl;
   cout << "[SKFlatNtuple::Loop] xsec = " << xsec << endl;
   cout << "[SKFlatNtuple::Loop] sumW = " << sumW << endl;
@@ -69,6 +70,7 @@ SKFlatNtuple::SKFlatNtuple(){
   DataStream = "";
   MCSample = "";
   IsFastSim = false;
+  IsWROfficial = false;
   DataYear = 2017;
   xsec = 1.;
   sumW = 1.;
@@ -738,6 +740,10 @@ void SKFlatNtuple::Init()
    fChain->SetBranchAddress("genWeight_id2", &genWeight_id2, &b_genWeight_id2);
    fChain->SetBranchAddress("genWeight_alphaQCD", &genWeight_alphaQCD, &b_genWeight_alphaQCD);
    fChain->SetBranchAddress("genWeight_alphaQED", &genWeight_alphaQED, &b_genWeight_alphaQED);
+   if(IsWROfficial){
+   fChain->SetBranchAddress("genMWR", &genMWR, &b_genMWR);
+   fChain->SetBranchAddress("genMN", &genMN, &b_genMN);
+   }
    }
    fChain->SetBranchAddress("photon_Energy", &photon_Energy, &b_photon_Energy);
    fChain->SetBranchAddress("photon_EnergyUnCorr", &photon_EnergyUnCorr, &b_photon_EnergyUnCorr);

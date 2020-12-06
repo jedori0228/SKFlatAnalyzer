@@ -1,0 +1,2 @@
+# alias PD xsec nmc sumw
+Official_FullSim_WR5400_N4400	Official_FullSim_WR5400_N4400	1.	30821	19823

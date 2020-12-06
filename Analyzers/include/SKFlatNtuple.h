@@ -38,6 +38,7 @@ public :
    TString DataStream;
    TString MCSample;
    bool IsFastSim;
+   bool IsWROfficial;
    int DataYear;
    double xsec, sumW, weight_norm_1invpb;
    vector<TString> Userflags;
@@ -390,6 +391,9 @@ public :
    Int_t           genWeight_id2;
    Double_t        genWeight_alphaQCD;
    Double_t        genWeight_alphaQED;
+   Int_t           genMWR;
+   Int_t           genMN;
+
    vector<double>  *photon_Energy;
    vector<double>  *photon_EnergyUnCorr;
    vector<double>  *photon_eta;
@@ -751,6 +755,8 @@ public :
    TBranch        *b_genWeight_id2;   //!
    TBranch        *b_genWeight_alphaQCD;   //!
    TBranch        *b_genWeight_alphaQED;   //!
+   TBranch        *b_genMWR;   //!
+   TBranch        *b_genMN;   //!
    TBranch        *b_photon_Energy;   //!
    TBranch        *b_photon_EnergyUnCorr;   //!
    TBranch        *b_photon_eta;   //!
