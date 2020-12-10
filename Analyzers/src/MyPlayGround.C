@@ -80,15 +80,18 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
   if( ! (ev.PassTrigger(Triggers_Muon)) ) return;
 
   vector<Muon> muons = GetMuons("POGTightWithTightIso", 20., 2.4);
-  if(muons.size()!=2) return;
+  if(muons.size()<1) return;
+  //if(muons.size()!=2) return;
   if(muons.at(0).Pt()<53) return;
-  if( !IsOnZ( (muons.at(0)+muons.at(1)).M(), 15 ) ) return;
+  //if( !IsOnZ( (muons.at(0)+muons.at(1)).M(), 15 ) ) return;
 
   if(param.Name=="Lepton200GeV"){
     if(muons.at(0).Pt()<200.) return;
   }
 
   vector<FatJet> fatjets_LepVeto = GetFatJets("tightLepVeto", 200., 2.4);
+  vector<FatJet> fatjets_LepVeto_Corr = puppiCorr->Correct( fatjets_LepVeto );
+
   vector<FatJet> fatjets_HN = GetFatJets("HN", 200., 2.4);
   vector<FatJet> fatjets = GetFatJets("tight", 200., 2.4);
   vector<Jet> jets_LepVeto = GetJets("tightLepVeto", 200., 2.4);
@@ -150,6 +153,21 @@ void MyPlayGround::executeEventFromParameter(AnalyzerParameter param){
     FillHist(this_region+"/LepVetoFatJet_Phi_"+this_region, fatjets_LepVeto.at(i).Phi(), weight, 80, -4., 4.);
     FillHist(this_region+"/LepVetoFatJet_Eta_vs_Phi_"+this_region, fatjets_LepVeto.at(i).Eta(), fatjets_LepVeto.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
     FillHist(this_region+"/LepVetoFatJet_SDMass_"+this_region, fatjets_LepVeto.at(i).SDMass(), weight, 500, 0., 500.);
+
+  }
+
+  for(unsigned int i=0; i<fatjets_LepVeto_Corr.size(); i++){
+
+    TString this_itoa = TString::Itoa(i,10);
+    FillHist(this_region+"/LepVetoFatJetCorr_"+this_itoa+"_Eta_"+this_region, fatjets_LepVeto_Corr.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/LepVetoFatJetCorr_"+this_itoa+"_Phi_"+this_region, fatjets_LepVeto_Corr.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJetCorr_"+this_itoa+"_Eta_vs_Phi_"+this_region, fatjets_LepVeto_Corr.at(i).Eta(), fatjets_LepVeto_Corr.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJetCorr_"+this_itoa+"_SDMass_"+this_region, fatjets_LepVeto_Corr.at(i).SDMass(), weight, 500, 0., 500.);
+
+    FillHist(this_region+"/LepVetoFatJetCorr_Eta_"+this_region, fatjets_LepVeto_Corr.at(i).Eta(), weight, 60, -3., 3.);
+    FillHist(this_region+"/LepVetoFatJetCorr_Phi_"+this_region, fatjets_LepVeto_Corr.at(i).Phi(), weight, 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJetCorr_Eta_vs_Phi_"+this_region, fatjets_LepVeto_Corr.at(i).Eta(), fatjets_LepVeto_Corr.at(i).Phi(), weight, 60, -3., 3., 80, -4., 4.);
+    FillHist(this_region+"/LepVetoFatJetCorr_SDMass_"+this_region, fatjets_LepVeto_Corr.at(i).SDMass(), weight, 500, 0., 500.);
 
   }
 
