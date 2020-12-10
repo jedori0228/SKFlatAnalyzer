@@ -25,15 +25,20 @@ void SkimTree_WROfficial::executeEvent(){
   if( targetMWR != TString::Itoa(genMWR,10) ) return;
   if( targetmN  != TString::Itoa(genMN, 10) ) return;
 
-  double pdf_Central = LHAPDFHandler_.PDFCentral->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q);
+  double pdf_Central =   LHAPDFHandler_.PDFCentral->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q) 
+                       * LHAPDFHandler_.PDFCentral->xfxQ(genWeight_id2, genWeight_X2, genWeight_Q);
   PDFWeights_Error->clear();
+  PDFWeights_Error->push_back(1.);
   for(int i=0; i<100; i++){
-    double this_pdf = LHAPDFHandler_.PDFErrorSet.at(i)->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q);
+    double this_pdf =   LHAPDFHandler_.PDFErrorSet.at(i)->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q) 
+                      * LHAPDFHandler_.PDFErrorSet.at(i)->xfxQ(genWeight_id2, genWeight_X2, genWeight_Q);
     double thie_rwg = this_pdf/pdf_Central;
     PDFWeights_Error->push_back(thie_rwg);
   }
-  double this_pdfAs_Up = LHAPDFHandler_.PDFAlphaSUp->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q);
-  double this_pdfAs_Dn = LHAPDFHandler_.PDFAlphaSDown->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q);
+  double this_pdfAs_Up =   LHAPDFHandler_.PDFAlphaSUp->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q) 
+                         * LHAPDFHandler_.PDFAlphaSUp->xfxQ(genWeight_id2, genWeight_X2, genWeight_Q);
+  double this_pdfAs_Dn =   LHAPDFHandler_.PDFAlphaSDown->xfxQ(genWeight_id1, genWeight_X1, genWeight_Q)
+                         * LHAPDFHandler_.PDFAlphaSDown->xfxQ(genWeight_id2, genWeight_X2, genWeight_Q);
 
   double this_AsUpRwg = 1.+(this_pdfAs_Up - pdf_Central)/pdf_Central * 0.75;
   double this_AsDnRwg = 1.+(this_pdfAs_Dn - pdf_Central)/pdf_Central * 0.75;

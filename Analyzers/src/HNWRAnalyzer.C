@@ -386,7 +386,7 @@ void HNWRAnalyzer::executeEvent(){
   param.Muon_MinPt = 53.;
 
   param.Jet_ID = "HN";
-  param.FatJet_ID = "tight";
+  param.FatJet_ID = "HN";
 
   AllElectrons = GetAllElectrons();
   AllMuons = GetAllMuons();
@@ -871,8 +871,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           bool DiLepMassGT400 = (dilep_mass > 400.);
           bool DiLepMassLT150 = (dilep_mass >= 60.) && (dilep_mass < 150.);
 
-          bool DiLepMass60to110  = (dilep_mass >= 60.) && (dilep_mass < 110.);
-          bool DiLepMass110to150 = (dilep_mass >= 110.) && (dilep_mass < 150.);
+          bool DiLepMass60to100  = (dilep_mass >= 60.) && (dilep_mass < 100.);
+          bool DiLepMass100to150 = (dilep_mass >= 100.) && (dilep_mass < 150.);
           bool DiLepMass200to400  = (dilep_mass >= 200.) && (dilep_mass < 400.);
 
           bool WRMassGT800 = ( WRCand.M() > 800. );
@@ -1020,10 +1020,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             else if(tmp_IsMM) IsResolved_DYCR_MM = true;
             else if(tmp_IsEM) IsResolved_DYCR_EM = true;
 
-            if(DiLepMass60to110){
+            if(DiLepMass60to100){
               map_bool_To_Region[Suffix+"_Resolved_DYCR1"] = true;
             }
-            if(DiLepMass110to150){
+            if(DiLepMass100to150){
               map_bool_To_Region[Suffix+"_Resolved_DYCR2"] = true;
             }
           }
@@ -1262,7 +1262,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                 if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
                 else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
 
-                if( LowMllMass < 110 ){
+                if( LowMllMass < 100 ){
                   map_bool_To_Region[Suffix+"_Boosted_DYCR1"] = true;
                 }
                 else{
