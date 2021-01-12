@@ -183,11 +183,11 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::DYReshapeSystDown){
     return "DYReshapeSystDown";
   }
-  else if(syst_==Syst::DYReshapeEEMMUp){
-    return "DYReshapeEEMMUp";
+  else if(syst_==Syst::BTagUp){
+    return "BTagUp";
   }
-  else if(syst_==Syst::DYReshapeEEMMDown){
-    return "DYReshapeEEMMDown";
+  else if(syst_==Syst::BTagDown){
+    return "BTagDown";
   }
   else{
     cout << "[AnalyzerParameter::GetSystType] Wrong Syst" << endl;

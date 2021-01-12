@@ -556,6 +556,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   int SystDir_PU(0);
 
   int SystDir_DYReshape(0);
+  string SystDir_BTag("central");
 
   if(param.syst_ == AnalyzerParameter::Central){
 
@@ -668,11 +669,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   else if(param.syst_ == AnalyzerParameter::DYReshapeSystDown){
     SystDir_DYReshape = -1;
   }
-  else if(param.syst_ == AnalyzerParameter::DYReshapeEEMMUp){
-    SystDir_DYReshape = +2;
+  else if(param.syst_ == AnalyzerParameter::BTagUp){
+    SystDir_BTag = "up";
   }
-  else if(param.syst_ == AnalyzerParameter::DYReshapeEEMMDown){
-    SystDir_DYReshape = -2;
+  else if(param.syst_ == AnalyzerParameter::BTagDown){
+    SystDir_BTag = "down";
   }
   else{
     cerr << "[HNWRAnalyzer::executeEventFromParameter] Wrong syst : param.syst_ = " << param.syst_ << endl;
@@ -757,9 +758,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   int NBJets=0;
   for(unsigned int i=0; i<jets.size(); i++){
-    if( mcCorr->IsBTagged_2a(JetTagging::Parameters(JetTagging::DeepCSV,
-                                                    JetTagging::Medium,
-                                                    JetTagging::incl, JetTagging::comb), jets.at(i)) ) NBJets++;
+    if( mcCorr->IsBTagged_2a(JetTagging::Parameters(JetTagging::DeepCSV, JetTagging::Medium, JetTagging::incl, JetTagging::comb), jets.at(i), SystDir_BTag) ){
+      NBJets++;
+    }
   }
 
   //==============
@@ -950,6 +951,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                 else if(tmp_IsMM) IsResolved_SR_MM = true;
                 else if(tmp_IsEM) IsResolved_SR_EM = true;
 
+
+                if(NBJets>0){
+                  FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_mll400_BJet_"+param.Name, weight);
+                  map_bool_To_Region[Suffix+"_Resolved_SR_BJet"] = true;
+                }
+                else{
+                  FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_mll400_NoBJet_"+param.Name, weight);
+                  map_bool_To_Region[Suffix+"_Resolved_SR_NoBJet"] = true;
+                }
 /*
                 if( (IsResolved_SR_EE||IsResolved_SR_MM) ){
                   cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
@@ -1458,6 +1468,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                       if(tmp_IsLeadE) IsBoosted_CR_EMJet = true;
                       else if(tmp_IsLeadM) IsBoosted_CR_MEJet = true;
 
+                      if(NBJets>0){
+                        FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mWRGT800_BJet_"+param.Name, weight);
+                        map_bool_To_Region[Suffix+"_EMu_Boosted_CR_BJet"] = true;
+                      }
+                      else{
+                        FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_mWRGT800_NoBJet_"+param.Name, weight);
+                        map_bool_To_Region[Suffix+"_EMu_Boosted_CR_NoBJet"] = true;
+                      }
+
                     }
                     else{
 
@@ -1625,9 +1644,52 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       }
 
-      FillHist(this_region+"/NEvent_"+this_region, 0., weight, 1, 0., 1.);
-      FillHist(this_region+"/MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
+      //==== Essential plots 
 
+      FillHist(this_region+"/NEvent_"+this_region, 0., weight, 1, 0., 1.);
+      FillHist(this_region+"/NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
+
+      if(this_region.Contains("Boosted")){
+        FillHist(this_region+"/HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
+        FillHist(this_region+"/HNFatJet_SDMass_"+this_region, HNFatJet.SDMass(), weight, 3000, 0., 3000.);
+        FillHist(this_region+"/HNFatJet_LSF_"+this_region, HNFatJet.LSF(), weight, 100, 0., 1.);
+      }
+
+      if( leps_for_plot.size()>=2 ){
+        FillHist(this_region+"/ZCand_Mass_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).M(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/ZCand_Pt_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/ZCand_Eta_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Eta(), weight, 60, -3., 3.);
+      }
+
+      double this_mWR = WRCand.M();
+      if(this_mWR<800.) this_mWR = 800.+1.;
+      if(this_mWR>=8000. && Signal) this_mWR = 7999.;
+      FillHist(this_region+"/WRCand_Mass_"+this_region, this_mWR, weight, 800, 0., 8000.);
+      FillHist(this_region+"/WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
+
+      FillHist(this_region+"/NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
+      FillHist(this_region+"/NCand_Pt_"+this_region, NCand.Pt(), weight, 300, 0., 3000.);
+
+      if( (MCSample.Contains("DYJets")) && IsCentral){
+        FillHist(this_region+"/ZPtReweight_"+this_region, ZPtReweight, 1., 40, 0., 4.);
+        FillHist(this_region+"/GenZ_Mass_"+this_region, GenZParticle.M(), weight, 800, 0., 8000.);
+        FillHist(this_region+"/GenZ_Pt_"+this_region, GenZParticle.Pt(), weight, 800, 0., 8000.);
+      }
+
+      for(unsigned int i=0; i<leps_for_plot.size(); i++){
+        TString this_itoa = TString::Itoa(i,10);
+        Lepton *lep = leps_for_plot[i];
+
+        FillHist(this_region+"/Lepton_"+this_itoa+"_Pt_"+this_region, lep->Pt(), weight, 3000, 0., 3000.);
+        FillHist(this_region+"/Lepton_"+this_itoa+"_Eta_"+this_region, lep->Eta(), weight, 60, -3., 3.);
+      }
+
+      //==== Optional plots
+
+      if(0){
+
+      FillHist(this_region+"/MET_"+this_region, METv.Pt(), weight, 1000., 0., 1000.);
       FillHist(this_region+"/nPileUp_"+this_region, nPileUp, weight, 200., 0., 200.);
       FillHist(this_region+"/nPV_"+this_region, nPV, weight, 200., 0., 200.);
       FillHist(this_region+"/N_VTX_"+this_region, N_VTX, weight, 200., 0., 200.);
@@ -1647,22 +1709,18 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       FillHist(this_region+"/FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
       FillHist(this_region+"/Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
-      FillHist(this_region+"/NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
       FillHist(this_region+"/HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
       FillHist(this_region+"/PrefireRwg_"+this_region, 0, weight_Prefire, 1, 0., 1.);
 
+
       if(this_region.Contains("Boosted")){
         FillHist(this_region+"/dPhi_LeadlJ_"+this_region, fabs( leps_for_plot.at(0)->DeltaPhi(HNFatJet) ), weight, 40, 0., 4.);
         FillHist(this_region+"/dR_SubleadlJ_"+this_region, fabs( leps_for_plot.at(1)->DeltaR(HNFatJet) ), weight, 40, 0., 4.);
-        FillHist(this_region+"/HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
-        FillHist(this_region+"/HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
         FillHist(this_region+"/HNFatJet_Mass_"+this_region, HNFatJet.M(), weight, 3000, 0., 3000.);
-        FillHist(this_region+"/HNFatJet_SDMass_"+this_region, HNFatJet.SDMass(), weight, 3000, 0., 3000.);
         FillHist(this_region+"/HNFatJet_PuppiTau21_"+this_region, HNFatJet.PuppiTau2()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
         FillHist(this_region+"/HNFatJet_PuppiTau31_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau1(), weight, 100, 0., 1.);
         FillHist(this_region+"/HNFatJet_PuppiTau32_"+this_region, HNFatJet.PuppiTau3()/HNFatJet.PuppiTau2(), weight, 100, 0., 1.);
-        FillHist(this_region+"/HNFatJet_LSF_"+this_region, HNFatJet.LSF(), weight, 100, 0., 1.);
 
         if(HEM1516){
           //==== HEM1516
@@ -1675,20 +1733,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
 
       if( leps_for_plot.size()>=2 ){
-        FillHist(this_region+"/ZCand_Mass_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).M(), weight, 2000, 0., 2000.);
-        FillHist(this_region+"/ZCand_Pt_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).Pt(), weight, 2000, 0., 2000.);
         FillHist(this_region+"/dPhi_ll_"+this_region, fabs((*leps_for_plot.at(0)).DeltaPhi(*leps_for_plot.at(1))), weight, 40, 0., 4.);
       }
 
-      double this_mWR = WRCand.M();
-      if(this_mWR<800.) this_mWR = 800.+1.;
-      if(this_mWR>=8000. && Signal) this_mWR = 7999.;
-      FillHist(this_region+"/WRCand_Mass_"+this_region, this_mWR, weight, 800, 0., 8000.);
-
-      FillHist(this_region+"/WRCand_Pt_"+this_region, WRCand.Pt(), weight, 300, 0., 3000.);
-
-      FillHist(this_region+"/NCand_Mass_"+this_region, NCand.M(), weight, 800, 0., 8000.);
-      FillHist(this_region+"/NCand_Pt_"+this_region, NCand.Pt(), weight, 300, 0., 3000.);
       FillHist(this_region+"/NCand_1_Mass_"+this_region, NCand_1.M(), weight, 800, 0., 8000.);
       FillHist(this_region+"/NCand_1_Pt_"+this_region, NCand_1.Pt(), weight, 300, 0., 3000.);
       FillHist(this_region+"/NCand_2_Mass_"+this_region, NCand_2.M(), weight, 800, 0., 8000.);
@@ -1698,8 +1745,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         FillHist(this_region+"/TriggerEff_"+this_region, 0., this_trigger_sf, 1, 0., 1.);
       }
 
-      FillLeptonPlots(leps_for_plot, this_region, weight);
-      FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
       if(jets.size()>=2){
         FillHist(this_region+"/DiJet_Mass_"+this_region, (jets.at(0)+jets.at(1)).M(), weight, 400, 0., 4000.);
@@ -1724,6 +1769,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         }
       }
+
+      //FillLeptonPlots(leps_for_plot, this_region, weight);
+      //FillJetPlots(jets, fatjets_LSF, this_region, weight);
 
       //==== 2020/11/24 : DY Boosted study
 
@@ -1757,13 +1805,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         FillHist(this_region+"/dRj1j2_"+this_region, jets.at(0).DeltaR( jets.at(1) ), weight, 60., 0., 6.);
       }
 
-      if( (MCSample.Contains("DYJets")) && IsCentral){
-        FillHist(this_region+"/ZPtReweight_"+this_region, ZPtReweight, 1., 40, 0., 4.);
-        FillHist(this_region+"/GenZ_Mass_"+this_region, GenZParticle.M(), weight, 800, 0., 8000.);
-        FillHist(this_region+"/GenZ_Pt_"+this_region, GenZParticle.Pt(), weight, 800, 0., 8000.);
-      }
-
       FillHist(this_region+"/JetLepFlav_"+this_region, JetLepFlav, 1., 3, -1., 2.);
+
+      } // Draw Optional plots?
 
     } // END if(pass Region)
 

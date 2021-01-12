@@ -51,7 +51,7 @@ public:
     ZPtRwUp, ZPtRwDown,
     PrefireUp, PrefireDown,
     DYReshapeSystUp, DYReshapeSystDown,
-    DYReshapeEEMMUp, DYReshapeEEMMDown,
+    BTagUp, BTagDown,
     NSyst
   };
   Syst syst_;
