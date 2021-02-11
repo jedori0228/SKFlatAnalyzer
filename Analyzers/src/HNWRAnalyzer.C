@@ -197,7 +197,7 @@ void HNWRAnalyzer::initializeAnalyzer(){
     TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/Ratio.root");
     hist_DYPtReweight = (TH2D *)file_DYPtReweight->Get("Ratio");
 
-    TFile *file_DYReshape = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYReshape/DYReshape_"+TString::Itoa(DataYear,10)+".root");
+    TFile *file_DYReshape = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYReshape/DYReshapeJetPt_"+TString::Itoa(DataYear,10)+".root");
     hist_DYReshape_Resolved_ratio_AllCh = (TH1D *)file_DYReshape->Get("Resolved_ratio_AllCh");
     hist_DYReshape_Resolved_EEOnlyRatio = (TH1D *)file_DYReshape->Get("Resolved_EEOnlyRatio");
     hist_DYReshape_Resolved_MuMuOnlyRatio = (TH1D *)file_DYReshape->Get("Resolved_MuMuOnlyRatio");
@@ -914,7 +914,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
             //==== DYReshape for DY
             if(ApplyDYReshape){
-              weight *= GetDYReshape(WRCand.M(), "Resolved", SystDir_DYReshape);
+              weight *= GetDYReshape(jets.at(0).Pt(), "Resolved", SystDir_DYReshape);
             }
 
           }
@@ -1522,7 +1522,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         //==== DYReshape for DY
         if(ApplyDYReshape){
-          weight *= GetDYReshape(WRCand.M(), "Boosted", SystDir_DYReshape);
+          weight *= GetDYReshape(HNFatJet.Pt(), "Boosted", SystDir_DYReshape);
         }
 
       } // END If trigger fired
@@ -1654,7 +1654,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         FillHist(this_region+"/HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
         FillHist(this_region+"/HNFatJet_SDMass_"+this_region, HNFatJet.SDMass(), weight, 3000, 0., 3000.);
         FillHist(this_region+"/HNFatJet_LSF_"+this_region, HNFatJet.LSF(), weight, 100, 0., 1.);
+        FillHist(this_region+"/ToBeCorrected_Jet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
       }
+      else{
+        FillHist(this_region+"/ToBeCorrected_Jet_Pt_"+this_region, jets.at(0).Pt(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/Jet_0_Pt_"+this_region, jets.at(0).Pt(), weight, 1000, 0., 1000.);
+        FillHist(this_region+"/Jet_1_Pt_"+this_region, jets.at(1).Pt(), weight, 1000, 0., 1000.);
+      }
+
 
       if( leps_for_plot.size()>=2 ){
         FillHist(this_region+"/ZCand_Mass_"+this_region, ((*leps_for_plot.at(0))+(*leps_for_plot.at(1))).M(), weight, 2000, 0., 2000.);
@@ -1942,7 +1949,7 @@ double HNWRAnalyzer::LSFSF(int lepflav, int dir){
 
 double HNWRAnalyzer::GetDYReshape(double mwr, TString region, int SystType){
 
-  if(mwr>=8000.) mwr=8000.;
+  if(mwr>=2000.) mwr=2000.;
 
   
 
