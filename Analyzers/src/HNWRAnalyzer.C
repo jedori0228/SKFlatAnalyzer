@@ -20,6 +20,8 @@ void HNWRAnalyzer::initializeAnalyzer(){
   CalculateAverageKFactor = HasFlag("CalculateAverageKFactor");
   SignalElectronOnly = HasFlag("SignalElectronOnly");
   SignalMuonOnly = HasFlag("SignalMuonOnly");
+  UseJetPtRwg = HasFlag("JetPt");
+  UseDYCR1Reshape = HasFlag("DYCR1");
 
   if(Signal){
     //==== MCSample = WRtoNLtoLLJJ_WR1400_N1000
@@ -197,7 +199,14 @@ void HNWRAnalyzer::initializeAnalyzer(){
     TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/Ratio.root");
     hist_DYPtReweight = (TH2D *)file_DYPtReweight->Get("Ratio");
 
-    TFile *file_DYReshape = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYReshape/DYReshapeJetPt_"+TString::Itoa(DataYear,10)+".root");
+    TString tmp_IsJetPt = "";
+    if(UseJetPtRwg) tmp_IsJetPt = "JetPt";
+    TString             filename_DYReshape = "DYReshape"+tmp_IsJetPt+"_"     +TString::Itoa(DataYear,10)+".root";
+    if(UseDYCR1Reshape) filename_DYReshape = "DYReshape"+tmp_IsJetPt+"DYCR1_"+TString::Itoa(DataYear,10)+".root";
+
+    cout << "[HNWRAnalyzer::initializeAnalyzer()] filename_DYReshape = " << filename_DYReshape << endl;
+
+    TFile *file_DYReshape = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYReshape/"+filename_DYReshape);
     hist_DYReshape_Resolved_ratio_AllCh = (TH1D *)file_DYReshape->Get("Resolved_ratio_AllCh");
     hist_DYReshape_Resolved_EEOnlyRatio = (TH1D *)file_DYReshape->Get("Resolved_EEOnlyRatio");
     hist_DYReshape_Resolved_MuMuOnlyRatio = (TH1D *)file_DYReshape->Get("Resolved_MuMuOnlyRatio");
@@ -914,7 +923,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
             //==== DYReshape for DY
             if(ApplyDYReshape){
-              weight *= GetDYReshape(jets.at(0).Pt(), "Resolved", SystDir_DYReshape);
+              double tmp_DYRwgParam = WRCand.M();
+              if(UseJetPtRwg) tmp_DYRwgParam = jets.at(0).Pt();
+
+              weight *= GetDYReshape(tmp_DYRwgParam, "Resolved", SystDir_DYReshape);
+
             }
 
           }
@@ -1522,7 +1535,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         //==== DYReshape for DY
         if(ApplyDYReshape){
-          weight *= GetDYReshape(HNFatJet.Pt(), "Boosted", SystDir_DYReshape);
+
+          double tmp_DYRwgParam = WRCand.M();
+          if(UseJetPtRwg) tmp_DYRwgParam = HNFatJet.Pt();
+
+          weight *= GetDYReshape(tmp_DYRwgParam, "Boosted", SystDir_DYReshape);
         }
 
       } // END If trigger fired
@@ -1648,6 +1665,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       FillHist(this_region+"/NEvent_"+this_region, 0., weight, 1, 0., 1.);
       FillHist(this_region+"/NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
+      FillHist(this_region+"/NJets_"+this_region, jets.size(), weight, 10, 0., 10.);
 
       if(this_region.Contains("Boosted")){
         FillHist(this_region+"/HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
@@ -1714,7 +1732,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       FillHist(this_region+"/FatJet_Size_"+this_region, fatjets.size(), weight, 10, 0., 10.);
       FillHist(this_region+"/LSFFatJet_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
       FillHist(this_region+"/FatJet_LSF_Size_"+this_region, fatjets_LSF.size(), weight, 10, 0., 10.);
-      FillHist(this_region+"/Jet_Size_"+this_region, jets.size(), weight, 10, 0., 10.);
 
       FillHist(this_region+"/HT_"+this_region, HT, weight, 4000, 0., 4000.);
 
@@ -1949,7 +1966,12 @@ double HNWRAnalyzer::LSFSF(int lepflav, int dir){
 
 double HNWRAnalyzer::GetDYReshape(double mwr, TString region, int SystType){
 
-  if(mwr>=2000.) mwr=2000.;
+  if(UseJetPtRwg){
+    if(mwr>=2000.) mwr=2000.;
+  }
+  else{
+    if(mwr>=8000.) mwr=8000.;
+  }
 
   
 
