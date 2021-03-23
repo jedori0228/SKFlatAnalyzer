@@ -26,6 +26,8 @@ public:
   bool CalculateAverageKFactor;
   bool HEM1516;
   bool BeforeRun319077;
+  bool UseJetPtRwg;
+  bool UseDYCR1Reshape;
 
   vector<Gen> gens;
 
@@ -46,6 +48,14 @@ public:
   TH2D *hist_DYPtReweight;
   Particle GenZParticle;
   double ZPtReweight, ZPtReweight_Up, ZPtReweight_Down;
+  TH1D *hist_DYPtEWCorr;
+  TH1D *hist_DYPtEWCorrE1;
+  TH1D *hist_DYPtEWCorrE2;
+  TH1D *hist_DYPtEWCorrE3;
+  double ZPtEWCorr;
+  double ZPtEWCorr_E1Up, ZPtEWCorr_E1Down;
+  double ZPtEWCorr_E2Up, ZPtEWCorr_E2Down;
+  double ZPtEWCorr_E3Up, ZPtEWCorr_E3Down;
 
   //==== My tool
   std::vector<Jet> JetsVetoLeptonInside(std::vector<Jet> jets, std::vector<Electron *> els, std::vector<Muon *> mus, double dR=0.4);

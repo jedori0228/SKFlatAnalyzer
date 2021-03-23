@@ -158,6 +158,13 @@ void HNWRAnalyzer::initializeAnalyzer(){
   ZPtReweight = 1.;
   ZPtReweight_Up = 1.;
   ZPtReweight_Down = 1.;
+  ZPtEWCorr = 1.;
+  ZPtEWCorr_E1Up = 1.;
+  ZPtEWCorr_E1Down = 1.;
+  ZPtEWCorr_E2Up = 1.;
+  ZPtEWCorr_E2Down = 1.;
+  ZPtEWCorr_E3Up = 1.;
+  ZPtEWCorr_E3Down = 1.;
 
   //==== b tagging
   std::vector<JetTagging::Parameters> jtps;
@@ -198,6 +205,12 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
     TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/Ratio.root");
     hist_DYPtReweight = (TH2D *)file_DYPtReweight->Get("Ratio");
+
+    TFile *file_DYPtEWCorr = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/ZPtEWCorr.root");
+    hist_DYPtEWCorr = (TH1D *)file_DYPtEWCorr->Get("hist_v");
+    hist_DYPtEWCorrE1 = (TH1D *)file_DYPtEWCorr->Get("hist_e1");
+    hist_DYPtEWCorrE2 = (TH1D *)file_DYPtEWCorr->Get("hist_e2");
+    hist_DYPtEWCorrE3 = (TH1D *)file_DYPtEWCorr->Get("hist_e3");
 
     TString tmp_IsJetPt = "";
     if(UseJetPtRwg) tmp_IsJetPt = "JetPt";
@@ -266,6 +279,19 @@ void HNWRAnalyzer::executeEvent(){
     ZPtReweight = value;
     ZPtReweight_Up = value+error;
     ZPtReweight_Down = value-error;
+
+    //==== EW Corr
+    ptZ = GenZParticle.Pt();
+    if(ptZ<30.) ptZ=31.;
+    if(ptZ>=6500.) ptZ=6499.;
+    int bin_EW = hist_DYPtEWCorr->FindBin(ptZ);
+    ZPtEWCorr = hist_DYPtEWCorr->GetBinContent(bin_EW);
+    ZPtEWCorr_E1Up   = ZPtEWCorr + hist_DYPtEWCorrE1->GetBinError(bin_EW);
+    ZPtEWCorr_E1Down = ZPtEWCorr - hist_DYPtEWCorrE1->GetBinError(bin_EW);
+    ZPtEWCorr_E2Up   = ZPtEWCorr + hist_DYPtEWCorrE2->GetBinError(bin_EW);
+    ZPtEWCorr_E2Down = ZPtEWCorr - hist_DYPtEWCorrE2->GetBinError(bin_EW);
+    ZPtEWCorr_E3Up   = ZPtEWCorr + hist_DYPtEWCorrE3->GetBinError(bin_EW);
+    ZPtEWCorr_E3Down = ZPtEWCorr - hist_DYPtEWCorrE3->GetBinError(bin_EW);
 
     //cout << GenZParticle.M() << "\t" << GenZParticle.Pt() << " -> " << value << endl;
 
@@ -416,6 +442,9 @@ void HNWRAnalyzer::executeEvent(){
       //==== ZPtRwUp and ZPtRwDown are only ran when ApplyDYPtReweight
       //==== If not, skip
       if( (param.syst_==AnalyzerParameter::ZPtRwUp || param.syst_==AnalyzerParameter::ZPtRwDown) && !ApplyDYPtReweight ) continue;
+      if( (param.syst_==AnalyzerParameter::ZPtRwEW1Up || param.syst_==AnalyzerParameter::ZPtRwEW1Down) && !ApplyDYPtReweight ) continue;
+      if( (param.syst_==AnalyzerParameter::ZPtRwEW2Up || param.syst_==AnalyzerParameter::ZPtRwEW2Down) && !ApplyDYPtReweight ) continue;
+      if( (param.syst_==AnalyzerParameter::ZPtRwEW3Up || param.syst_==AnalyzerParameter::ZPtRwEW3Down) && !ApplyDYPtReweight ) continue;
 
       param.Name = "Syst_"+param.GetSystType()+"_HNWR";
 
@@ -490,6 +519,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       if(param.syst_ == AnalyzerParameter::ZPtRwUp) weight *= ZPtReweight_Up;
       else if(param.syst_ == AnalyzerParameter::ZPtRwDown) weight *= ZPtReweight_Down;
       else weight *= ZPtReweight;
+
+      if(param.syst_ == AnalyzerParameter::ZPtRwEW1Up) weight *= ZPtEWCorr_E1Up;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwEW1Down) weight *= ZPtEWCorr_E1Down;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwEW2Up) weight *= ZPtEWCorr_E2Up;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwEW2Down) weight *= ZPtEWCorr_E2Down;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwEW3Up) weight *= ZPtEWCorr_E3Up;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwEW3Down) weight *= ZPtEWCorr_E3Down;
+      else weight *= ZPtEWCorr;
 
     }
 
@@ -664,6 +701,24 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   }
   else if(param.syst_ == AnalyzerParameter::ZPtRwDown){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwEW1Up){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwEW1Down){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwEW2Up){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwEW2Down){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwEW3Up){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwEW3Down){
 
   }
   else if(param.syst_ == AnalyzerParameter::PrefireUp){
@@ -1936,11 +1991,11 @@ double HNWRAnalyzer::LSFSF(int lepflav, int dir){
   }
   if(DataYear==2018){
 
-    LSFSF_EJet_Central = 1.11;
-    LSFSF_EJet_Error_Up = 0.08;
-    LSFSF_EJet_Error_Down = 0.07;
+    LSFSF_EJet_Central = 1.05;
+    LSFSF_EJet_Error_Up = 0.07;
+    LSFSF_EJet_Error_Down = 0.06;
 
-    LSFSF_MJet_Central = 1.06;
+    LSFSF_MJet_Central = 1.04;
     LSFSF_MJet_Error_Up = 0.06;
     LSFSF_MJet_Error_Down = 0.05;
 
