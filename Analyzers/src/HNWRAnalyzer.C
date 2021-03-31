@@ -154,10 +154,18 @@ void HNWRAnalyzer::initializeAnalyzer(){
 
   }
 
-  //==== Z-pt rewieght
+  //==== Z-pt QCD
   ZPtReweight = 1.;
   ZPtReweight_Up = 1.;
   ZPtReweight_Down = 1.;
+  ZPtReweight_QCDScaleUp = 1.;
+  ZPtReweight_QCDScaleDown = 1.;
+  ZPtReweight_QCDPDFErrorUp = 1.;
+  ZPtReweight_QCDPDFErrorDown = 1.;
+  ZPtReweight_QCDPDFAlphaSUp = 1.;
+  ZPtReweight_QCDPDFAlphaSDown = 1.;
+
+  //==== Z-pt EW
   ZPtEWCorr = 1.;
   ZPtEWCorr_E1Up = 1.;
   ZPtEWCorr_E1Down = 1.;
@@ -203,15 +211,23 @@ void HNWRAnalyzer::initializeAnalyzer(){
   if(!IsDATA){
     TString datapath = getenv("DATA_DIR");
 
-    TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/Ratio.root");
-    hist_DYPtReweight = (TH2D *)file_DYPtReweight->Get("Ratio");
+    //==== QCD
+    TFile *file_DYPtReweight = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/ZPtQCDWithError.root");
 
+    hist_DYPt_PDFError = (TH1D *)file_DYPtReweight->Get("h_Ratio_PDFError");
+    hist_DYPt_ScaleUp = (TH1D *)file_DYPtReweight->Get("h_Ratio_ScaleUp");
+    hist_DYPt_ScaleDown = (TH1D *)file_DYPtReweight->Get("h_Ratio_ScaleDown");
+    hist_DYPt_PDFAlphaSUp = (TH1D *)file_DYPtReweight->Get("h_Ratio_AlphaSUp");
+    hist_DYPt_PDFAlphaSDown = (TH1D *)file_DYPtReweight->Get("h_Ratio_AlphaSDown");
+
+    //==== EW
     TFile *file_DYPtEWCorr = new TFile(datapath+"/"+TString::Itoa(DataYear,10)+"/HNWRDYPtReweight/ZPtEWCorr.root");
     hist_DYPtEWCorr = (TH1D *)file_DYPtEWCorr->Get("hist_v");
     hist_DYPtEWCorrE1 = (TH1D *)file_DYPtEWCorr->Get("hist_e1");
     hist_DYPtEWCorrE2 = (TH1D *)file_DYPtEWCorr->Get("hist_e2");
     hist_DYPtEWCorrE3 = (TH1D *)file_DYPtEWCorr->Get("hist_e3");
 
+    //==== Shape
     TString tmp_IsJetPt = "";
     if(UseJetPtRwg) tmp_IsJetPt = "JetPt";
     TString             filename_DYReshape = "DYReshape"+tmp_IsJetPt+"_"     +TString::Itoa(DataYear,10)+".root";
@@ -265,20 +281,24 @@ void HNWRAnalyzer::executeEvent(){
     double mZ = GenZParticle.M();
     double ptZ = GenZParticle.Pt();
 
-    if(mZ<50.) mZ=51.;
-    if(mZ>=1000.) mZ=999.;
-    //if(ptZ<70.) ptZ=71.;
-    if(ptZ>=1000.) ptZ=999.;
+    if(ptZ>=8000.) ptZ=7999.;
 
-    int bin_mass = hist_DYPtReweight->GetXaxis()->FindBin(mZ);
-    int bin_pt   = hist_DYPtReweight->GetYaxis()->FindBin(ptZ);
+    int bin_pt   = hist_DYPt_PDFError->FindBin(ptZ);
 
-    double value = hist_DYPtReweight->GetBinContent( bin_mass, bin_pt );
-    double error = hist_DYPtReweight->GetBinError( bin_mass, bin_pt );
+    double value = hist_DYPt_PDFError->GetBinContent( bin_pt );
+    double error = hist_DYPt_PDFError->GetBinError( bin_pt );
 
     ZPtReweight = value;
     ZPtReweight_Up = value+error;
     ZPtReweight_Down = value-error;
+
+    ZPtReweight_QCDScaleUp = hist_DYPt_ScaleUp->GetBinContent( bin_pt );
+    ZPtReweight_QCDScaleDown = hist_DYPt_ScaleDown->GetBinContent( bin_pt );
+    double ZPtRwPDFErr = hist_DYPt_PDFError->GetBinError( bin_pt );
+    ZPtReweight_QCDPDFErrorUp = value + ZPtRwPDFErr;
+    ZPtReweight_QCDPDFErrorDown = value - ZPtRwPDFErr;
+    ZPtReweight_QCDPDFAlphaSUp = hist_DYPt_PDFAlphaSUp->GetBinContent( bin_pt );
+    ZPtReweight_QCDPDFAlphaSDown = hist_DYPt_PDFAlphaSDown->GetBinContent( bin_pt );
 
     //==== EW Corr
     ptZ = GenZParticle.Pt();
@@ -518,6 +538,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       if(param.syst_ == AnalyzerParameter::ZPtRwUp) weight *= ZPtReweight_Up;
       else if(param.syst_ == AnalyzerParameter::ZPtRwDown) weight *= ZPtReweight_Down;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwQCDScaleUp) weight *= ZPtReweight_QCDScaleUp;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwQCDScaleDown) weight *= ZPtReweight_QCDScaleDown;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFErrorUp) weight *= ZPtReweight_QCDPDFErrorUp;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFErrorDown) weight *= ZPtReweight_QCDPDFErrorDown;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFAlphaSUp) weight *= ZPtReweight_QCDPDFAlphaSUp;
+      else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFAlphaSDown) weight *= ZPtReweight_QCDPDFAlphaSDown;
       else weight *= ZPtReweight;
 
       if(param.syst_ == AnalyzerParameter::ZPtRwEW1Up) weight *= ZPtEWCorr_E1Up;
@@ -701,6 +727,24 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   }
   else if(param.syst_ == AnalyzerParameter::ZPtRwDown){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwQCDScaleUp){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwQCDScaleDown){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFErrorUp){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFErrorDown){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFAlphaSUp){
+
+  }
+  else if(param.syst_ == AnalyzerParameter::ZPtRwQCDPDFAlphaSDown){
 
   }
   else if(param.syst_ == AnalyzerParameter::ZPtRwEW1Up){

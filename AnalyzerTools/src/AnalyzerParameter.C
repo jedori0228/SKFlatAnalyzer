@@ -171,6 +171,24 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::ZPtRwDown){
     return "ZPtRwDown";
   }
+  else if(syst_==Syst::ZPtRwQCDScaleUp){
+    return "ZPtRwQCDScaleUp";
+  }
+  else if(syst_==Syst::ZPtRwQCDScaleDown){
+    return "ZPtRwQCDScaleDown";
+  }
+  else if(syst_==Syst::ZPtRwQCDPDFErrorUp){
+    return "ZPtRwQCDPDFErrorUp";
+  }
+  else if(syst_==Syst::ZPtRwQCDPDFErrorDown){
+    return "ZPtRwQCDPDFErrorDown";
+  }
+  else if(syst_==Syst::ZPtRwQCDPDFAlphaSUp){
+    return "ZPtRwQCDPDFAlphaSUp";
+  }
+  else if(syst_==Syst::ZPtRwQCDPDFAlphaSDown){
+    return "ZPtRwQCDPDFAlphaSDown";
+  }
   else if(syst_==Syst::ZPtRwEW1Up){
     return "ZPtRwEW1Up";
   }

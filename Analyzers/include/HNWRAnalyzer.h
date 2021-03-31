@@ -45,9 +45,18 @@ public:
   //==== DYPtReweight
   GenFinderForDY *genFinderDY;
   bool ApplyDYPtReweight;
-  TH2D *hist_DYPtReweight;
+  TH1D *hist_DYPt_PDFError;
+  TH1D *hist_DYPt_ScaleUp;
+  TH1D *hist_DYPt_ScaleDown;
+  TH1D *hist_DYPt_PDFAlphaSUp;
+  TH1D *hist_DYPt_PDFAlphaSDown;
   Particle GenZParticle;
   double ZPtReweight, ZPtReweight_Up, ZPtReweight_Down;
+  double ZPtReweight_QCDScaleUp, ZPtReweight_QCDScaleDown;
+  double ZPtReweight_QCDPDFErrorUp, ZPtReweight_QCDPDFErrorDown;
+  double ZPtReweight_QCDPDFAlphaSUp, ZPtReweight_QCDPDFAlphaSDown;
+
+  //==== DYPt EW corr
   TH1D *hist_DYPtEWCorr;
   TH1D *hist_DYPtEWCorrE1;
   TH1D *hist_DYPtEWCorrE2;
