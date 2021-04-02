@@ -649,6 +649,12 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     this_AllJets = ScaleJets( this_AllJets, -1 );
     this_AllFatJets = ScaleFatJets( this_AllFatJets, -1 );
   }
+  else if(param.syst_ == AnalyzerParameter::JetMassUp){
+    this_AllFatJets = ScaleSDMassFatJets( this_AllFatJets, +1 );
+  }
+  else if(param.syst_ == AnalyzerParameter::JetMassDown){
+    this_AllFatJets = ScaleSDMassFatJets( this_AllFatJets, -1 );
+  }
   else if(param.syst_ == AnalyzerParameter::MuonRecoSFUp){
     SystDir_MuonRecoSF = +1;
   }

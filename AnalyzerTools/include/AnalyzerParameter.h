@@ -36,6 +36,7 @@ public:
     Central,
     JetResUp, JetResDown,
     JetEnUp, JetEnDown,
+    JetMassUp, JetMassDown,
     MuonRecoSFUp, MuonRecoSFDown,
     MuonEnUp, MuonEnDown,
     MuonIDSFUp, MuonIDSFDown,

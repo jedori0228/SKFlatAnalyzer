@@ -851,7 +851,7 @@ std::vector<FatJet> AnalyzerCore::ScaleSDMassFatJets(const std::vector<FatJet>& 
   for(unsigned int i=0; i<jets.size(); i++){
     //==== jets is a const vector. So in this function, we have to copy the elements like below
     FatJet this_jet = jets.at(i);
-    double current_SDMass = this_jet.SDMass() * (1. + double(sys) * 0.0094 );
+    double current_SDMass = this_jet.SDMass() * (1. + double(sys) * 0.05 );
     this_jet.SetSDMass( current_SDMass );
     
     out.push_back( this_jet );

@@ -93,6 +93,12 @@ TString AnalyzerParameter::GetSystType(){
   else if(syst_==Syst::JetEnDown){
     return "JetEnDown";
   }
+  else if(syst_==Syst::JetMassUp){
+    return "JetMassUp";
+  }
+  else if(syst_==Syst::JetMassDown){
+    return "JetMassDown";
+  }
   else if(syst_==Syst::MuonRecoSFUp){
     return "MuonRecoSFUp";
   }
