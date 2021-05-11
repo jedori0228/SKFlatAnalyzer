@@ -1137,6 +1137,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           leps_for_plot.push_back( Tight_leps.at(0) );
           leps_for_plot.push_back( Tight_leps.at(1) );
 
+          //if( isHEMVetoEvent( leps_for_plot) ) return;
+
           //==== Region Dictionary
           //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved DYCR [IsResolved_DYCR_EE]
           //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved DYCR [IsResolved_DYCR_MM]
@@ -1339,6 +1341,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             LowMllLooseLepton = Loose_SF_leps.at(i);
             leps_for_plot.push_back( Loose_SF_leps.at(i) );
 
+            //if( isHEMVetoEvent( leps_for_plot) ) return;
+
             if(tmp_IsLeadM){
               //==== In this case, the loose ID is HighPt ID muon.
               //==== we want to apply the lepton scale factors to these muons
@@ -1516,6 +1520,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                   FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoHasOFLooseLepton_"+param.Name, weight);
 
                   leps_for_plot.push_back( SFLooseLepton );
+                  //if( isHEMVetoEvent( leps_for_plot) ) return;
+
                   if(tmp_IsLeadM){
                     //==== In this case, the loose ID is HighPt ID muon.
                     //==== we want to apply the lepton scale factors to these muons
@@ -1569,6 +1575,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                   FillCutFlow(IsCentral, "CutFlow", "FSB_"+Suffix+"_HasOFLooseLepton_"+param.Name, weight);
 
                   leps_for_plot.push_back( OFLooseLepton );
+                  //if( isHEMVetoEvent( leps_for_plot) ) return;
 
                   if( (*LeadLep+*OFLooseLepton).M() > 200 ){
 
@@ -1684,32 +1691,29 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   //==== DY LO vs NLO stduy
   bool IsHighWRMassResolvedDYEvent = (IsResolved_DYCR_EE||IsResolved_DYCR_MM) && (WRCand.M()>3000.);
   bool IsHighWRMassBoostedDYEvent = (IsBoosted_DYCR_EE || IsBoosted_DYCR_MM) && (WRCand.M()>3000.);
+
+  bool IsHighWRMassResolvedSREvent = (IsResolved_SR_EE || IsResolved_SR_MM) && (WRCand.M()>3000.);
+  bool IsHighWRMassBoostedSREvent = (IsBoosted_SR_EE || IsBoosted_SR_MM) &&  (WRCand.M()>3000.);
+
   //cout << "@@@@ High mass m(lljj) DY events found" << endl;
   //cout << "m(lljj) = " << WRCand.M() << endl;
   //cout << "m(ll) = " << ( (*leps_for_plot.at(0))+(*leps_for_plot.at(1)) ).M() << endl;
 
   if(IsHighWRMassResolvedDYEvent){
-
-    cout << "@@@@ IsHighWRMassResolvedDYEvent " << endl;
-    cout << "[RECO]" << endl;
-    cout << "lep1 : "; leps_for_plot.at(0)->Print();
-    cout << "lep2 : "; leps_for_plot.at(1)->Print();
-    cout << "jet1 : "; jets.at(0).Print();
-    cout << "jet2 : "; jets.at(1).Print();
-
-    cout << "[LHE]" << endl;
-    for(unsigned int i=0; i<lhes.size(); i++){
-      lhes.at(i).Print();
-      int this_ID = lhes.at(i).ID();
-      int this_Status = lhes.at(i).Status();
-    }
-
     FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
     FillHist("LHEStudy/IsHighWRMassResolvedDYEvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
   }
-  if(IsHighWRMassBoostedDYEvent){
+  else if(IsHighWRMassBoostedDYEvent){
     FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
     FillHist("LHEStudy/IsHighWRMassBoostedDYEvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
+  }
+  else if(IsHighWRMassResolvedSREvent){
+    FillHist("LHEStudy/IsHighWRMassResolvedSREvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassResolvedSREvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
+  }
+  else if(IsHighWRMassBoostedSREvent){
+    FillHist("LHEStudy/IsHighWRMassBoostedSREvent__LHE_lepton_flavour", LHE_lepton_flavour, weight_norm_1invpb, 4, -1., 3.);
+    FillHist("LHEStudy/IsHighWRMassBoostedSREvent__nFinalParton", nFinalParton, weight_norm_1invpb, 10, 0., 10.);
   }
 
   return;
@@ -1720,24 +1724,29 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
     if(IsResolved_SR_EE || IsResolved_SR_MM){
       if(WRCand.M() >= 3200.){
-        if(IsResolved_SR_EE) cout << "[HighMassDataEvent][IsResolved_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
-        if(IsResolved_SR_MM) cout << "[HighMassDataEvent][IsResolved_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+        if(IsResolved_SR_EE) cout << "[HighMassDataEvent][IsResolved_SR_EE] (run, lumi, event) = " << run << ", " << lumi << ", " << event << endl;
+        if(IsResolved_SR_MM) cout << "[HighMassDataEvent][IsResolved_SR_MM] (run, lumi, event) = " << run << ", " << lumi << ", " << event << endl;
       }
+      cout << "m(lljj) = " << WRCand.M() << endl;
       leps_for_plot.at(0)->Print();
       leps_for_plot.at(1)->Print();
-      jets.at(0).Print();
-      jets.at(1).Print();
+      cout << "AK4\t";jets.at(0).Print();
+      cout << "AK4\t";jets.at(1).Print();
     }
     if(IsBoosted_SR_EE || IsBoosted_SR_MM){
       if(WRCand.M() >= 1800.){
-        if(IsBoosted_SR_EE) cout << "[HighMassDataEvent][IsBoosted_SR_EE] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
-        if(IsBoosted_SR_MM) cout << "[HighMassDataEvent][IsBoosted_SR_MM] " << run << ":" << lumi << ":" << event << "\t" << WRCand.M() << endl;
+        if(IsBoosted_SR_EE) cout << "[HighMassDataEvent][IsBoosted_SR_EE] (run, lumi, event) = " << run << ", " << lumi << ", " << event << endl;
+        if(IsBoosted_SR_MM) cout << "[HighMassDataEvent][IsBoosted_SR_MM] (run, lumi, event) = " << run << ", " << lumi << ", " << event << endl;
       }
+      cout << "m(lJ) = " << WRCand.M() << endl;
       leps_for_plot.at(0)->Print();
       leps_for_plot.at(1)->Print();
-      HNFatJet.Print();
+      cout << "AK8\t";HNFatJet.Print();
     }
   }
+
+  bool isThisHEMVetoEvent = isHEMVetoEvent( leps_for_plot );
+  if(isThisHEMVetoEvent) return;
 
   for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
@@ -1772,6 +1781,10 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       FillHist(this_region+"/NBJets_"+this_region, NBJets, weight, 10, 0., 10.);
       FillHist(this_region+"/NJets_"+this_region, jets.size(), weight, 10, 0., 10.);
 
+      if(jets.size()>0){
+        FillHist(this_region+"/IfExist_Jet_0_Pt_"+this_region, jets.at(0).Pt(), weight, 2000, 0., 2000.);
+      }
+
       if(this_region.Contains("Boosted")){
         FillHist(this_region+"/HNFatJet_Pt_"+this_region, HNFatJet.Pt(), weight, 2000, 0., 2000.);
         FillHist(this_region+"/HNFatJet_Eta_"+this_region, HNFatJet.Eta(), weight, 60, -3., 3.);
@@ -1781,8 +1794,14 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       }
       else{
         FillHist(this_region+"/ToBeCorrected_Jet_Pt_"+this_region, jets.at(0).Pt(), weight, 2000, 0., 2000.);
-        FillHist(this_region+"/Jet_0_Pt_"+this_region, jets.at(0).Pt(), weight, 1000, 0., 1000.);
-        FillHist(this_region+"/Jet_1_Pt_"+this_region, jets.at(1).Pt(), weight, 1000, 0., 1000.);
+        FillHist(this_region+"/Jet_0_Pt_"+this_region, jets.at(0).Pt(), weight, 2000, 0., 2000.);
+        FillHist(this_region+"/Jet_1_Pt_"+this_region, jets.at(1).Pt(), weight, 2000, 0., 2000.);
+
+        //==== temp
+        if(IsDATA){
+          FillHist(this_region+"/Jet_0_Eta_"+this_region, jets.at(0).Eta(), weight, 60, -3., 3.);
+          FillHist(this_region+"/Jet_1_Eta_"+this_region, jets.at(1).Eta(), weight, 60, -3., 3.);
+        }
       }
 
 
@@ -2152,3 +2171,18 @@ double HNWRAnalyzer::GetHNWRKFactor(double mlN){
 
 }
 
+bool HNWRAnalyzer::isHEMVetoEvent(const vector<Lepton *>& leps_for_plot){
+
+  if(DataYear!=2018) return false;
+
+  bool isLepton_0_HEM = (leps_for_plot.at(0)->LeptonFlavour()==Lepton::ELECTRON) &&
+                        (leps_for_plot.at(0)->Eta()<-1.25) &&
+                        (leps_for_plot.at(0)->Phi()<-0.82) && (leps_for_plot.at(0)->Phi()>-1.62);
+  bool isLepton_1_HEM = (leps_for_plot.at(1)->LeptonFlavour()==Lepton::ELECTRON) &&
+                        (leps_for_plot.at(1)->Eta()<-1.25) &&
+                        (leps_for_plot.at(1)->Phi()<-0.82) && (leps_for_plot.at(1)->Phi()>-1.62);
+
+  return (isLepton_0_HEM || isLepton_1_HEM);
+
+
+}

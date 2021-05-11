@@ -107,6 +107,8 @@ public:
   double this_kfactor;
   double GetHNWRKFactor(double mlN);
 
+  bool isHEMVetoEvent(const vector<Lepton *>& leps_for_plot);
+
 };
 
 
