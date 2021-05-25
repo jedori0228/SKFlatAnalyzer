@@ -447,7 +447,7 @@ void HNWRAnalyzer::executeEvent(){
   AllMuons = GetAllMuons();
   AllTunePMuons = UseTunePMuon( AllMuons );
   AllJets = GetAllJets();
-  //AllFatJets = puppiCorr->Correct( GetAllFatJets() ); // TODO correct SD Mass here, but not sure about the systematics
+  //AllFatJets = puppiCorr->Correct( GetAllFatJets() ); // This correction is only valid for W-tagged jets
   AllFatJets = GetAllFatJets();
 
   param.dRSeparation = 0.4;
@@ -917,6 +917,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool IsResolved_LowWRCR_EE(false), IsResolved_LowWRCR_MM(false), IsResolved_LowWRCR_EM(false);
   bool IsResolved_DYCR_EE(false), IsResolved_DYCR_MM(false), IsResolved_DYCR_EM(false);
 
+  //==== Requiring exactly two tight leptons, but with leading lepton pt > 60 GeV
+
   if( (n_Tight_leptons==2) && (Tight_leps.at(0)->Pt()>60.) ){
 
     FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+param.Name, weight);
@@ -924,6 +926,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     TString Suffix = "";
     bool tmp_IsEE(false), tmp_IsMM(false), tmp_IsEM(false);
     bool this_triggerpass(false);
+    //==== Check the number of electrons and muons
     if(      (Tight_electrons.size()==2) && (Tight_muons.size()==0) ){
       tmp_IsEE = true;
       Suffix = "SingleElectron";
@@ -951,11 +954,15 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
     FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_"+param.Name, weight);
 
+    //==== 1) If we have two tight electrons, require the electron triggers to be fired
+    //==== 2) If we have two tight muons, require the muon triggers to be fired
+    //==== 3) If we have an electron and a muon, we use muon triggers
+
     if(this_triggerpass){
 
       FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_PassTrigger_"+param.Name, weight);
 
-      //==== lljj
+      //==== Requiring at least two AK4 jets
 
       if( jets.size()>=2 ){
 
@@ -969,11 +976,17 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         bool dRTwoLepton = (LeadLep->DeltaR( *SubLeadLep ) > param.dRSeparation);
         bool dRTwoJets = (jets.at(0).DeltaR( jets.at(1) ) > param.dRSeparation);
 
+        //==== Requiring dR separtions between the two leptons and the two leading AK4 jets
+
         if( dRLeadJetLepton && dRSubLeadJetLepton && dRTwoLepton && dRTwoJets ){
 
           FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_dRSeparation_"+param.Name, weight);
 
+          //==== If this is satisfied, we tag this events as "Resolved"
+
           IsResolvedEvent = true;
+
+          //==== We now defined WR as lljj
 
           WRCand = *LeadLep+*SubLeadLep+jets.at(0)+jets.at(1);
           NCand = *SubLeadLep+jets.at(0)+jets.at(1);
@@ -1026,7 +1039,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             trigger_sf_SingleElectron = mcCorr->ElectronTrigger_SF(param.Electron_Trigger_SF_Key, TriggerNameForSF_Electron, Tight_electrons, SystDir_ElectronTriggerSF);
             trigger_sf_SingleMuon = mcCorr->MuonTrigger_SF(param.Muon_Trigger_SF_Key, TriggerNameForSF_Muon, Tight_muons, SystDir_MuonTriggerSF);
 
-            //==== DYReshape for DY
+            //==== DYReshape only for DY
             if(ApplyDYReshape){
               double tmp_DYRwgParam = WRCand.M();
               if(UseJetPtRwg) tmp_DYRwgParam = jets.at(0).Pt();
@@ -1047,10 +1060,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
           //@@@@
           //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+          //==== ll>200 GeV is what was used in EXO-17-011
+          //==== in this analyis, we will use ll>400 GeV (applied below)
           if(DiLepMassGT200){
 
             FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mllGT200_"+param.Name, weight);
 
+            //==== lljj>800 GeV
             if(WRMassGT800){
 
               FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_"+param.Name, weight);
@@ -1060,6 +1076,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               //==== - HNWR_SingleMuon_Resolved_SR : mm Resolved SR [IsResolved_SR_MM]
               //==== - HNWR_EMu_Resolved_SR : em Resolved sideband [IsResolved_SR_EM]
 
+              //==== ll>400 GeV
               if(DiLepMassGT400){
 
                 FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_mll400_"+param.Name, weight);
@@ -1069,7 +1086,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                 else if(tmp_IsMM) IsResolved_SR_MM = true;
                 else if(tmp_IsEM) IsResolved_SR_EM = true;
 
-
+                //==== For b-jet related CRs
                 if(NBJets>0){
                   FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_mll400_BJet_"+param.Name, weight);
                   map_bool_To_Region[Suffix+"_Resolved_SR_BJet"] = true;
@@ -1078,6 +1095,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
                   FillCutFlow(IsCentral, "CutFlow", "NTightLeptonIsTwo_"+Suffix+"_mWRGT800_mll400_NoBJet_"+param.Name, weight);
                   map_bool_To_Region[Suffix+"_Resolved_SR_NoBJet"] = true;
                 }
+
 /*
                 if( (IsResolved_SR_EE||IsResolved_SR_MM) ){
                   cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
@@ -1117,8 +1135,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 */
               }
 
-            }
-            //==== Validate EMu method here
+            } // END if lljj > 800 GeV
+
+            //==== lljj < 800 GeV CR here
             else{
 
               //==== Region Dictionary
@@ -1130,20 +1149,21 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               if(tmp_IsEE) IsResolved_LowWRCR_EE = true;
               else if(tmp_IsMM) IsResolved_LowWRCR_MM = true;
               else if(tmp_IsEM) IsResolved_LowWRCR_EM = true;
-            }
+            } // END if lljj < 800 GeV
 
-          }
+          } // END if ll > 200 GeV
 
+          //==== leps_for_plot are the two leptons that will be used in the kinematic plots
+          //==== for this resolved event, we use the two tight leptons
           leps_for_plot.push_back( Tight_leps.at(0) );
           leps_for_plot.push_back( Tight_leps.at(1) );
-
-          //if( isHEMVetoEvent( leps_for_plot) ) return;
 
           //==== Region Dictionary
           //==== - HNWR_SingleElectron_Resolved_DYCR : ee Resolved DYCR [IsResolved_DYCR_EE]
           //==== - HNWR_SingleMuon_Resolved_DYCR : mm Resolved DYCR [IsResolved_DYCR_MM]
           //==== - HNWR_EMu_Resolved_DYCR : filled, but NOT USED [IsResolved_DYCR_EM]
 
+          //==== DY CRs are defined as ll<150 GeV && lljj>800 GeV
           if(DiLepMassLT150 && WRMassGT800){
             map_bool_To_Region[Suffix+"_Resolved_DYCR"] = true;
             if(tmp_IsEE) IsResolved_DYCR_EE = true;
@@ -1161,71 +1181,6 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             map_bool_To_Region[Suffix+"_Resolved_DYCR3"] = true;
           }
 
-          for(unsigned int i=0; i<Loose_leps.size(); i++){
-            if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SubLeadLep){
-              //cout << "--> duplicate" << endl;
-              continue;
-            }
-            NExtraLooseLepton++;
-            if(Loose_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraLooseElectron++;
-            else if(Loose_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraLooseMuon++;
-            else{
-              cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra loose lepton in RESOLVED" << endl;
-              exit(EXIT_FAILURE);
-            }
-
-          }
-          for(unsigned int i=0; i<Tight_leps.size(); i++){
-            if(Tight_leps.at(i)==LeadLep || Tight_leps.at(i)==SubLeadLep){
-              //cout << "--> duplicate" << endl;
-              continue;
-            }
-            NExtraTightLepton++;
-            if(Tight_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON) NExtraTightElectron++;
-            else if(Tight_leps.at(i)->LeptonFlavour()==Lepton::MUON) NExtraTightMuon++;
-            else{
-              cerr << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra Tight lepton in RESOLVED" << endl;
-              exit(EXIT_FAILURE);
-            }
-
-          }
-
-/*
-          //==== XXX debugging
-          if(IsResolved_SR_MM){
-            if(NExtraLooseLepton>0){
-              cout << "==========================================" << endl;
-              cout << "NExtraLooseElectron = " << NExtraLooseElectron << endl;
-              cout << "NExtraLooseMuon = " << NExtraLooseMuon << endl;
-              //genFinder->Debug=true;
-              genFinder->Run(gens);
-              genFinder->Print();
-              genFinder->PrintGen(gens);
-              cout << "#### RECO ####" << endl;
-              for(unsigned int i=0; i<Loose_leps.size(); i++){
-                if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SubLeadLep){
-                  cout << i << " (Duplicated) ";Loose_leps.at(i)->Print();
-                  //cout << "--> duplicate" << endl;
-                  continue;
-                }
-                if(Loose_leps.at(i)->LeptonFlavour()==Lepton::ELECTRON){
-                  cout << i << " (Electron) ";Loose_leps.at(i)->Print();
-                }
-                else if(Loose_leps.at(i)->LeptonFlavour()==Lepton::MUON){
-                  cout << i << " (Muon) ";Loose_leps.at(i)->Print();
-                }
-                else{
-                  cout << "[HNWRAnalyzer::executeEventFromParameter] wrong lepton flavour while counting extra loose lepton in RESOLVED" << endl;
-                  exit(EXIT_FAILURE);
-                }
-
-              }
-
-            }
-
-          } // END Debugging
-*/
-
         } // END if dR(l,l)>0.4 && dR(j,j)>0.4
 
       } // END if # of jets >= 2
@@ -1234,6 +1189,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
   } // END if # of tight lepton == 2
 
+  //==== Now, when IsResolvedEvent it still false, we check if this event is a "boosted" event
+
   bool IsBoostedEvent(false);
   bool IsBoosted_SR_EE(false), IsBoosted_SR_MM(false);
   bool IsBoosted_LowWRCR_EE(false), IsBoosted_LowWRCR_MM(false);
@@ -1241,9 +1198,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   bool IsBoosted_CR_EMJet(false), IsBoosted_CR_MEJet(false);
   bool IsBoosted_LowWRCR_EMJet(false), IsBoosted_LowWRCR_MEJet(false);
   int JetLepFlav=-1;
+
+  //==== of course, we need "NOT IsResolvedEvent" to keep the orthogonality between the resolved and boosted events
   if(!IsResolvedEvent){
 
     FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+param.Name, weight);
+
+    //==== At least one tight leptons with leading pt > 60 GeV
 
     if( (n_Tight_leptons>0) && (Tight_leps.at(0)->Pt()>60.) ){
 
@@ -1255,6 +1216,9 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       bool this_triggerpass(false);
       std::vector<Electron *> ForSF_electrons;
       std::vector<Muon *> ForSF_muons;
+
+      //==== The flavour of the leading lepton is important. It determines which triggers to be fired
+
       if(LeadLep->LeptonFlavour()==Lepton::ELECTRON){
         tmp_IsLeadE = true;
         Suffix = "SingleElectron";
@@ -1288,6 +1252,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
       //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
       //@@@@ Apply lepton scale factors
+      //@@@@ Only applied for the leading tight lepton
 
       if(!IsDATA){
 
@@ -1315,6 +1280,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
       //@@@@
       //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+      //==== Triggers, depend on the flavour of the leading lepton, are fired
+
       if(this_triggerpass){
 
         FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_PassTrigger_"+param.Name, weight);
@@ -1324,24 +1291,32 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
         std::vector<Lepton *> Loose_SF_leps = tmp_IsLeadE ? Loose_leps_el : Loose_leps_mu;
         std::vector<Lepton *> Loose_OF_leps = tmp_IsLeadE ? Loose_leps_mu : Loose_leps_el;;
 
-        //==== Check for DYCR very first time
+        //==== Check DYCR
+        //==== We already have the leading tight lepton (l_T)
+        //==== We have a collection of same-flavour loose leptons too (Loose_SF_leps)
+        //==== We pair (l_T, loose lepton) and check their invariant mass (skip if l_T == loose lepton) 
 
         bool HasLowMll = false;
         double LowMllMass = -1;
         Lepton *LowMllLooseLepton;
+        //==== loop over all same-flavour loose leptons
         for(unsigned int i=0; i<Loose_SF_leps.size(); i++){
+          //==== IF this loose lepton is the same lepton as the tight lepton, skip
           if(Loose_SF_leps.at(i)==LeadLep){
             //cout << "--> duplicate" << endl;
             continue;
           }
+
           double dilep_mass  = (*(LeadLep)+*(Loose_SF_leps.at(i))).M();
+          //==== If the pair mass is between Z window, we tag this event as "boosted DY CR"
+          //==== This event will not be used as Boosted "SR", to keep the orthogonality between CRs and SRs
           if( (dilep_mass >= 60.) && (dilep_mass < 150.) ){
+
             HasLowMll = true;
             LowMllMass = dilep_mass;
+
             LowMllLooseLepton = Loose_SF_leps.at(i);
             leps_for_plot.push_back( Loose_SF_leps.at(i) );
-
-            //if( isHEMVetoEvent( leps_for_plot) ) return;
 
             if(tmp_IsLeadM){
               //==== In this case, the loose ID is HighPt ID muon.
@@ -1350,35 +1325,46 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               ForSF_muons.push_back( looseMuon );
             }
 
+            //==== Z-pair is found. We now skip loose lepton loop
             break;
-          }
-        }
 
+          } //==== END if this pair is within the Z-mass window
+
+        } //==== END loop over same-sign loose leptons
+
+        //==== Okay, we a Z-pair was found above, we have HasLowMll==true.
+        //==== This event is a Boosted DY CR
         if(HasLowMll){
 
           FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasLowMll_"+param.Name, weight);
 
           map_bool_To_Region[Suffix+"_Boosted_LowMll"] = true;
 
+          //==== Loop over the AK8 jets, but without the LSF requirement
+          //==== In the boosted DY CR, we remove this requirement; in the boosted SR, one of the lepton from Z is accidentally overlapped with a jet 
           for(unsigned int i=0; i<fatjets.size(); i++){
 
             FatJet this_fatjet = fatjets.at(i);
 
+            //==== Check if this AK8 jet is back-to-back to the tight lepton
             if( fabs( LeadLep->DeltaPhi(this_fatjet) ) > 2.0 ){
 
               FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasLowMll_HasBackToBackAK8Jet_"+param.Name, weight);
 
               map_bool_To_Region[Suffix+"_Boosted_LowMllWithAK8Jet"] = true;
 
-              //==== Now this is the DY sideband we want
+              //==== Now this is the DY CR we want
 
               HNFatJet = this_fatjet;
+              //==== If the loopse lepton is inside this away-AK8 jet, NCand = AK8jet alone
               if( this_fatjet.DeltaR( *LowMllLooseLepton ) < 0.8 ){
                 NCand = HNFatJet;
               }
+              //==== If the loopse lepton is outside this away-AK8 jet, NCand = AK8jet+loose lepton
               else{
                 NCand = HNFatJet + *(LowMllLooseLepton);
               }
+              //==== Of course, WR = NCand + Leading (Tight) lepton
               WRCand = *LeadLep+NCand;
 
               //==== Region Dictionary
@@ -1389,7 +1375,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
                 FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_DYCR_"+param.Name, weight);
 
-                //==== 60~150
+                //==== lljj>800 GeV -> DY CR
                 map_bool_To_Region[Suffix+"_Boosted_DYCR"] = true;
                 if(tmp_IsLeadE) IsBoosted_DYCR_EE = true;
                 else if(tmp_IsLeadM) IsBoosted_DYCR_MM = true;
@@ -1403,6 +1389,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
               }
 
+              //==== away-AK8 jet is now found. Stop AK8 jet loop here
               break;
 
             } // END if back-to-back
@@ -1411,23 +1398,27 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
 
         } // END if HasLowMll
 
-        //==== If not, look for merged jet
+        //==== If this event does NOT have Z-pair, now look for boosted SR (and boosted emu event)
         else{
 
           FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoLowmll_"+param.Name, weight);
 
           bool HasAwayMergedFatJet = false;
+          //==== Loop over LSF AK8 jet
           for(unsigned int i=0; i<fatjets_LSF.size(); i++){
             FatJet this_fatjet = fatjets_LSF.at(i);
+            //==== Check if away-AK8 jet
             if( fabs( LeadLep->DeltaPhi(this_fatjet) ) > 2.0 ){
               HasAwayMergedFatJet = true;
               HNFatJet = this_fatjet;
               NCand = HNFatJet;
               WRCand = *LeadLep+NCand;
+              //==== Away-AK8 jet is found. Skip the AK8jet loop
               break;
             }
           }
 
+          //==== Okay, if away-AK8 (LSF) jet is found, check more properties
           if(HasAwayMergedFatJet){
 
             FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_HasMergedJet_"+param.Name, weight);
@@ -1437,9 +1428,13 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             bool HasOFLooseLepton = false;
             Lepton *OFLooseLepton;
 
+            //==== Firstly, loop over same-flavour loose lepton, and check if this is insdie the away-AK8 jet
             for(unsigned int k=0; k<Loose_SF_leps.size(); k++){
+              //==== Reject if this loose lepton is same as the leading lepton
               if( LeadLep->DeltaR( *(Loose_SF_leps.at(k)) ) < 0.01 ) continue;
+              //==== 53 GeV is already applied, but to be safe..
               if( Loose_SF_leps.at(k)->Pt() <= 53. ) continue;
+              //==== Check if this loose lepton is inside the away-AK8 jet
               if( HNFatJet.DeltaR( *(Loose_SF_leps.at(k)) ) < 0.8 ){
                 HasSFLooseLepton = true;
                 SFLooseLepton = Loose_SF_leps.at(k);
@@ -1447,6 +1442,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               }
             }
 
+            //====  Next, loop over opposite-flavour loose lepton, and check if this is insdie the away-AK8 jet
             for(unsigned int k=0; k<Loose_OF_leps.size(); k++){
 
               if( LeadLep->DeltaR( *(Loose_OF_leps.at(k)) ) < 0.01 ) continue;
@@ -1458,7 +1454,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               }
             }
 
-            //==== Now, veto with additoanl Tight lepton
+            //==== not used. just checking
             for(unsigned int i=0; i<Loose_leps.size(); i++){
               if(Loose_leps.at(i)==LeadLep || Loose_leps.at(i)==SFLooseLepton || Loose_leps.at(i)==OFLooseLepton ){
                 //cout << "--> duplicate" << endl;
@@ -1473,6 +1469,8 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
               }
 
             }
+
+            //==== Now, veto with additoanl Tight lepton
             for(unsigned int i=0; i<Tight_leps.size(); i++){
               if(Tight_leps.at(i)==LeadLep || Tight_leps.at(i)==SFLooseLepton || Tight_leps.at(i)==OFLooseLepton ){
                 //cout << "--> duplicate" << endl;
@@ -1491,6 +1489,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
             bool NoExtraTightLepton = (NExtraTightLepton==0);
             bool WRMassGT800 = ( WRCand.M() > 800. );
 
+            //==== Reject if there is tight lepton in addition to the Leading and the chosen loose lepton (inside the away-AK8 jet)
             if(NoExtraTightLepton){
 
               FillCutFlow(IsCentral, "CutFlow", "NotResolved_"+Suffix+"_NoExtraTight_"+param.Name, weight);
@@ -1719,7 +1718,7 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
   return;
 */
 
-  //==== Printing data info
+  //==== Printing high-mass data info
   if(IsDATA){
 
     if(IsResolved_SR_EE || IsResolved_SR_MM){
@@ -1745,9 +1744,11 @@ void HNWRAnalyzer::executeEventFromParameter(AnalyzerParameter param){
     }
   }
 
+  //==== Veto HEM electron events here
   bool isThisHEMVetoEvent = isHEMVetoEvent( leps_for_plot );
   if(isThisHEMVetoEvent) return;
 
+  //==== now, fill histograms for each analysis regions; Looping map_bool_To_Region
   for(std::map<TString, bool>::iterator it_map = map_bool_To_Region.begin(); it_map != map_bool_To_Region.end(); it_map++){
 
     TString this_region = it_map->first;
