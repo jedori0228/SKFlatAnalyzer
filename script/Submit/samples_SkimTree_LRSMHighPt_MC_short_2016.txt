@@ -1,0 +1,10 @@
+#DYJets10to50_MG
+WW_pythia
+WZ_pythia
+ZZ_pythia
+WWW
+WWZ
+WZZ
+ZZZ
+ttWToLNu
+ttWToQQ
